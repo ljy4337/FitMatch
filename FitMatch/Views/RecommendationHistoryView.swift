@@ -201,6 +201,7 @@ struct RecommendationHistoryView: View {
                 }
             }
         }
+        .diagnosesScrollPerformance(screen: "history_list")
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .contentMargins(.top, FitMatchTopChromeMetrics.height, for: .scrollContent)
@@ -247,6 +248,10 @@ struct RecommendationHistoryView: View {
     }
 
     private func showDetail(_ history: RecommendationHistory) {
+        FitMatchPerformanceDiagnosticsStore.shared.begin(.historyToResult)
+        #if !DEBUG
+        FitMatchReleaseHistoryResultTransitionMonitor.shared.begin()
+        #endif
         DetailPerformanceDiagnostics.beginHistoryResultNavigation(
             productName: history.productNameForDisplay
         )

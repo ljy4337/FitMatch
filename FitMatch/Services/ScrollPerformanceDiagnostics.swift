@@ -185,13 +185,165 @@ private struct ScrollPerformanceGeometry: Equatable {
 }
 #endif
 
+#if !DEBUG
+@MainActor
+private final class ReleaseScrollPerformanceMonitor: NSObject, ObservableObject {
+    let screen: String
+    private var displayLink: CADisplayLink?
+    private var previousTimestamp: CFTimeInterval?
+    private var cadence = FitMatchFrameCadenceBuckets()
+    private var delayed = 0
+    private var severe = 0
+    private let requestedFPS = max(60, UIScreen.main.maximumFramesPerSecond)
+
+    init(screen: String) {
+        self.screen = screen
+    }
+
+    func setScrolling(_ scrolling: Bool) {
+        if scrolling {
+            guard displayLink == nil else { return }
+            let link = CADisplayLink(target: self, selector: #selector(tick(_:)))
+            link.preferredFrameRateRange = CAFrameRateRange(
+                minimum: 60,
+                maximum: Float(requestedFPS),
+                preferred: Float(requestedFPS)
+            )
+            link.add(to: .main, forMode: .common)
+            displayLink = link
+        } else {
+            stop()
+        }
+    }
+
+    func stop() {
+        guard displayLink != nil else { return }
+        displayLink?.invalidate()
+        displayLink = nil
+        FitMatchPerformanceDiagnosticsStore.shared.scrollSummary(
+            screen: screen,
+            frames: cadence.intervals,
+            delayed: delayed,
+            severe: severe,
+            worstMS: cadence.worstMS,
+            requestedFPS: requestedFPS,
+            cadence: cadence
+        )
+        previousTimestamp = nil
+        cadence = FitMatchFrameCadenceBuckets()
+        delayed = 0
+        severe = 0
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {
+        defer { previousTimestamp = link.timestamp }
+        guard let previousTimestamp else { return }
+        let milliseconds = (link.timestamp - previousTimestamp) * 1_000
+        cadence.record(intervalMS: milliseconds)
+        if milliseconds >= 24 { delayed += 1 }
+        if milliseconds >= 40 { severe += 1 }
+    }
+}
+
+@MainActor
+final class FitMatchReleaseHistoryResultTransitionMonitor: NSObject {
+    static let shared = FitMatchReleaseHistoryResultTransitionMonitor()
+
+    private var displayLink: CADisplayLink?
+    private var previousTimestamp: CFTimeInterval?
+    private var cadence = FitMatchFrameCadenceBuckets()
+    private var appeared = false
+    private var finishTask: Task<Void, Never>?
+    private let requestedFPS = max(60, UIScreen.main.maximumFramesPerSecond)
+
+    func begin() {
+        stop()
+        appeared = false
+        let link = CADisplayLink(target: self, selector: #selector(tick(_:)))
+        link.preferredFrameRateRange = CAFrameRateRange(
+            minimum: 60,
+            maximum: Float(requestedFPS),
+            preferred: Float(requestedFPS)
+        )
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+        scheduleStop(after: .seconds(3))
+    }
+
+    func resultAppeared() {
+        guard displayLink != nil, !appeared else { return }
+        recordSummary(phase: "before_appear")
+        appeared = true
+        cadence = FitMatchFrameCadenceBuckets()
+        previousTimestamp = nil
+        scheduleStop(after: .milliseconds(900))
+    }
+
+    private func scheduleStop(after duration: Duration) {
+        finishTask?.cancel()
+        finishTask = Task { @MainActor in
+            try? await Task.sleep(for: duration)
+            guard !Task.isCancelled else { return }
+            stop()
+        }
+    }
+
+    private func stop() {
+        guard displayLink != nil else { return }
+        finishTask?.cancel()
+        finishTask = nil
+        displayLink?.invalidate()
+        displayLink = nil
+        recordSummary(phase: appeared ? "after_appear" : "before_appear")
+        previousTimestamp = nil
+        cadence = FitMatchFrameCadenceBuckets()
+    }
+
+    private func recordSummary(phase: String) {
+        FitMatchPerformanceDiagnosticsStore.shared.frameCadenceSummary(
+            route: .historyToResult,
+            phase: phase,
+            requestedFPS: requestedFPS,
+            cadence: cadence
+        )
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {
+        defer { previousTimestamp = link.timestamp }
+        guard let previousTimestamp else { return }
+        cadence.record(intervalMS: (link.timestamp - previousTimestamp) * 1_000)
+    }
+}
+
+private struct ReleaseScrollPerformanceModifier: ViewModifier {
+    @StateObject private var monitor: ReleaseScrollPerformanceMonitor
+
+    init(screen: String) {
+        _monitor = StateObject(wrappedValue: ReleaseScrollPerformanceMonitor(screen: screen))
+    }
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content
+                .onScrollPhaseChange { _, phase in
+                    monitor.setScrolling(phase != .idle)
+                }
+                .onDisappear { monitor.stop() }
+        } else {
+            content
+        }
+    }
+}
+#endif
+
 extension View {
     @ViewBuilder
     func diagnosesScrollPerformance(screen: String) -> some View {
         #if DEBUG
         modifier(ScrollPerformanceDiagnosticsModifier(screen: screen))
         #else
-        self
+        modifier(ReleaseScrollPerformanceModifier(screen: screen))
         #endif
     }
 }

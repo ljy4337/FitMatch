@@ -319,15 +319,7 @@ struct VNextHistoryCacheHydrator {
         var prepared: [UUID: (analysis: VNextComparisonBatchAnalysis,
                                projection: HistoricalTargetProjection)] = [:]
         for row in currentRows where !existingHistoryIDs.contains(row.clientComparisonID) {
-            guard let begin = row.snapshotBegin,
-                  let recommendedID = row.recommendedProductSizeID else {
-                throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
-            }
-            let analysis = try adapter.analyze(begin)
-            guard analysis.recommended.productSizeID == recommendedID,
-                  completionMatches(row, analysis: analysis) else {
-                throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
-            }
+            let analysis = try validatedCompletedAnalysis(row)
             guard row.referenceClientItemID != nil else {
                 throw VNextHistoryCacheHydrationError.missingReferenceIdentity(row.id)
             }
@@ -434,6 +426,24 @@ struct VNextHistoryCacheHydrator {
             try modelContext.save()
         }
         return hydrated
+    }
+
+    func validatedCompletedAnalysis(
+        _ row: VNextComparisonHistoryDTO
+    ) throws -> VNextComparisonBatchAnalysis {
+        try FitMatchVNextContractValidator.validateCompletedReplay(row)
+        guard let begin = row.snapshotBegin,
+              let recommendedID = row.recommendedProductSizeID,
+              begin.snapshot.target.productID == row.targetProductID,
+              begin.snapshot.target.variantID == row.targetVariantID else {
+            throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
+        }
+        let analysis = try adapter.analyze(begin)
+        guard analysis.recommended.productSizeID == recommendedID,
+              completionMatches(row, analysis: analysis) else {
+            throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
+        }
+        return analysis
     }
 
     private func completionMatches(

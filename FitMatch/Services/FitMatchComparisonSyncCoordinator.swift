@@ -179,6 +179,42 @@ final class FitMatchComparisonSyncCoordinator: ObservableObject {
         }
     }
 
+    /// Restores read-only size analyses from this user's immutable completed
+    /// record. It does not authorize a new comparison or persist a result.
+    func recoverVerifiedAlternativeSizeAnalysis(
+        for history: RecommendationHistory
+    ) async throws -> VNextComparisonBatchAnalysis? {
+        guard let userID = activeUserID,
+              history.isServerBackedVNextHistory,
+              let targetProductID = RecommendationHistoryStore.targetProductID(for: history)
+                ?? (history.product.canonicalSourceIdentity == "fitmatch_vnext_history"
+                    ? history.product.id : nil) else {
+            return nil
+        }
+        let historyID = history.id
+        let response = try await remote.fetchVNextComparisonHistorySync()
+        guard isCurrentSyncUser(userID),
+              !response.tombstones.contains(where: { $0.clientComparisonID == historyID }) else {
+            return nil
+        }
+        let matches = response.histories.filter { $0.clientComparisonID == historyID }
+        guard matches.count == 1,
+              let row = matches.first,
+              row.targetProductID == targetProductID,
+              let referenceID = row.referenceClientItemID,
+              history.referencesClosetItem(clientItemID: referenceID) else {
+            return nil
+        }
+        let analysis = try hydrator.validatedCompletedAnalysis(row)
+        guard isCurrentSyncUser(userID),
+              RecommendationService().canPresentCurrentVNextAlternativeSizes(
+                for: history, batch: analysis
+              ) else {
+            return nil
+        }
+        return analysis
+    }
+
     /// Called only after the caller has successfully persisted the local
     /// presentation removal.  Keeping this separate from the server hide
     /// prevents an uncertain local save from consuming a tombstone cursor.

@@ -14,6 +14,13 @@ final class FitMatchResultSupplementalComparisonCache {
         productCategory: ClothingCategory,
         productDetailCategory: ClosetDetailCategory
     ) -> MeasurementComparisonResult {
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        defer {
+            FitMatchPerformanceDiagnosticsStore.shared.recordSlowWork(
+                .supplementalComparison,
+                elapsedMS: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            )
+        }
         let input = Input(
             sizeID: productSize.id,
             referenceID: referenceItem.id,

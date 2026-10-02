@@ -1,3 +1,143 @@
+## 2026-10-02 QA 통합 및 개발환경 테스트 기준
+
+- `sharebtnmodify`의 검토된 5개 커밋(`854ed0b`..`1c09701`)을 로컬 `QA`에 전체 병합한다. 공통 부모 이후 `QA`에는 무신사 0 실측 표시 수정의 별도 커밋 `5d78a42`가 있어 단순 fast-forward가 아니며, `FitMatch Behavior Map.md`의 겹친 설명만 두 흐름을 보존해 해결했다. 원격 푸시 및 최종 SHA는 병합 후 별도 검증한다. `main`은 변경하지 않는다.
+- 다음 Codex 테스트는 반드시 `FitMatch-QA` scheme의 `Debug-QA`(Run/Test) 또는 `Release-QA`(Archive)를 명시하고 개발 Supabase `hnkplvyegonlhumlejst`만 사용한다. `FitMatch-Production` 및 기본 `FitMatch` scheme은 운영 DB `aqhrupgjpmrtnystottx`이므로 QA 테스트에 사용하지 않는다. 브랜치 이름만으로 DB가 바뀌지 않으며 `FITMATCH_SUPABASE_*` 실행 환경 override가 있으면 별도 확인한다.
+- PASS: `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch-QA -configuration Debug-QA -showBuildSettings`에서 앱 ID `com.ljy4337.fitmatch.qa`, 개발 URL `https://hnkplvyegonlhumlejst.supabase.co` 확인. 현재 shell의 `FITMATCH_SUPABASE_*` override 없음. QA 빌드는 소스 컴파일 후 universal binary 결합 시 `/tmp` 디스크 여유 부족으로 exit 65 (`No space left on device`); BUILD PASS 아님. 이 작업이 만든 `/tmp/FitMatchQAMergeBuild`만 제거했다. 병합은 DB/Edge write나 인증된 상품·옷장·비교 E2E를 수행하지 않는다.
+
+## 2026-10-02 온보딩 후 등록 진입 UI 테스트 보정 (로컬 미커밋)
+
+- 앞선 4장 온보딩 재검증의 등록 진입 2 FAIL은 앱 시트 미표시가 아니었다. 실패 순간 XCUI 접근성 계층에 `내 옷 추가` 시트와 링크/직접 입력 버튼이 모두 있었다. 두 버튼의 접근성 이름은 제목과 설명이 결합되는데 테스트가 제목만 정확히 일치시켜 조회했다. 테스트를 제목 접두 조회로 보정했고 앱 UI/시트 전환 코드는 변경하지 않았다.
+- 수동 등록 진입 테스트는 현재 신규 직접 입력 화면에 없는 `상품명 입력` 대신 실제 `closet.measurement.총장` 입력 필드를 확인한다. 링크 fixture의 상품명 기대값도 현재 `ProductURLParserService`의 `온보딩 무신사 상의` / `온보딩 유니클로 상의`와 맞췄다. 파서·서버·DB 코드는 변경하지 않았다.
+- FitMatch-QA iPhone 17 Pro 시뮬레이터: 최초 수정 후 2개 중 링크 등록 진입 PASS/수동 등록 필드 기대값 FAIL (`/tmp/FitMatchSourceAuditSelectorsFixed-20261002.xcresult`). 필드 수정 후 온보딩 묶음과 링크 등록 검사 9개 중 6 PASS/3 fixture 이름 기대값 FAIL (`/tmp/FitMatchSourceAuditRegistrationFinal-20261002.xcresult`). 이름 수정 후 실패했던 fixture 3개 3 PASS/0 FAIL (`/tmp/FitMatchSourceAuditFixturesFixed-20261002.xcresult`). 9개 전체를 최종 소스 한 번에 재실행한 결과는 아니며, 인증된 서버 저장·실기기 E2E는 NOT RUN. 기존 미커밋 작업 보존, commit/push/DB write 없음.
+
+## 2026-10-02 온보딩 4장 안내 적용 (로컬 미커밋)
+
+- 사용자 승인된 4장: 앱 가치/기록 → 공유 사용 → iOS 공유 설정 → 링크·직접 입력 대안. 이전 2026-10-01의 5장 시안 결정을 대체한다. 모든 장의 유일한 실행 버튼은 `다음`; 마지막은 기존 ContentView 완료 콜백을 호출한다. 건너뛰기/나중에 등록/온보딩 내부 등록 sheet 제거. 실제 등록·비교·DB 계약 및 기존 완료 사용자 상태는 변경하지 않았다.
+- `FitMatchOnboardingView.swift`를 네이티브 텍스트/정적 안내로 구성. 사용자 제공 비교 결과·URL 입력 캡처와 기존 앱 아이콘을 3개 imageset에 추가. 연락처 캡처 미포함; URL 입력 원본의 오류 부분은 표시하지 않는다. 공유 예시는 메시지/Mail/메모와 FitMatch만 사용. 예시는 실행 불가, VoiceOver 설명 제공, 본문 스크롤/고정 다음/Reduce Motion 지원. 생성 시안 PNG 전체를 앱에 넣은 것이 아니며 픽셀 동일성은 주장하지 않는다.
+- RED: `FitMatchOnboardingUITests/testFourGuidePagesHaveOnlyNextAndFinish` 수정 전 1 FAIL, exit65 (`/tmp/FitMatchOnboardingRed.xcresult`). GREEN: QA iPhone17Pro(iOS26.3.1) 같은 테스트 + signed-out root 2 PASS/0 FAIL, exit0 (`/tmp/FitMatchOnboardingGreen.xcresult`). 실제 캡처에서 이미지 축소 오류를 찾아 명시적 원본 비율 frame으로 보정.
+- 최종 재검증 `/tmp/FitMatchOnboardingFinal.xcresult`: 앱/테스트 컴파일 성공, 4장 이동/완료/재실행 1 PASS. 추가된 Main 등록 진입 테스트 2 FAIL (총3개, exit65): `test04ManualRegistrationRemainsAvailableAfterGuide`, `testLinkedClosetEmptyInputCannotLoadOrAdvance`. 새 작업→내 옷장에 추가 이후 등록 방식 sheet가 나타나지 않아 실패; 기존 ContentView의 0.25초 sheet 전환 경로이며 이번에 수정하지 않았다. 이것만으로 온보딩 회귀라고 확정하지 않음. 원래 온보딩 등록 버튼을 사용하던 테스트는 Main 진입으로 옮겼으며 manual 테스트는 폐기된 온보딩 fixture-prefill 저장에서 실제 Main 폼 진입 검증으로 변경. 나머지 옮긴 parser/등록 테스트 미실행.
+- 명령 공통: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-QA -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchEnvironmentBuild -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:<위 테스트> -resultBundlePath <위 경로> test`. 기존 동시성 경고 잔존. 최종 캡처 `/tmp/FitMatchOnboardingFinalScreens/`. 실기기/작은 화면/큰 글씨/VoiceOver 실제 조작/전체 suite/Release 새 archive/TestFlight NOT RUN. DB write, commit/push 없음. 기존 다른 미커밋 작업 보존.
+
+## 2026-10-02 TestFlight 1.1(14) 재시도 — 아카이브 PASS / 업로드 BLOCKED
+
+- 사용자 재시도 요청으로 `sharebtnmodify`의 현 작업 트리(저장된 History의 다른 사이즈 복원 포함)를 Production 앱/Share Extension build 14로 아카이브했다. `CURRENT_PROJECT_VERSION` 앱/확장 8곳 13→14. 기존 미커밋 작업 보존, commit/push/DB write 없음.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/FitMatchBuild14-20261002.xcarchive -derivedDataPath /tmp/FitMatchProductionArchive -disableAutomaticPackageResolution -allowProvisioningUpdates archive` exit 0. 앱/공유 확장 Info.plist 모두 1.1(14) 확인. 아카이브 `/tmp/FitMatchBuild14-20261002.xcarchive` 보존.
+- BLOCKED: `xcodebuild -exportArchive -archivePath /tmp/FitMatchBuild14-20261002.xcarchive -exportOptionsPlist /tmp/FitMatchBuild10-ExportOptions.plist -exportPath /tmp/FitMatchBuild14-Upload -allowProvisioningUpdates` exit 70 `Failed to Use Accounts`; Xcode keychain 계정의 `Xcode-Token` 누락이 09:45 재현됐다. Apple 서버 업로드/처리/테스터 설치 없음. 로컬 `codesign --verify --deep --strict`도 `CSSMERR_TP_NOT_TRUSTED`였으므로 Apple 계정 재인증 후 export 재서명 결과를 별도 확인해야 한다. 오전 07:07 build 11은 업로드 성공했으나 08:30 build 13부터 동일 계정 토큰 누락; 집중 모드 원인 증거 없음. 로그 `/tmp/FitMatchBuild14-archive.log`, `/tmp/FitMatchBuild14-upload.log`.
+
+## 2026-10-02 기록 결과의 다른 사이즈 비교 복원 (로컬 미커밋)
+
+- 원인: 결과 화면의 다른 사이즈 버튼은 프로세스 수명에만 존재하는 `VNextComparisonSessionStore`의 승인된 사이즈 배치를 요구했다. 앱 재시작 후 저장된 History를 열면 이 배치가 없어 비활성화됐다.
+- 서버가 저장한 해당 사용자·비교 ID의 완료 기록에서 불변 begin snapshot을 읽고, 대상 상품/variant·내 옷·추천 사이즈·완료 점수/실측 증거를 검증한 경우에만 승인된 사이즈 분석을 임시 복원한다. 새 비교/완료/저장 RPC, DB write, 점수 계산 규칙 변경 없음. 다른 비교 기록·계정 변경 중 늦은 응답·불일치는 거부한다. 기존 미커밋 성능 진단 및 다른 변경은 보존.
+- PASS: `FitMatch-QA` iPhone 17 Simulator 4개 관련 테스트 클래스 37개 테스트 / 매개변수 실행 46건, 실패·건너뜀 0 (`/tmp/FitMatchAlternateSizeFinal.xcresult`). 저장 기록 복원, 2개 승인 사이즈 exact ID, 다른 비교 ID 및 계정 전환 거부 포함. `FitMatch-Production` Release iOS 빌드 exit 0 (`CODE_SIGNING_ALLOWED=NO`, `/tmp/FitMatchAlternateSize-production.log`). `git diff --check`와 보호 스크롤 검사 PASS.
+- NOT RUN: 실기기/인증된 History UI E2E 및 TestFlight 설치 검증. 이 수정을 포함한 새 1.1(14) archive는 생성됐으나 업로드 인증 BLOCKED. DB/Edge 적용, commit/push 없음.
+
+## 2026-10-02 기록→결과 전환·결과 스크롤 진단 1.1(13) — 업로드 인증 BLOCKED
+
+- 기록 카드 탭부터 결과 `onAppear` 전후의 display-link callback 간격과 결과 스크롤의 12/20/28/40ms 구간을 집계한다. 결과 snapshot/실측 presentation/보조 실측 계산은 8ms 이상일 때 작업별 최대 5건만 기록한다. UI·비교·DB 기능은 그대로이며 이 수치는 실제 표시 프레임이나 CPU/GPU stack 증거가 아니다.
+- PASS: `scripts/test-metrics-diagnostics.sh` 9개, Production Release build와 1.1(13) archive exit 0. 앱·Share Extension build 13 및 진단 문자열 포함 확인. 기존 Swift 동시성 경고 잔존.
+- BLOCKED: export/upload exit 70 `Failed to Use Accounts` (`Xcode-Token` 누락). `/tmp/FitMatchBuild13-20261002.xcarchive` 보존; Apple 재로그인 후 export/upload만 재시도. TestFlight 설치·실기기 성능 검증 NOT RUN. DB write, commit/push 없음.
+
+## 2026-10-02 기록 카드→결과 전환·결과 스크롤 진단 (코드 변경 없음)
+
+- 사용자 제공 TestFlight 1.1(12) 품질 진단을 사진의 기록 목록→비교 결과 경로로 재해석했다. `history_to_result` 두 번의 첫 main runloop는 94.7/127.0ms; 새 결과 스크롤 요약 10구간의 display-link 간격 600개 중 24ms 이상 1개(40ms 이상도 같은 1개), 최악 59.3ms다. 한 번의 긴 callback 간격은 관측됐으나 체감 버벅임 전체를 부정하거나 원인을 특정할 증거는 아니다.
+- 소스상 `RecommendationHistoryView.showDetail`은 선택 ID만 바꾸고, destination `RecommendationResultView.init`은 로컬 비교 JSON을 디코딩하고 사이즈를 정렬한다. 이 직접 전환 경로에는 서버 호출이 없다. 결과 view는 `@Query` Closet, 반복 실측 presentation 계산, 같은 쇼핑몰 보조 실측 memo, 여러 카드 shadow/GeometryReader와 비동기 썸네일을 가진다. `@Query`는 2026-08-14 인계에 제거 기록이 있지만 현재 HEAD에는 존재하며 2026-09-11 `151c8d25`에서 재도입됐다. 현재는 참조 옷 이미지 보완 및 보조 실측 조회에 사용된다. 이들은 조사 후보이며 실제 59.3ms의 실행 stack으로 입증되지 않았다.
+- 현 Release 진단의 `result_appeared`/`first_main_runloop`는 애니메이션 완료나 실제 픽셀 표시 시각이 아니다. 스크롤 monitor는 `CADisplayLink.timestamp` callback 간격만 세고, Debug와 달리 Release에서 최고 주사율을 요청하지 않으며 24/40ms 임계치만 기록한다. 따라서 16.7ms 구간을 화면의 완전한 매끄러움으로 해석할 수 없고 GPU/compositor 문제도 식별하지 못한다. 실제 귀속에는 해당 두 동작만 따로 잡은 실기기 SwiftUI/Time Profiler와 화면 frame timeline 또는 개선된 비침습 계측이 필요하다.
+- 이번 작업은 소스/사용자 로그 정적 진단만 수행했다. 앱 UI·동작·서버/DB·계측 코드 변경, 새 빌드/업로드, 실기기 Instruments 캡처, commit/push 없음. 코드 변경 테스트/build NOT RUN.
+
+## 2026-10-02 TestFlight 1.1(12) 단계별 비교 진단 업로드 접수 / 처리 중
+
+- 사용자 요청으로 `sharebtnmodify`의 현재 미커밋 단계별 성능 진단을 포함한 Production 앱을 업로드했다. 앱과 Share Extension의 관련 `CURRENT_PROJECT_VERSION` 8곳을 11→12로 함께 변경했다. 기존 미커밋 변경은 보존했고 commit/push/DB·Edge write 없음.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/FitMatchBuild12-20261002.xcarchive -derivedDataPath /tmp/FitMatchProductionArchive -disableAutomaticPackageResolution -allowProvisioningUpdates archive` exit 0. 앱·Share Extension의 Info.plist 모두 1.1(12), 운영 bundle ID `com.ljy4337.fitmatch` / `com.ljy4337.fitmatch.shareextension` 확인. 앱 binary에서 `reference_authorized`, `server_completion_received`, `step_ms` 문자열 확인. 최초 sandbox 실행은 SwiftPM cache 접근 거부로 exit 74였으며 Xcode 권한으로 재실행해 성공했다.
+- PASS: `xcodebuild -exportArchive -archivePath /tmp/FitMatchBuild12-20261002.xcarchive -exportOptionsPlist /tmp/FitMatchBuild10-ExportOptions.plist -exportPath /tmp/FitMatchBuild12-Upload -allowProvisioningUpdates` exit 0. App Store Connect 응답 `Upload succeeded` / `Uploaded package is processing` / `** EXPORT SUCCEEDED **`. 이는 업로드 접수 증거이며 TestFlight 처리 완료·설치 가능·실기기 단계별 진단·성능 원인 규명은 NOT VERIFIED.
+
+## 2026-10-02 비교 카드→결과 전환 단계별 Release 진단 (로컬 미커밋)
+
+- 사용자 TestFlight 1.1(11) 진단에서 후보 카드 터치→결과 첫 main runloop는 1601.4ms였고 결과 스크롤 집계는 4구간 중 24ms 초과 2회, 40ms 초과 0회였다. 이 자료만으로 서버/로컬/렌더링 중 지연 원인은 특정할 수 없다.
+- 기존 사용자 명시 공유 품질 진단에 비교 카드 경로의 `product_prepared`, `reference_authorized`, `begin_completed`(eligible-size 검증 포함), `analysis_completed`, `server_completion_received`, `history_projected`, `history_saved`, `result_step_selected` 및 실패/취소 지점을 추가했다. 각 이벤트는 탭부터 누적 `elapsed_ms`와 직전 이벤트부터 `step_ms`를 남긴다. 상품명·URL·사용자 ID·실측값은 남기지 않는다. UI, 비교 계산/승인/저장, DB/Edge 계약은 변경하지 않았다.
+- PASS: `CLANG_MODULE_CACHE_PATH=/tmp/fitmatch-clang-cache bash scripts/test-metrics-diagnostics.sh` 8개 테스트; 최종 소스 기준 `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchProductionArchive -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO -quiet build` exit 0 (기존 동시성 경고 잔존); `git diff --check`; 보호 스크롤 검사. 새 TestFlight 빌드 업로드 및 실기기 재측정은 NOT RUN; 기존 1.1(11) 설치본에는 이번 새 단계 이벤트가 없다. DB write, commit/push 없음.
+
+## 2026-10-02 TestFlight 1.1(11) 업로드 접수 / 처리 중
+
+- 사용자 요청으로 현재 `sharebtnmodify` 작업 트리의 Release 진단 코드와 기존 미커밋 공유 화면 변경을 포함한 앱을 새 빌드로 업로드했다. 앱·Share Extension의 8개 관련 configuration `CURRENT_PROJECT_VERSION`을 10→11로 올렸다. 기존 1.1(10) 아카이브는 진단 코드 이전 것이고 업로드 실패 상태여서 재사용하지 않았다.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/FitMatchBuild11-20261002.xcarchive -derivedDataPath /tmp/FitMatchProductionArchive -disableAutomaticPackageResolution -allowProvisioningUpdates archive` exit 0. 아카이브의 앱 `com.ljy4337.fitmatch`와 공유 확장 `com.ljy4337.fitmatch.shareextension` 모두 1.1(11), 운영 Supabase URL `aqhrupgjpmrtnystottx` 확인. 앱 binary의 성능 진단 event 문자열 확인.
+- PASS: `xcodebuild -exportArchive -archivePath /tmp/FitMatchBuild11-20261002.xcarchive -exportOptionsPlist /tmp/FitMatchBuild10-ExportOptions.plist -exportPath /tmp/FitMatchBuild11-Upload -allowProvisioningUpdates` exit 0. App Store Connect 응답 `Upload succeeded` / `Uploaded package is processing` / `** EXPORT SUCCEEDED **`; 이전 Apple 계정 인증 BLOCKED는 이번 업로드에서 해소됐다. TestFlight 처리 완료·설치 가능·실기기 진단·기능 E2E는 NOT VERIFIED. `git diff --check`와 보호 스크롤 검사 PASS. DB/Edge 변경, commit/push 없음. 로그: `/tmp/FitMatchBuild11-archive.log`, `/tmp/FitMatchBuild11-upload.log`.
+
+## 2026-10-01 기록·비교 결과 Release 성능 진단 (로컬 미커밋)
+
+- 기존 `FitMatchMetricsRecorder`의 사용자 명시 공유 진단 보고서에 별도 bounded 성능 이벤트 40개를 추가했다. History 카드→결과, 후보 카드→결과, 결과→다른 옷 후보/시트, 결과→다른 사이즈 시트 및 선택 사이즈 적용의 탭·도착 경과 시간을 기록한다. URL/상품명/사용자 ID/실측 원문은 기록하지 않으며 자동 원격 전송은 없다. `result_appeared`/`first_main_runloop`는 실제 화면 픽셀 표시 시각이 아니다.
+- Release iOS 18+에서는 기록 목록, 비교 결과, 다른 사이즈 시트의 스크롤 phase 동안에만 CADisplayLink 간격(24/40ms 이상 횟수·최악값)을 집계하고 종료 시 비동기 저장한다. 이는 실제 dropped-frame/Instruments stack 귀속이 아닌 근사치다. 기록 grid 및 비교 후보 화면은 보호된 스크롤 modifier 인접 변경을 피하기 위해 스크롤 집계에서 제외했고 전환 시간만 기록한다. iOS 17 Release는 스크롤 집계 대상이 아니다. DEBUG 기존 계측은 유지했다. 화면 디자인, 버튼/시트 동작, 서버/DB 비교·저장 코드는 변경하지 않았다.
+- PASS: `CLANG_MODULE_CACHE_PATH=/tmp/fitmatch-clang-cache bash scripts/test-metrics-diagnostics.sh` 7개 테스트, `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/FitMatchProductionArchive -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO -quiet build` exit 0, `git diff --check`, 보호 스크롤 검사. 첫 sandbox Xcode 시도는 SwiftPM cache 접근/네트워크 제한으로 exit 74였고 기존 캐시 사용 재실행은 성공. 실기기/TestFlight 전환·스크롤 측정과 기능 E2E는 NOT RUN. 새 TestFlight 빌드 업로드, DB write, commit/push 없음. 기존 미커밋 Share Extension/Xcode 프로젝트/인계 내용 보존.
+
+## 2026-10-01 온보딩 5장 재시안 — 사용자 구성 결정
+
+- 직전3장 시안은 사용자 디자인 불만으로 대체 제안. 사용자 확정 구성: 앱소개/핵심기능3장 + 공유설정/공유등록·비교 및 실측직접등록 설명2장 = 총5장.
+- 이미지 시안2개 생성하여 표시: 1~3 내옷비교 가치/옷장/부위차이·기록, 4~5 iOS 공유 즐겨찾기 설정 및 내옷추가·상품비교 선택/실측직접입력과 비교순서. 흰배경·검정CTA·절제된 파랑 안내. iOS 공유/등록 그림은 설명용 도식이며 실제 스크린샷이 아님. 최종디자인승인/앱반영 미진행, 앱코드 변경없음.
+
+## 2026-10-01 온보딩 디자인 시안 — 앱 미반영
+
+- 사용자 변경 전/후 시안 요청. 실제 FitMatchOnboardingView 현재4페이지 확인. 첫화면 Before는 소스 기반 이미지 재구성이며 실제 스크린샷/픽셀동일 증거가 아니다. 기존3페이지의 다른그룹 비교 안내는 현행 동일그룹 정책과 불일치 발견; 코드 수정하지 않음.
+- 제안3장: 내옷기반 가치 → 동일그룹 사용자선택/실측차이 예시 → 링크/직접/나중등록 선택. 흑백/아이보리 및 절제된 청록치수선. 비교수치는 설명용. 이미지생성 도구로 첫화면 전후1장 및 전체제안1장 생성, 사용자에게 표시. 디자인 승인/Swift반영/빌드/UI검증 없음.
+- 이미지: `/Users/jinyoung/.codex/generated_images/01a0a364-09f9-7b50-b02d-393c729d457f/exec-5dc02678-df82-4a0a-bc4f-3b820379db9f.png`, `exec-ed2d57a4-c3df-4615-b5af-a08ec40963bb.png` (동일폴더). 진행중 다른사용자 ShareViewController/pbxproj 변경 보존.
+
+## 2026-10-01 Share Extension 활성 버튼 색상 통일 (로컬 미커밋)
+
+- 사용자 요청에 따라 공유 완료 화면의 `상품 비교`와 `내 옷 추가` 두 버튼을 동일한 활성 검정 배경/흰 글자로 맞췄다. 앱 열기 요청 중에는 두 버튼 모두 기존 회색 계열 배경/보조 글자색으로 전환하고 재시도 상태에서는 활성 색상을 복구한다. 공유 URL, destination, 앱 전환 및 저장 로직은 변경하지 않았다. 다른 화면 전체 버튼 스타일 감사/수정은 하지 않았다.
+- PASS: `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch-QA -configuration Debug-QA -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build` exit 0 (기존 Swift concurrency 경고 잔존). 실기기 Share Sheet 시각/상호작용 E2E NOT RUN. 새 TestFlight 업로드, commit/push 없음. 기존 미커밋 Xcode 프로젝트/인계 변경은 보존했다.
+
+## 2026-10-01 무신사 0 실측 표시 복구 (sharebtnmodify/main/QA 반영)
+
+- Git publication update: 실측 표시·정책·집중 테스트 5개 파일을 `sharebtnmodify`에 `1dbce48`로 커밋·푸시했다. 공유 UI 전체를 끌고 가지 않도록 이 수정만 `main`/`QA` 공통 기반에 적용한 `5d78a42`를 두 원격 브랜치에 atomic push했고 로컬 두 브랜치도 동일 SHA로 fast-forward했다. 현재 checkout의 다른 미커밋 `Docs/CodexSessionHandoff.md` 및 Xcode 프로젝트 변경은 보존했다. 새 TestFlight 업로드는 하지 않았다.
+- 사용자 확인: 무신사 공유 상품 6991945의 밑단단면·소매부리단면·암홀은 공식 actual-size API에서 0.0으로 온다. 쇼핑몰 표와 같이 무신사 0값 행만 `-`로 다시 표시한다. 다른 쇼핑몰의 비양수 표시 필터, 원본 0 저장·전송, 비교 제외 규칙은 유지한다. 앞선 같은 날의 `모든 0값 행 숨김` 결정은 무신사 0값 표시에 한해 대체한다.
+- `MeasurementResolver`의 parsed/persisted 원본 행 표시를 동일하게 변경하고 `MusinsaParserConcurrencyTests`에서 0 표시와 원본 전송값을 검증했다. 실측 정책과 Flow Map 표시 설명을 갱신했다. DB/Edge write 없음.
+- PASS: `xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA -destination 'platform=iOS Simulator,id=146FF9DA-E9A3-4F67-A629-D0C0C531F25A' -only-testing:FitMatchTests/MusinsaParserConcurrencyTests -only-testing:FitMatchTests/ClosetPreviewMeasurementRegressionTests CODE_SIGNING_ALLOWED=NO -quiet` exit 0; `git diff --check` exit 0. 실기기/TestFlight UI와 authenticated 저장·비교 E2E는 NOT RUN. 새 빌드 설치 전 기존 아이폰 화면은 바뀌지 않는다.
+
+## 2026-10-01 TestFlight 1.1(10) — Archive 완료 / 인증 BLOCKED
+
+- 사용자 TestFlight 업로드 요청. sharebtnmodify 65ed50f 및 현재 로컬 0실측 표시 수정 포함. 앱/확장 build 9→10(8개 configuration), git commit/push/merge 없음.
+- PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-Production -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/FitMatchBuild10-20261001.xcarchive -derivedDataPath /tmp/FitMatchProductionArchive -allowProvisioningUpdates archive` exit0. 앱/확장1.1(10), 운영bundle, 운영URL aqhrupgjpmrtnystottx 확인.
+- BLOCKED: `xcodebuild -exportArchive -archivePath /tmp/FitMatchBuild10-20261001.xcarchive -exportOptionsPlist /tmp/FitMatchBuild10-ExportOptions.plist -exportPath /tmp/FitMatchBuild10-Upload -allowProvisioningUpdates` exit70 `exportArchive Failed to Use Accounts`, Xcode-Token 누락. 사용자 현재 재로그인 불가. Apple 서버 업로드/Processing 확인 없음.
+- 대체 API 인증 조사: 기본 private_keys 경로4곳에 키 없음, 관련환경변수 없음, Transporter 앱 없음. App Store Connect API 설정을 Codex 브라우저로 열었으나 login authResult=FAILED. 현재 browser inventory에 Chrome없음. 비밀번호/키 요청·노출 없음; API키 생성 미실행.
+- archive audit exit1: privacy/support URL 공란2 + 앱/확장 development 서명2(서명무결성 자체는 유효, App Store export 재서명 필요). 이는 Apple upload validation 결과가 아님. 재인증 후 export 재시도 및 배포 메타데이터 확인 필요. 개발DB 0raw 제약 수정의 운영 적용은 이번 범위 밖이며 운영DB 추가쓰기 없음.
+- 로그 `/tmp/FitMatchBuild10-archive.log`, `/tmp/FitMatchBuild10-upload.log`; 보호스크롤/diff검사 PASS. 기존 작업 보존.
+
+## 2026-10-01 실측값 없는 행 숨김 — 사용자 요청 반영
+
+- 사용자 요청: 실제 받은 유효 실측값만 표시. 기존 0값을 `-`로 바꾸던 미커밋 표시 방안을 대체하여, 공통 MeasurementResolver.sourceDisplayRows 두 overload에서 finite positive 값만 표시한다. unknown/미매핑 양수는 유지. MUSINSA/UNIQLO/ZARA 동일 적용; raw records·observation·DB 저장·비교 점수 코드는 변경하지 않음. MeasurementPolicy §3 및 지도 표시 기준 갱신.
+- RED: `/tmp/FitMatchZeroRowsRedSuite.xcresult` 6 tests 중 5 PASS/1 FAIL(exit65), 예상2행/실제3행으로 재현. 최초 단일 method selector 실행은0건이므로 PASS 아님.
+- GREEN PASS: `xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-QA -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchEnvironmentBuild -parallel-testing-enabled NO -only-testing:FitMatchTests/MusinsaParserConcurrencyTests -only-testing:FitMatchTests/ClosetPreviewMeasurementRegressionTests -only-testing:FitMatchTests/FitMatchSupabaseProductResolverTests -resultBundlePath /tmp/FitMatchZeroRowsGreen.xcresult test` exit0. 73 tests / 78 parameter runs PASS, 0 FAIL/skip. 앱·테스트 컴파일 포함, 기존 Swift concurrency warnings 잔존.
+- 검증 내용: 0 raw 보존/전송과 화면 제외, unknown 양수 표시, 세 쇼핑몰 raw hydration 및 비교 evidence 유지. diff/protected-scroll PASS. 전체 suite·실기기 UI/E2E NOT RUN. branch sharebtnmodify, commit/push/DB write 없음. 아이폰에 반영하려면 재빌드 필요.
+
+## 2026-10-01 무신사 6991945 실측 원문 확인
+
+- 사용자 제공 `xxkf3k6a` 공유 링크가 상품 6991945로 resolve됨. 상품 HTML은 HTTP403이지만 actual-size API는 HTTP200/SUCCESS. 원문은 `/tmp/fitmatch-musinsa-6991945-actual-size.json`에 보관.
+- S/M/L 모두 총장·어깨너비·가슴단면·소매길이 4개 양수와 밑단단면·소매부리단면·암홀 3개 `value:0.0`을 실제 반환. L=70/52/57/65로 사용자 사진과 일치. 앱이 absent/null을 0으로 생성한 사례는 아님. 다만 원본 0 보존과 정상 실측처럼 `0cm` 표시하는 것은 별개이며 표시상 문제는 유지됨.
+- 현재 작업 트리에 다른 작업의 MeasurementResolver 0값 `-` 표시 및 테스트 변경이 이미 존재하여 보존. 이번에는 앱 코드/DB 수정·빌드·테스트 없음. 기존 원문 미확인 상태는 이 상품에 한해 해소; 다른 상품 및 저장/비교 E2E는 미검증.
+
+## 2026-10-01 sharebtnmodify 소스 대조 — 0 실측 표시
+
+- READ ONLY Git/소스 대조: connectDB 3b71f15, main/QA c0095c7, sharebtnmodify 65ed50f 모두 원격 SHA 동일. share branch는 main 이후 공유 목적지/Closet initialURL 진입 변경. 파서 MusinsaActualSizeAPIParser, MeasurementResolver, AddComparedProductToClosetSheet 및 ShoppingProductViewModel은 connectDB..sharebtnmodify diff 없음.
+- 0.0cm 표시 경로는 connectDB 마지막 커밋에도 존재: parser finite value >=0 원본 보존/positive scalar만 투영 → sourceDisplayRows 원본 전체 → 등록 UI valueText 일괄 표시. UI는 isCanonical/비정상값 사유를 행에 표시하지 않아 0을 정상치수처럼 보이게 할 수 있음. 정책 §3.5의 상태/사유 안내 요구와 간극 확인. UI/소스 수정 없음.
+- 사진 상품의 exact URL/API 응답/저장 결과 미제공으로 실제 값 출처 및 저장실패/전체 비교 정상 여부 미확정. 기존 Handoff의 개발DB nonpositive 제약 제거 기록은 이번 DB live 검증으로 재확인하지 않음. 빌드/E2E NOT RUN; diff/보호스크롤 PASS.
+
+## 2026-10-01 QA 무신사 링크 등록 실패 — 원본 실측 제약 충돌
+
+- 08:11 KST 재시도 화면은 상품 카드가 없고 일반 서비스 확인 오류만 표시. 해당 시각(2026-09-30 23:08~23:13Z) 개발 Supabase 로그에는 `fitmatch_vnext_list_closet_items` 200만 있으며 product-observation/ingestion 요청은 없다. 직전 제약 오류의 재발 증거는 없고, 이번 시도는 서버 수집 이전 단계에서 끝난 것으로 보인다. 전체 공유 링크가 화면에서 잘려 있어 쇼핑몰 리다이렉트/API의 정확한 실패를 재현하지 못함; 사용자에게 전체 링크와 앱 오류 로그를 요청. 추가 DB/코드 수정 없음, 원인 미확정.
+- 개발 Supabase `hnkplvyegonlhumlejst`의 실제 iPhone 요청(2026-09-30 22:29:41Z, 22:30:21Z)은 인증 `/user` 200 후 `product-observation` 422 / ingestion RPC 400 SQLSTATE 23514로 끝났다. Postgres 원인: `product_size_measurements_value_chk` 위반. 연결 문제나 로그인 실패가 아니다.
+- DB 실제 제약은 `raw_value > 0`; 반면 배포된 `ingest_product_observation_v2`는 숫자 원본값(0 이하 포함)을 보존하려고 insert한다. 무신사 파서도 0을 raw record에 유지하고 positive scalar만 비교에 투입한다. 배포된 canonical 함수 두 곳의 `m.raw_value > 0` 조건 확인. `Docs/FitMatchMeasurementPolicy.md`의 원본 보존 정책과 옛 테이블 제약의 충돌이다.
+- 사용자 승인 후 QA 개발 DB에 migration `preserve_nonpositive_retailer_measurements` 실제 적용 성공(원격 버전 `20260930225621`; 로컬 파일 `supabase/migrations/20260930225621_preserve_nonpositive_retailer_measurements.sql`). 기존 제약/두 canonical 필터 전제 검증 후 옛 positive-only 제약만 제거했다. READ ONLY postflight: 제약 없음, 두 canonical 함수의 `m.raw_value > 0` 보존 PASS; 원격 migration 목록에 버전 확인. 운영 DB/Edge/iOS 코드 변경 없음. 인증된 재시도 및 Closet 저장/read-back NOT RUN. QA 앱 재빌드 불필요.
+
+## 2026-10-01 QA Apple 로그인 실패 진단
+
+- `sharebtnmodify` HEAD `65ed50faf74854704ed57edba33d61293cac49cd`에서 QA 앱은 `com.ljy4337.fitmatch.qa`와 개발 Supabase `hnkplvyegonlhumlejst`를 사용한다. 해당 프로젝트의 QA publishable key는 활성 상태로 확인했다. 직전 공유 화면 변경은 이 커밋으로 push되었으며 아래 작성 당시의 `commit/push 없음` 기록을 대체한다.
+- 개발 Supabase Auth 로그의 2026-09-30 22:13:24Z, 22:13:32Z `POST /token` 요청은 HTTP 400, `Unacceptable audience in id_token: [com.ljy4337.fitmatch.qa]`로 거절되었다. Apple 토큰 발급 이후 Supabase의 audience 허용 검증에서 실패한 증거다. 앱 코드의 nonce 처리나 상품/공유 라우팅 오류로 단정하지 않는다.
+- 필요한 외부 설정: 개발 프로젝트 Authentication > Sign In / Providers > Apple의 Client IDs에 기존 ID를 보존하고 `com.ljy4337.fitmatch.qa`를 추가·저장한다. Dashboard 직접 확인은 미로그인 상태라 BLOCKED. 설정 변경, 인증된 재로그인, 실제 기기 E2E는 NOT RUN. Supabase DB/앱 코드 변경 없음.
+
+## 2026-10-01 공유 화면에서 비교/내 옷 등록 선택
+
+- `sharebtnmodify`에서 Share Extension 성공 화면의 `보러가기`를 `상품 비교`로 바꾸고 `내 옷 추가` 버튼을 추가했다. 공유 URL은 기존 App Group 파일에 destination과 함께 보관하며, 이전 destination 없는 payload는 비교로 읽는다. 버튼 선택 시 같은 URL/generation에 대해서만 destination을 갱신한다.
+- 비교는 기존 CompareFlowSheet를 유지한다. 내 옷 추가는 앱 인증·온보딩 뒤 기존 LinkClosetRegistrationView에 공유 URL을 전달하고 상품 조회를 최초 1회 자동 시작한다. 사이즈 선택, 그룹 정책, 원본 실측, 서버 저장/read-back은 기존 등록 경로 그대로이며 DB/Edge 변경은 없다. 다른 시트가 열려 있으면 닫힌 후 새 목적의 시트를 연다. 운영/QA App Group과 URL scheme 분리는 기존 빌드 조건을 따른다.
+- PASS: 새 공유 목적/기존 payload 호환/라우트 XCTest 3/3, FitMatch-QA unsigned Simulator 앱+Share Extension build exit 0. 기존 headless 공유 단일 테스트의 `-only-testing` 시도는 exit 0이지만 xcresult 실행 0건이므로 PASS로 세지 않는다. 실제 iPhone Share Sheet, 로그인 후 등록·서버 저장 및 앱 전환 E2E는 NOT RUN. commit/push 및 DB write 없음.
+
 ## 2026-09-30 main/QA 선별 게시 준비
 
 - 사용자 일괄 반영 승인. 운영/QA 환경 분리 변경과 현재 production caller가 요구하는 미등록 VNextCompletedReplayPolicy.swift, 독립 회귀 테스트를 선별. .build 제외 규칙 추가. 기존 실제 비교기록 fixture 2개 및 이에 의존하는 FrozenReleaseHistoryAuditTests.swift는 개인 데이터 원문이므로 게시 제외/로컬 보존.
@@ -5490,3 +5630,8 @@ git diff -- '*.swift' | grep -E \
 - App Store Connect가 기존 `1.1 (6)`을 이미 보유해 재업로드를 거절했다. 앱과 Share Extension의 버전을 `1.1 (7)`로 맞춰 새 Release archive를 생성했다.
 - `xcodebuild archive`와 App Store Connect upload는 모두 성공했다. Apple 응답은 `Uploaded package is processing.`이며, TestFlight 목록에 표시되기 전 처리 시간은 별도로 남아 있다.
 - 이 작업의 Xcode 프로젝트 버전 변경은 아직 로컬 미커밋이다. 기존 작업 트리 변경은 보존했다.
+## 2026-10-02 sharebtnmodify 작업 분리 커밋
+
+- 기존 미커밋 작업을 범위별로 분리했다: 공유 버튼 상태 `854ed0b`, 기록의 다른 사이즈 비교 복원 및 결과 성능 진단 `b55c7bf`, 4장 온보딩과 UI 테스트 `826f48b`, 앱/공유 확장 빌드 번호 14 `db072cc`. 아래의 "로컬 미커밋" 표기는 각 작업 당시의 기록이며, 현재 커밋 상태를 뜻하지 않는다.
+- 현재 소스의 `FitMatch-Production` Release iOS 빌드(`CODE_SIGNING_ALLOWED=NO`) PASS. `scripts/test-metrics-diagnostics.sh` Swift Testing 9건 PASS. 온보딩/등록 UI 테스트는 9건 중 첫 실행 6 PASS/3 fixture 기대값 FAIL, 해당 fixture 수정 후 실패 3건만 재실행해 3 PASS. 따라서 최종 소스에서 전체 9건 일괄 PASS라고 주장하지 않는다.
+- 인증된 서버 저장/비교 실기기 E2E, 신규 TestFlight 업로드는 NOT RUN. 기존 1.1(14) 아카이브 업로드는 Xcode 계정 인증 문제로 BLOCKED. DB/Edge write 없음. 다른 미추적 QA/수집/마이그레이션 파일은 이번 커밋 범위에서 제외한다.

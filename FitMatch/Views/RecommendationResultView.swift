@@ -3,6 +3,7 @@ import SwiftData
 
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query private var closetItems: [UserFit]
     let result: RecommendationHistory
@@ -50,6 +51,7 @@ struct RecommendationResultView: View {
         onReselectClassification: (() -> Void)? = nil,
         onClearClassification: (() -> Void)? = nil
     ) {
+        let startedAt = ProcessInfo.processInfo.systemUptime
         let comparisonData = result.comparisonData
         self.diagnosticsStartedAt = DetailPerformanceDiagnostics.now()
         self.result = result
@@ -63,6 +65,10 @@ struct RecommendationResultView: View {
         self.resultProductSizes = result.product.sizes
             .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.displayOrder < $1.displayOrder }
+        FitMatchPerformanceDiagnosticsStore.shared.recordSlowWork(
+            .resultSnapshotInit,
+            elapsedMS: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+        )
     }
 
     private var currentResult: RecommendationHistory {
@@ -93,7 +99,10 @@ struct RecommendationResultView: View {
             .toolbar {
                 if let onShowComparisonList {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button(action: onShowComparisonList) {
+                        Button {
+                            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToCandidates)
+                            onShowComparisonList()
+                        } label: {
                             Label("비교 목록", systemImage: "chevron.left")
                         }
                         .font(.subheadline.weight(.bold))
@@ -141,6 +150,12 @@ struct RecommendationResultView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .onChange(of: isShowingAlternativeSizeComparison) {
+                if !isShowingAlternativeSizeComparison {
+                    alternativePreparationGeneration = UUID()
+                    isPreparingAlternativeSizes = false
+                }
+            }
             .sheet(isPresented: $isShowingOtherClosetComparison) {
                 NavigationStack {
                     CompareFlowSheet(initialHistoricalProduct: currentResult.product)
@@ -160,6 +175,11 @@ struct RecommendationResultView: View {
                 Text(closetRegistrationPreparationErrorMessage ?? "")
             }
             .onAppear {
+                FitMatchPerformanceDiagnosticsStore.shared.mark(.historyToResult, event: "result_appeared")
+                #if !DEBUG
+                FitMatchReleaseHistoryResultTransitionMonitor.shared.resultAppeared()
+                #endif
+                FitMatchPerformanceDiagnosticsStore.shared.mark(.comparisonCardToResult, event: "result_appeared")
                 DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "result_on_appear")
                 logInitialPerformance()
                 #if DEBUG
@@ -277,7 +297,7 @@ struct RecommendationResultView: View {
                                     .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
                             }
                             .buttonStyle(.plain)
-                            .disabled(availableProductSizes.count < 2)
+                            .disabled(!canOpenAlternativeSizeComparison)
                             .padding(.horizontal, 6)
                             .accessibilityHint("상품의 다른 사이즈를 임시로 비교합니다.")
                         }
@@ -500,8 +520,10 @@ struct RecommendationResultView: View {
                     Spacer(minLength: 8)
                     Button {
                         if let onShowOtherClosetComparison {
+                            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToCandidates)
                             onShowOtherClosetComparison()
                         } else {
+                            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToOtherClothesSheet)
                             isShowingOtherClosetComparison = true
                         }
                     } label: {
@@ -562,22 +584,32 @@ struct RecommendationResultView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(availableProductSizes) { size in
-                        let analysis = cachedAnalysis(for: size)
-                        let score = alternativeRecommendationScore(
-                            for: size,
-                            analysis: analysis
-                        )
-                        AlternativeSizeResultCard(
-                            sizeName: size.name.displaySizeName,
-                            isRecommended: size.id == currentResult.recommendedSize.id,
-                            isSelected: size.id == selectedAlternativeSizeID,
-                            score: score,
-                            fitDescription: score.map(fitMatchDescription(for:)),
-                            fitColor: score.map(fitMatchColor(for:)),
-                            measurements: alternativeMeasurementSummaries(for: analysis)
-                        ) {
-                            selectedAlternativeSizeID = size.id
+                    if isPreparingAlternativeSizes {
+                        ProgressView("사이즈 확인 중")
+                            .padding(.top, 40)
+                    } else if availableProductSizes.count < 2 {
+                        Text("비교할 다른 사이즈가 없어요.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 40)
+                    } else {
+                        ForEach(availableProductSizes) { size in
+                            let analysis = cachedAnalysis(for: size)
+                            let score = alternativeRecommendationScore(
+                                for: size,
+                                analysis: analysis
+                            )
+                            AlternativeSizeResultCard(
+                                sizeName: size.name.displaySizeName,
+                                isRecommended: size.id == currentResult.recommendedSize.id,
+                                isSelected: size.id == selectedAlternativeSizeID,
+                                score: score,
+                                fitDescription: score.map(fitMatchDescription(for:)),
+                                fitColor: score.map(fitMatchColor(for:)),
+                                measurements: alternativeMeasurementSummaries(for: analysis)
+                            ) {
+                                selectedAlternativeSizeID = size.id
+                            }
                         }
                     }
                 }
@@ -585,6 +617,7 @@ struct RecommendationResultView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 88)
             }
+            .diagnosesScrollPerformance(screen: "alternative_sizes")
             .navigationTitle("다른 사이즈 비교")
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
@@ -622,6 +655,11 @@ struct RecommendationResultView: View {
             } message: {
                 Text(alternativeSizeErrorMessage ?? "")
             }
+        }
+        .onAppear {
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .resultToSizesSheet, event: "sheet_appeared"
+            )
         }
     }
 
@@ -669,6 +707,16 @@ struct RecommendationResultView: View {
             ]
         })
         return resultProductSizes.filter { authorized.contains($0.id) }
+    }
+
+    private var canOpenAlternativeSizeComparison: Bool {
+        let batch = VNextComparisonSessionStore.shared.analysis(for: currentResult.id)
+        if let batch {
+            return RecommendationService().canPresentCurrentVNextAlternativeSizes(
+                for: currentResult, batch: batch
+            ) && availableProductSizes.count >= 2
+        }
+        return currentResult.isServerBackedVNextHistory && comparisonSync != nil
     }
 
     private var displayedProductSize: ProductSize {
@@ -847,6 +895,13 @@ struct RecommendationResultView: View {
     }
 
     private var reportMeasurementPresentations: [ReportMeasurementPresentation] {
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        defer {
+            FitMatchPerformanceDiagnosticsStore.shared.recordSlowWork(
+                .resultMeasurements,
+                elapsedMS: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            )
+        }
         var result = comparedMeasurementKinds.map { kind in
             let values = displayedMeasurementValues(for: kind)
             let usage = displayedMeasurementUsages.first { $0.kind == kind }
@@ -957,9 +1012,38 @@ struct RecommendationResultView: View {
 
     @MainActor
     private func prepareAlternativeSizeAnalyses() async {
-        let batch = VNextComparisonSessionStore.shared.analysis(
-            for: currentResult.id
-        )
+        let generation = alternativePreparationGeneration
+        let batch: VNextComparisonBatchAnalysis?
+        if let current = VNextComparisonSessionStore.shared.analysis(for: currentResult.id) {
+            batch = current
+        } else if let comparisonSync, currentResult.isServerBackedVNextHistory {
+            do {
+                let recovered = try await comparisonSync.recoverVerifiedAlternativeSizeAnalysis(
+                    for: currentResult
+                )
+                guard generation == alternativePreparationGeneration,
+                      isShowingAlternativeSizeComparison else { return }
+                if let recovered {
+                    VNextComparisonSessionStore.shared.store(
+                        recovered, historyID: currentResult.id
+                    )
+                }
+                batch = recovered
+            } catch {
+                guard generation == alternativePreparationGeneration,
+                      isShowingAlternativeSizeComparison else { return }
+                isPreparingAlternativeSizes = false
+                alternativeSizeErrorMessage = error is URLError
+                    ? FitMatchFailureCopy.transientNetwork
+                    : FitMatchFailureCopy.serviceInspection
+                FitMatchPerformanceDiagnosticsStore.shared.mark(
+                    .resultToSizesSheet, event: "sizes_unavailable", finished: true
+                )
+                return
+            }
+        } else {
+            batch = nil
+        }
         guard RecommendationService().canPresentCurrentVNextAlternativeSizes(
             for: currentResult,
             batch: batch
@@ -971,9 +1055,19 @@ struct RecommendationResultView: View {
             unavailableAlternativeSizeKeys = []
             activeAlternativeAnalysisKeys = [:]
             isPreparingAlternativeSizes = false
+            alternativeSizeErrorMessage = "이 비교 기록의 다른 사이즈를 확인할 수 없어요. 다시 시도해 주세요."
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .resultToSizesSheet, event: "sizes_unavailable", finished: true
+            )
             return
         }
-        let generation = alternativePreparationGeneration
+        guard availableProductSizes.count >= 2 else {
+            isPreparingAlternativeSizes = false
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .resultToSizesSheet, event: "sizes_unavailable", finished: true
+            )
+            return
+        }
         let bySizeID = Dictionary(
             uniqueKeysWithValues: batch.analyses.map { ($0.productSizeID, $0) }
         )
@@ -1025,9 +1119,14 @@ struct RecommendationResultView: View {
         unavailableAlternativeSizeKeys = unavailableKeys
         activeAlternativeAnalysisKeys = activeKeys
         isPreparingAlternativeSizes = false
+        FitMatchPerformanceDiagnosticsStore.shared.mark(
+            .resultToSizesSheet, event: "sizes_prepared", finished: true
+        )
     }
 
     private func presentAlternativeSizeComparison() {
+        FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToSizesSheet)
+        alternativeSizeErrorMessage = nil
         isShowingAlternativeSizeComparison = true
         guard !isPreparingAlternativeSizes else {
             return
@@ -1046,7 +1145,9 @@ struct RecommendationResultView: View {
     }
 
     private var alternativeAnalysisIsEnabled: Bool {
-        !isAnalyzingAlternativeSize && alternativeAnalysisHasValidSelection
+        !isPreparingAlternativeSizes
+            && !isAnalyzingAlternativeSize
+            && alternativeAnalysisHasValidSelection
     }
 
     private var alternativeAnalysisHasValidSelection: Bool {
@@ -1068,6 +1169,7 @@ struct RecommendationResultView: View {
               let selectedAlternativeSize else {
             return
         }
+        FitMatchPerformanceDiagnosticsStore.shared.begin(.sizeApplyToResult)
         isAnalyzingAlternativeSize = true
         Task { @MainActor in
             await Task.yield()
@@ -1092,6 +1194,9 @@ struct RecommendationResultView: View {
             temporaryDisplayedProductSizeID = exactProductSizeID
             isAnalyzingAlternativeSize = false
             isShowingAlternativeSizeComparison = false
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .sizeApplyToResult, event: "analysis_applied", finished: true
+            )
         }
     }
 
@@ -1644,6 +1749,12 @@ struct RecommendationResultView: View {
         )
         DispatchQueue.main.async {
             DetailPerformanceDiagnostics.logHistoryResultNavigation(event: "first_main_runloop")
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .historyToResult, event: "first_main_runloop", finished: true
+            )
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "first_main_runloop", finished: true
+            )
             DetailPerformanceDiagnostics.log(
                 screen: "recommendation_result",
                 event: "next_main_runloop",

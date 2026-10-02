@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct LinkClosetRegistrationView: View {
+    let initialURL: String?
     let onSaved: (() -> Void)?
     let prefersRepresentativeByDefault: Bool
 
@@ -28,11 +29,18 @@ struct LinkClosetRegistrationView: View {
     @State private var emptyPasteboardShake = 0
     @State private var loadTask: Task<Void, Never>?
     @State private var loadRequestID = UUID()
+    @State private var hasStartedSharedURL = false
     @FocusState private var isURLFocused: Bool
 
-    init(prefersRepresentativeByDefault: Bool = false, onSaved: (() -> Void)? = nil) {
+    init(
+        initialURL: String? = nil,
+        prefersRepresentativeByDefault: Bool = false,
+        onSaved: (() -> Void)? = nil
+    ) {
+        self.initialURL = initialURL
         self.prefersRepresentativeByDefault = prefersRepresentativeByDefault
         self.onSaved = onSaved
+        _productURL = State(initialValue: initialURL ?? "")
     }
 
     private var normalizedURLString: String {
@@ -180,6 +188,11 @@ struct LinkClosetRegistrationView: View {
             guard !isShowingAddToClosetSheet else { return }
             loadTask?.cancel()
             loadTask = nil
+        }
+        .onAppear {
+            guard !hasStartedSharedURL, initialURL != nil else { return }
+            hasStartedSharedURL = true
+            startLoadingProduct()
         }
     }
 
