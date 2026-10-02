@@ -83,8 +83,8 @@ final class ShareViewController: UIViewController {
 
         closetButton.setTitle("내 옷 추가", for: .normal)
         closetButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
-        closetButton.tintColor = .label
-        closetButton.backgroundColor = .secondarySystemBackground
+        closetButton.tintColor = .white
+        closetButton.backgroundColor = .label
         closetButton.layer.cornerRadius = 14
         closetButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
         closetButton.isHidden = true
@@ -179,6 +179,7 @@ final class ShareViewController: UIViewController {
         closetButton.isEnabled = true
         closetButton.setTitle("내 옷 추가", for: .normal)
         closetButton.isHidden = false
+        updateActionButtonAppearance()
         closeButton.isHidden = false
         closeButton.setTitle("닫기", for: .normal)
     }
@@ -217,6 +218,7 @@ final class ShareViewController: UIViewController {
         }
         openButton.isEnabled = false
         closetButton.isEnabled = false
+        updateActionButtonAppearance()
         messageLabel.text = "FitMatch 앱으로 이동하고 있습니다."
         isAttemptingOpen = true
         openContainingApp(destination: destination)
@@ -318,7 +320,15 @@ final class ShareViewController: UIViewController {
         closetButton.isEnabled = true
         closetButton.setTitle("내 옷 추가", for: .normal)
         closetButton.isHidden = false
+        updateActionButtonAppearance()
         closeButton.setTitle("닫기", for: .normal)
         closeButton.isHidden = false
+    }
+
+    private func updateActionButtonAppearance() {
+        for button in [openButton, closetButton] {
+            button.backgroundColor = button.isEnabled ? .label : .secondarySystemBackground
+            button.tintColor = button.isEnabled ? .white : .secondaryLabel
+        }
     }
 }
