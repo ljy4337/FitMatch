@@ -6,17 +6,28 @@ final class FitMatchOnboardingUITests: XCTestCase {
     }
 
     @MainActor
-    func test01NewUserReachesGarmentRegistrationGuideWithoutBodySetup() throws {
-        let app = launchFreshOnboardingApp()
-
-        advanceToRegistrationGuide(in: app)
-
-        XCTAssertTrue(app.staticTexts["잘 맞는 내 옷을 하나 등록해보세요"].exists)
-        XCTAssertTrue(app.buttons["onboarding.shoppingLink"].exists)
-        XCTAssertTrue(app.buttons["onboarding.manual"].exists)
-        XCTAssertFalse(app.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS[c] %@", "체형")
-        ).firstMatch.exists)
+    func testFourGuidePagesHaveOnlyNextAndFinish() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-fitmatchUITesting", "-fitmatchResetOnboarding"]
+        app.launch()
+        for page in 0..<4 {
+            XCTAssertTrue(app.staticTexts["onboarding.title.\(page)"].waitForExistence(timeout: 8))
+            XCTAssertFalse(app.buttons["onboarding.skip"].exists)
+            XCTAssertFalse(app.buttons["onboarding.shoppingLink"].exists)
+            XCTAssertFalse(app.buttons["onboarding.manual"].exists)
+            XCTAssertFalse(app.buttons["onboarding.later"].exists)
+            let capture = XCTAttachment(screenshot: app.screenshot())
+            capture.name = "Onboarding \(page + 1)"
+            capture.lifetime = .keepAlways
+            add(capture)
+            app.buttons["onboarding.next"].tap()
+        }
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
+        app.terminate()
+        app.launchArguments = ["-fitmatchUITesting"]
+        app.launch()
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["onboarding.next"].exists)
     }
 
     @MainActor
@@ -26,7 +37,7 @@ final class FitMatchOnboardingUITests: XCTestCase {
         registerLinkedProduct(
             in: app,
             url: "https://www.musinsa.com/products/onboarding-ui-test",
-            expectedProductName: "온보딩 무신사 기준옷"
+            expectedProductName: "온보딩 무신사 상의"
         )
     }
 
@@ -37,40 +48,26 @@ final class FitMatchOnboardingUITests: XCTestCase {
         registerLinkedProduct(
             in: app,
             url: "https://www.uniqlo.com/kr/ko/products/E000001-000/00",
-            expectedProductName: "온보딩 유니클로 기준옷"
+            expectedProductName: "온보딩 유니클로 상의"
         )
     }
 
     @MainActor
-    func test04ManualGarmentMeasurementRegistrationCreatesClosetItem() throws {
+    func test04ManualRegistrationRemainsAvailableAfterGuide() throws {
         let app = launchFreshOnboardingApp()
-        advanceToRegistrationGuide(in: app)
-
-        app.buttons["onboarding.manual"].tap()
-        XCTAssertTrue(app.staticTexts["내 옷 추가"].waitForExistence(timeout: 3))
-
-        let totalLengthField = app.textFields["closet.measurement.총장"]
-        scrollToElement(totalLengthField, in: app)
-        XCTAssertTrue(totalLengthField.exists)
-        totalLengthField.tap()
-        totalLengthField.typeText("70")
-
-        let saveButton = app.buttons["closet.manualSave"]
-        XCTAssertTrue(saveButton.isEnabled)
-        saveButton.tap()
-
-        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["온보딩 직접등록 내 옷"].waitForExistence(timeout: 3))
+        openRegistrationFromMain(in: app, method: "직접 입력하기")
+        XCTAssertTrue(app.textFields["closet.measurement.총장"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["onboarding.next"].exists)
     }
 
     @MainActor
-    func test05LaterPersistsOnboardingCompletionAcrossRelaunch() throws {
+    func test05NextPersistsOnboardingCompletionAcrossRelaunch() throws {
         var app = launchFreshOnboardingApp()
         advanceToRegistrationGuide(in: app)
 
         XCTAssertFalse(app.buttons["onboarding.later.top"].exists)
-        let laterButton = app.buttons["onboarding.later"]
-        laterButton.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
+        let nextButton = app.buttons["onboarding.next"]
+        nextButton.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["아직 등록된 옷이 없어요"].exists)
 
@@ -80,7 +77,7 @@ final class FitMatchOnboardingUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 8))
-        XCTAssertFalse(app.staticTexts["내 옷으로 비교해요"].exists)
+        XCTAssertFalse(app.staticTexts["onboarding.title.0"].exists)
         XCTAssertTrue(app.staticTexts["아직 등록된 옷이 없어요"].exists)
     }
 
@@ -101,7 +98,7 @@ final class FitMatchOnboardingUITests: XCTestCase {
         let app = launchFreshOnboardingApp()
         registerLinkedProduct(in: app,
                               url: "https://www.musinsa.com/products/onboarding-ui-test",
-                              expectedProductName: "온보딩 무신사 기준옷")
+                              expectedProductName: "온보딩 무신사 상의")
         let reload = app.buttons["closet.linkLoad"]
         if reload.exists && reload.isHittable { reload.tap() }
         XCTAssertFalse(app.buttons["closet.confirmAction"].exists)
@@ -143,19 +140,31 @@ final class FitMatchOnboardingUITests: XCTestCase {
         ]
         app.launch()
         XCTAssertTrue(
-            app.staticTexts["내 옷으로 비교해요"].waitForExistence(timeout: 8)
+            app.staticTexts["onboarding.title.0"].waitForExistence(timeout: 8)
         )
         return app
     }
 
     @MainActor
     private func advanceToRegistrationGuide(in app: XCUIApplication) {
+        for page in 1..<4 {
+            app.buttons["onboarding.next"].tap()
+            XCTAssertTrue(app.staticTexts["onboarding.title.\(page)"].waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor
+    private func openRegistrationFromMain(in app: XCUIApplication, method: String) {
+        advanceToRegistrationGuide(in: app)
         app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.staticTexts["상품 실측을 불러와요"].waitForExistence(timeout: 3))
-        app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.staticTexts["비슷한 옷을 한눈에 봐요"].waitForExistence(timeout: 3))
-        app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.staticTexts["잘 맞는 내 옷을 하나 등록해보세요"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
+        app.buttons["새 작업"].tap()
+        app.buttons["내 옷장에 추가"].tap()
+        let methodButton = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", method)
+        ).firstMatch
+        XCTAssertTrue(methodButton.waitForExistence(timeout: 3))
+        methodButton.tap()
     }
 
     @MainActor
@@ -164,8 +173,7 @@ final class FitMatchOnboardingUITests: XCTestCase {
         url: String,
         expectedProductName: String
     ) {
-        advanceToRegistrationGuide(in: app)
-        app.buttons["onboarding.shoppingLink"].tap()
+        openRegistrationFromMain(in: app, method: "상품 링크로 불러오기")
 
         let urlField = app.textFields["closet.linkURL"]
         XCTAssertTrue(urlField.waitForExistence(timeout: 3))

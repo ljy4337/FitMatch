@@ -25,21 +25,21 @@ final class FitMatchReleaseCurrentUIAuditTests: XCTestCase {
     }
 
     @MainActor
-    func testCurrentOnboardingNextAndLaterReachHome() {
+    func testCurrentOnboardingNextReachHome() {
         let app = launch(onboarding: true)
-        XCTAssertTrue(app.staticTexts["내 옷으로 비교해요"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["onboarding.title.0"].waitForExistence(timeout: 8))
         capture(app, "Onboarding first page")
         app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.staticTexts["상품 실측을 불러와요"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["onboarding.title.1"].waitForExistence(timeout: 3))
         app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.staticTexts["비슷한 옷을 한눈에 봐요"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["onboarding.title.2"].waitForExistence(timeout: 3))
         app.buttons["onboarding.next"].tap()
-        XCTAssertTrue(app.buttons["onboarding.shoppingLink"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["onboarding.manual"].exists)
-        capture(app, "Registration choices")
-        app.buttons["onboarding.later"].tap()
+        XCTAssertTrue(app.staticTexts["onboarding.title.3"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["onboarding.manual"].exists)
+        capture(app, "Alternative input guide")
+        app.buttons["onboarding.next"].tap()
         XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
-        capture(app, "Home after Later")
+        capture(app, "Home after guide")
         app.terminate()
         app.launchArguments = ["-fitmatchUITesting"]
         app.launch()
@@ -91,7 +91,15 @@ final class FitMatchReleaseCurrentUIAuditTests: XCTestCase {
         let app = launch(onboarding: true)
         XCTAssertTrue(app.buttons["onboarding.next"].waitForExistence(timeout: 8))
         for _ in 0..<3 { app.buttons["onboarding.next"].tap() }
-        app.buttons["onboarding.shoppingLink"].tap()
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.buttons["새 작업"].waitForExistence(timeout: 5))
+        app.buttons["새 작업"].tap()
+        app.buttons["내 옷장에 추가"].tap()
+        let linkButton = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "상품 링크로 불러오기")
+        ).firstMatch
+        XCTAssertTrue(linkButton.waitForExistence(timeout: 3))
+        linkButton.tap()
         XCTAssertTrue(app.textFields["closet.linkURL"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.buttons["closet.linkLoad"].isEnabled)
         XCTAssertFalse(app.buttons["closet.linkNext"].exists)

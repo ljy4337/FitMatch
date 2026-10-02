@@ -19,10 +19,10 @@ final class FitMatchUITestsLaunchTests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(
-            app.staticTexts["내 옷으로 비교해요"].waitForExistence(timeout: 8),
+            app.staticTexts["onboarding.title.0"].waitForExistence(timeout: 8),
             "신규 사용자는 첫 온보딩 화면을 봐야 합니다."
         )
-        XCTAssertTrue(app.buttons["건너뛰기"].exists)
+        XCTAssertFalse(app.buttons["건너뛰기"].exists)
         XCTAssertTrue(app.buttons["다음"].exists)
 
         let attachment = XCTAttachment(screenshot: app.screenshot())

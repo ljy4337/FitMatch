@@ -1,447 +1,315 @@
 import SwiftUI
-import SwiftData
 
+/// A read-only guide. Registration, comparison and persistence remain in Main.
 struct FitMatchOnboardingView: View {
-    @Environment(\.modelContext) private var modelContext
-
     let onFinish: () -> Void
-
     @State private var selectedPage = 0
-    @State private var registrationRoute: OnboardingRegistrationRoute?
+    @State private var didFinish = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let titles = [
+        "내 옷으로 비교하고,\n사이즈를 골라요.",
+        "복사 없이,\n공유로 바로 보내세요.",
+        "한 번만 설정하면,\n다음부터 더 간편해요.",
+        "링크를 붙여넣어도,\n직접 입력해도 돼요."
+    ]
+    private let descriptions = [
+        "잘 입는 옷과의 실측 차이를 확인하고\n비교 결과를 기록으로 남겨요.",
+        "쇼핑몰의 상품 페이지에서\n공유 → FitMatch를 선택하면 돼요.",
+        "아이폰 공유 목록에 FitMatch를 추가해 두세요.",
+        "공유를 사용하지 않아도 상품을 불러오고,\n내 옷의 실측을 직접 입력할 수 있어요."
+    ]
 
     init(onFinish: @escaping () -> Void) {
         self.onFinish = onFinish
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        let initialPage: Int
         if let marker = arguments.firstIndex(of: "-fitmatchOnboardingInitialPage"),
            arguments.indices.contains(marker + 1),
-           let requestedPage = Int(arguments[marker + 1]) {
-            initialPage = max(0, min(3, requestedPage))
-        } else {
-            initialPage = 0
+           let page = Int(arguments[marker + 1]) {
+            _selectedPage = State(initialValue: max(0, min(3, page)))
         }
-        _selectedPage = State(initialValue: initialPage)
         #endif
     }
-
-    private let pages = [
-        FitMatchOnboardingPage(
-            title: "내 옷으로 비교해요",
-            description: "체형을 재는 대신, 내가 실제로 입는 옷의 실측을 쇼핑 상품과 비교해요.",
-            kind: .referenceGarment
-        ),
-        FitMatchOnboardingPage(
-            title: "상품 실측을 불러와요",
-            description: "내 옷을 등록하고 사고 싶은 상품을 불러오면, 모든 사이즈의 공통 실측을 비교해요.",
-            kind: .howItWorks
-        ),
-        FitMatchOnboardingPage(
-            title: "비슷한 옷을 한눈에 봐요",
-            description: "같은 비교 그룹의 내 옷들을 가까운 순서로 보고, 원하는 옷을 눌러 상세 차이를 확인해요.",
-            kind: .referenceSelection
-        )
-    ]
-
-    private var pageCount: Int { pages.count + 1 }
-    private var isRegistrationPage: Bool { selectedPage == pages.count }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
+                Text("FitMatch").font(.title2.bold())
                 Spacer()
-                if !isRegistrationPage {
-                    Button("건너뛰기") {
-                        onFinish()
-                    }
-                    .accessibilityIdentifier("onboarding.skip")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                }
+                Text("\(selectedPage + 1) / \(titles.count)")
+                    .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 18)
+            .padding(.horizontal, 24).padding(.vertical, 16)
 
             TabView(selection: $selectedPage) {
-                ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                    onboardingPage(page)
-                        .tag(index)
+                ForEach(titles.indices, id: \.self) { index in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(titles[index])
+                                .font(.title.weight(.bold))
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityAddTraits(.isHeader)
+                                .accessibilityIdentifier("onboarding.title.\(index)")
+                            Text(descriptions[index])
+                                .font(.body).foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            illustration(index)
+                        }
+                        .padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
+                    }
+                    .scrollIndicators(.hidden)
+                    .tag(index)
                 }
-
-                registrationPage
-                    .tag(pages.count)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .layoutPriority(-1)
 
             HStack(spacing: 8) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    Capsule()
-                        .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.25))
+                ForEach(titles.indices, id: \.self) { index in
+                    Capsule().fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.25))
                         .frame(width: index == selectedPage ? 22 : 8, height: 8)
-                        .animation(.easeOut(duration: 0.18), value: selectedPage)
                 }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("총 \(pageCount)페이지 중 \(selectedPage + 1)페이지")
-            .padding(.bottom, 24)
-            .layoutPriority(1)
+            .accessibilityLabel("총 4페이지 중 \(selectedPage + 1)페이지")
+            .padding(.vertical, 14)
 
-            if isRegistrationPage {
-                Button {
+            Button {
+                guard !didFinish else { return }
+                if selectedPage == titles.count - 1 {
+                    didFinish = true
                     onFinish()
-                } label: {
-                    Text("나중에 등록하기")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-                .accessibilityIdentifier("onboarding.later")
-                .buttonStyle(.plain)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 18)
-                .layoutPriority(1)
-            } else {
-                Button {
-                    withAnimation(.easeOut(duration: 0.2)) {
+                } else {
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
                         selectedPage += 1
                     }
-                } label: {
-                    Text("다음")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(Color(.systemBackground))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
-                .accessibilityIdentifier("onboarding.next")
-                .buttonStyle(.plain)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 18)
-                .layoutPriority(1)
+            } label: {
+                Text("다음").font(.headline.bold())
+                    .frame(maxWidth: .infinity).padding(.vertical, 18)
+                    .foregroundStyle(Color(.systemBackground))
+                    .background(Color.primary, in: RoundedRectangle(cornerRadius: 24))
             }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("onboarding.next")
+            .accessibilityHint(selectedPage == 3 ? "안내를 마치고 FitMatch를 시작해요" : "다음 안내 페이지")
+            .padding(.horizontal, 24).padding(.bottom, 16)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .sheet(item: $registrationRoute) { route in
-            switch route {
-            case .shoppingLink:
-                NavigationStack {
-                    LinkClosetRegistrationView(prefersRepresentativeByDefault: false) {
-                        finishAfterRegistration()
-                    }
+    }
+
+    @ViewBuilder private func illustration(_ index: Int) -> some View {
+        switch index {
+        case 0: introduction
+        case 1: sharing
+        case 2: shareSetup
+        default: alternativeInput
+        }
+    }
+
+    private var introduction: some View {
+        VStack(spacing: 16) {
+            guideCard {
+                exampleLabel
+                // The source capture contains no personal/account information.
+                screenshot("OnboardingResultExample", from: 0.143, to: 0.50,
+                           label: "비교 예시. 유니클로 집업블루종, 추천 XXL, 사이즈 유사도 92퍼센트, 사용한 실측 4개")
+                Divider()
+                measurement("총장", product: "69", closet: "76", difference: "7cm 짧아요")
+            }
+            guideCard {
+                Label("기록에서 다시 확인", systemImage: "clock.arrow.circlepath")
+                    .font(.headline)
+                Text("비교한 상품과 결과를 기록 화면에서 다시 볼 수 있어요.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            note("먼저 내 옷 한 벌을 등록해 주세요. 같은 그룹의 상품 중 비교 가능한 실측이 있는 상품을 비교해요.")
+        }
+    }
+
+    private var sharing: some View {
+        VStack(spacing: 16) {
+            guideCard {
+                step(1, "상품 페이지에서 공유 누르기")
+                HStack(spacing: 16) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.largeTitle).foregroundStyle(.blue)
+                        .frame(width: 64, height: 64)
+                        .background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+                    Text("쇼핑몰의 상품 공유 버튼을 찾아주세요. 버튼 모양과 위치는 쇼핑몰마다 달라요.")
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-            case .manual:
-                NavigationStack {
-                    AddClosetItemView(
-                        prefillCategory: usesUITestFixtures ? .top : nil,
-                        prefillDetailCategory: usesUITestFixtures ? .shortSleeve : nil,
-                        prefillGender: usesUITestFixtures ? .unisex : nil,
-                        prefillSourceOption: usesUITestFixtures ? .manual : nil,
-                        prefillBrand: usesUITestFixtures ? "온보딩 직접등록 브랜드" : nil,
-                        prefillProductName: usesUITestFixtures ? "온보딩 직접등록 내 옷" : nil,
-                        prefersRepresentativeByDefault: false,
-                        onSaved: { _ in finishAfterRegistration() }
-                    )
+            }
+            guideCard {
+                step(2, "공유 목록에서 FitMatch 선택")
+                exampleLabel
+                shareApps(includeFitMatch: true)
+                Divider()
+                Label("이미 가진 옷 → 내 옷 추가", systemImage: "tshirt")
+                Label("구매할 옷 → 상품 비교", systemImage: "bag")
+            }
+            note("FitMatch가 안 보인다면 다음 장에서 설정해요.")
+        }
+    }
+
+    private var shareSetup: some View {
+        VStack(spacing: 14) {
+            guideCard {
+                step(1, "앱 목록 끝의 ‘더 보기’")
+                Text("공유 목록을 왼쪽으로 밀어 맨 끝으로 이동해요.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                shareApps(includeFitMatch: false)
+            }
+            guideCard {
+                step(2, "오른쪽 위 ‘편집’ 누르기")
+                HStack {
+                    Text("앱").font(.headline)
+                    Spacer()
+                    Text("편집").font(.subheadline.bold())
+                        .padding(.horizontal, 18).padding(.vertical, 10)
+                        .background(Color(.tertiarySystemGroupedBackground), in: Capsule())
+                        .overlay(Capsule().stroke(Color.blue, lineWidth: 2))
                 }
-                .presentationDragIndicator(.visible)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("앱 목록 화면의 오른쪽 위 편집 버튼 예시")
+            }
+            guideCard {
+                step(3, "FitMatch 옆 ＋ 누르기")
+                HStack(spacing: 14) {
+                    Image(systemName: "plus.circle.fill").foregroundStyle(.green).font(.title2)
+                    Image("OnboardingAppIcon").resizable().frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 9))
+                    Text("FitMatch").font(.subheadline)
+                    Spacer()
+                    Capsule().fill(Color.green).frame(width: 40, height: 24)
+                        .overlay(alignment: .trailing) {
+                            Circle().fill(Color.white).padding(2).frame(width: 24, height: 24)
+                        }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("FitMatch 왼쪽의 초록색 더하기로 즐겨찾기에 추가")
+            }
+            guideCard {
+                step(4, "체크 버튼으로 완료")
+                HStack {
+                    Text("즐겨찾기에 FitMatch가 있으면 준비 완료예요.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill").font(.largeTitle).foregroundStyle(.blue)
+                }
+            }
+            note("이미 즐겨찾기에 있다면 설정하지 않아도 돼요. iOS 버전에 따라 완료 버튼 모양이 다를 수 있어요.")
+        }
+    }
+
+    private var alternativeInput: some View {
+        VStack(spacing: 16) {
+            guideCard {
+                step(1, "쇼핑몰에서 상품 링크 복사")
+                step(2, "FitMatch에 붙여넣고 불러오기")
+                exampleLabel
+                // Only the URL-entry portion is shown; the original lower
+                // capture includes an error state, which is not a tutorial.
+                screenshot("OnboardingLinkExample", from: 0.175, to: 0.428,
+                           label: "상품 URL 입력란의 붙여넣기, 상품 정보 불러오기 버튼 예시")
+                Text("내 옷을 등록할 때는 내가 가진 사이즈를 선택하고 실측을 확인해 주세요.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            guideCard {
+                Label("내 옷의 링크가 없다면", systemImage: "ruler").font(.headline)
+                Text("직접 입력하기를 선택해, 옷을 평평하게 놓고 잰 실측을 입력해요.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Label("신체 치수가 아닌 옷의 치수예요", systemImage: "tshirt")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 
-    private func onboardingPage(_ page: FitMatchOnboardingPage) -> some View {
-        ScrollView {
-            VStack(spacing: page.kind == .referenceSelection ? 16 : 24) {
-                Text(page.title)
-                    .font(.largeTitle.weight(.black))
-                    .multilineTextAlignment(.center)
-                Text(page.description)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var exampleLabel: some View {
+        Text("화면 예시").font(.caption).foregroundStyle(.secondary)
+    }
 
-                pageVisual(for: page.kind)
+    private func guideCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10, content: content)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+            .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.primary.opacity(0.05)))
+    }
+
+    private func step(_ number: Int, _ title: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(number)").font(.subheadline.bold()).foregroundStyle(.white)
+                .frame(width: 28, height: 28).background(Color.blue, in: Circle())
+                .accessibilityHidden(true)
+            Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func note(_ text: String) -> some View {
+        Label(text, systemImage: "info.circle").font(.footnote).foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func measurement(_ title: String, product: String, closet: String, difference: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.subheadline.bold())
+            Text("상품 \(product)cm · 내 옷 \(closet)cm").font(.subheadline)
+            Text(difference).font(.subheadline.bold()).foregroundStyle(.blue)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func shareApps(includeFitMatch: Bool) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            appTile("메시지", symbol: "message.fill", color: .green)
+            appTile("Mail", symbol: "envelope.fill", color: .blue)
+            if includeFitMatch {
+                appTile("FitMatch", symbol: "bag.fill", color: .black)
+            } else {
+                appTile("메모", symbol: "note.text", color: .yellow)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, page.kind == .referenceSelection ? 12 : 26)
-            .padding(.bottom, 10)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    @ViewBuilder
-    private func pageVisual(for kind: FitMatchOnboardingPage.Kind) -> some View {
-        switch kind {
-        case .referenceGarment:
-            referenceGarmentVisual
-        case .howItWorks:
-            howItWorksVisual
-        case .referenceSelection:
-            referenceSelectionVisual
-        }
-    }
-
-    private var referenceGarmentVisual: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 18, y: 8)
-
-            Image(systemName: "tshirt.fill")
-                .font(.system(size: 104, weight: .semibold))
-                .foregroundStyle(.primary)
-
-            measurementChip("어깨 53", alignment: .topTrailing)
-            measurementChip("가슴 64", alignment: .leading)
-            measurementChip("총장 76", alignment: .bottomTrailing)
+            appTile("더 보기", symbol: "ellipsis", color: .gray)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 290)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("내 옷 실측 예시, 어깨 53, 가슴 64, 총장 76센티미터")
+        .accessibilityElement(children: .combine)
     }
 
-    private func measurementChip(_ title: String, alignment: Alignment) -> some View {
-        Text(title)
-            .font(.caption.weight(.bold))
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
-            .background(.regularMaterial, in: Capsule())
-            .overlay(Capsule().stroke(.primary.opacity(0.08)))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-            .padding(22)
-    }
-
-    private var howItWorksVisual: some View {
-        VStack(spacing: 10) {
-            onboardingStep(
-                number: 1,
-                title: "잘 맞는 내 옷 등록",
-                description: "상품 링크 또는 직접 실측으로 등록",
-                systemImage: "tshirt"
-            )
-            onboardingStep(
-                number: 2,
-                title: "사고 싶은 상품 불러오기",
-                description: "무신사·유니클로·ZARA 링크를 공유하거나 입력",
-                systemImage: "link"
-            )
-            onboardingStep(
-                number: 3,
-                title: "가까운 사이즈 확인",
-                description: "공통 실측과 부위별 차이를 한눈에 확인",
-                systemImage: "checkmark.circle"
-            )
-        }
-    }
-
-    private func onboardingStep(
-        number: Int,
-        title: String,
-        description: String,
-        systemImage: String
-    ) -> some View {
-        HStack(spacing: 14) {
-            Text("\(number)")
-                .font(.headline.weight(.black))
-                .foregroundStyle(Color(.systemBackground))
-                .frame(width: 38, height: 38)
-                .background(Color.primary, in: Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline.weight(.bold))
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 4)
-
-            Image(systemName: systemImage)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-
-    private var referenceSelectionVisual: some View {
-        VStack(spacing: 12) {
-            comparisonRouteCard(
-                badge: "같은 그룹",
-                title: "비슷한 내 옷을 목록으로 확인",
-                description: "같은 비교 그룹의 내 옷을 가까운 순서로 보여드려요.",
-                systemImage: "bolt.fill",
-                emphasized: true
-            )
-
-            comparisonRouteCard(
-                badge: "다른 그룹",
-                title: "원하는 내 옷을 직접 선택",
-                description: "다른 그룹이나 내 옷장 전체에서 원하는 비교 대상을 선택할 수 있어요.",
-                systemImage: "hand.tap.fill",
-                emphasized: false
-            )
-
-            Label("선택된 옷과 상품의 모든 사이즈를 실측으로 비교해요.", systemImage: "ruler")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 4)
-                .padding(.top, 2)
-        }
-    }
-
-    private func comparisonRouteCard(
-        badge: String,
-        title: String,
-        description: String,
-        systemImage: String,
-        emphasized: Bool
-    ) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(emphasized ? Color(.systemBackground) : .primary)
-                .frame(width: 38, height: 38)
-                .background(emphasized ? Color.primary : Color.primary.opacity(0.07), in: Circle())
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text(badge)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                Text(title)
-                    .font(.headline.weight(.black))
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(emphasized ? Color.primary : Color.primary.opacity(0.08), lineWidth: emphasized ? 1.5 : 1)
-        }
-    }
-
-    private var registrationPage: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("잘 맞는 내 옷을 하나 등록해보세요")
-                        .font(.largeTitle.weight(.black))
-                    Text("새 옷을 살 때 내 옷과 비교해 가장 비슷한 사이즈를 찾아드려요.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(4)
+    private func appTile(_ title: String, symbol: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Group {
+                if title == "FitMatch" {
+                    Image("OnboardingAppIcon").resizable().scaledToFit()
+                } else {
+                    Image(systemName: symbol).font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(color)
                 }
-
-                registrationCard(
-                    title: "상품 링크로 등록",
-                    description: "무신사·유니클로·ZARA에서 가지고 있는 상품의 링크를 복사해 등록할 수 있어요.",
-                    supportText: "지원 쇼핑몰  MUSINSA · UNIQLO · ZARA",
-                    buttonTitle: "상품 링크로 등록",
-                    systemImage: "link"
-                ) {
-                    registrationRoute = .shoppingLink
-                }
-                .accessibilityIdentifier("onboarding.shoppingLink")
-
-                registrationCard(
-                    title: "직접 등록",
-                    description: "온라인에서 찾을 수 없는 옷은 가지고 있는 옷의 실측을 직접 입력할 수 있어요.",
-                    supportText: "신체 치수가 아닌 의류 실측을 입력해요",
-                    buttonTitle: "직접 등록",
-                    systemImage: "ruler"
-                ) {
-                    registrationRoute = .manual
-                }
-                .accessibilityIdentifier("onboarding.manual")
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 28)
-            .padding(.bottom, 20)
+            .frame(width: 44, height: 44)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .accessibilityHidden(true)
+            Text(title).font(.caption2).fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private func registrationCard(
-        title: String,
-        description: String,
-        supportText: String,
-        buttonTitle: String,
-        systemImage: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Label(title, systemImage: systemImage)
-                .font(.title3.weight(.black))
-            Text(description)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(supportText)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Button(buttonTitle, action: action)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(Color(.systemBackground))
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(Color.primary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .buttonStyle(.plain)
+    /// Crop within the view so original capture bytes remain unchanged.
+    /// Both approved captures are 590 × 1280. Decorative text is described
+    /// through an accessibility label instead of exposing fake controls.
+    private func screenshot(_ asset: String, from start: CGFloat, to end: CGFloat, label: String) -> some View {
+        let ratio: CGFloat = 1280 / 590
+        return GeometryReader { proxy in
+            Image(asset).resizable()
+                .frame(width: proxy.size.width, height: proxy.size.width * ratio)
+                .offset(y: -proxy.size.width * ratio * start)
         }
-        .padding(18)
-        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .aspectRatio(1 / (ratio * (end - start)), contentMode: .fit)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(.isImage)
+        .allowsHitTesting(false)
     }
-
-    private func finishAfterRegistration() {
-        registrationRoute = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            onFinish()
-        }
-    }
-
-    private var usesUITestFixtures: Bool {
-        #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("-fitmatchOnboardingFixtures")
-        #else
-        false
-        #endif
-    }
-}
-
-private struct FitMatchOnboardingPage {
-    enum Kind: Equatable {
-        case referenceGarment
-        case howItWorks
-        case referenceSelection
-    }
-
-    let title: String
-    let description: String
-    let kind: Kind
-}
-
-private enum OnboardingRegistrationRoute: String, Identifiable {
-    case shoppingLink
-    case manual
-
-    var id: String { rawValue }
 }
