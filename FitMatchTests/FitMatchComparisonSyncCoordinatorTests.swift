@@ -5,6 +5,138 @@ import Testing
 
 @MainActor
 struct FitMatchComparisonSyncCoordinatorTests {
+    @Test func savedHistoryCanRecoverOnlyItsVerifiedServerSizeAnalysis() async throws {
+        let fixture = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT",
+            snapshotSchemaVersion: 4
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed], existingHistories: [], existingProducts: [],
+            existingClosetItems: [], modelContext: context
+        )
+        let history = try #require(context.fetch(FetchDescriptor<RecommendationHistory>()).first)
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        coordinator.prepareForAuthenticatedUser(fixture.userID)
+
+        let analysis = try #require(
+            try await coordinator.recoverVerifiedAlternativeSizeAnalysis(for: history)
+        )
+
+        #expect(analysis.comparisonID == fixture.comparisonID)
+        #expect(analysis.authorizedCandidateProductSizeIDs == [fixture.productSizeID])
+        #expect(analysis.recommended.productSizeID == fixture.productSizeID)
+        #expect(await remote.historyFetchCount() == 1)
+    }
+
+    @Test func savedHistoryRestoresTwoExactAuthorizedSizeIdentities() async throws {
+        let secondSizeID = UUID()
+        let fixture = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT",
+            snapshotSchemaVersion: 4,
+            completedJSONTransform: { json in
+                var root = try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any]
+                var target = root["target_snapshot"] as! [String: Any]
+                var candidates = target["candidates"] as! [[String: Any]]
+                var second = candidates[0]
+                second["product_size_id"] = secondSizeID.uuidString
+                second["size_label"] = "L"
+                var measurements = second["comparison_measurements"] as! [[String: Any]]
+                measurements[0]["target_value"] = 54.0
+                measurements[0]["difference"] = 4.0
+                measurements[0]["absolute_difference"] = 4.0
+                second["comparison_measurements"] = measurements
+                candidates.append(second)
+                target["candidates"] = candidates
+                target["authorized_candidate_product_size_ids"] = candidates.map {
+                    $0["product_size_id"] as! String
+                }
+                root["target_snapshot"] = target
+
+                let draft = try! JSONSerialization.data(withJSONObject: root)
+                let row = try! JSONDecoder().decode(VNextComparisonHistoryDTO.self, from: draft)
+                let analysis = try! VNextComparisonEngineAdapter().analyze(row.snapshotBegin!)
+                var evidence = try! JSONSerialization.jsonObject(
+                    with: JSONEncoder().encode(analysis.completionPayload)
+                ) as! [String: Any]
+                evidence["engine_version"] = root["engine_version"]
+                evidence["reliability"] = 2
+                root["result_evidence"] = evidence
+                root["fit_score"] = analysis.recommended.result.score
+                return String(data: try! JSONSerialization.data(withJSONObject: root), encoding: .utf8)!
+            }
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed], existingHistories: [], existingProducts: [],
+            existingClosetItems: [], modelContext: context
+        )
+        let history = try #require(context.fetch(FetchDescriptor<RecommendationHistory>()).first)
+        let remote = ComparisonHistoryRemoteStub(pending: nil, completed: fixture.completed)
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: remote)
+        coordinator.prepareForAuthenticatedUser(fixture.userID)
+
+        let analysis = try #require(
+            try await coordinator.recoverVerifiedAlternativeSizeAnalysis(for: history)
+        )
+
+        #expect(Set(analysis.authorizedCandidateProductSizeIDs) == Set([
+            fixture.productSizeID, secondSizeID
+        ]))
+        #expect(Set(history.product.sizes.map(\.id)) == Set([
+            VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: history.id, productSizeID: fixture.productSizeID
+            ),
+            VNextHistoryProjectionIdentity.productSizeID(
+                comparisonID: history.id, productSizeID: secondSizeID
+            )
+        ]))
+        #expect(RecommendationService().canPresentCurrentVNextAlternativeSizes(
+            for: history, batch: analysis
+        ))
+    }
+
+    @Test func savedHistoryRejectsAnotherComparisonAndLateAccountResponse() async throws {
+        let fixture = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT",
+            snapshotSchemaVersion: 4
+        )
+        let other = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT",
+            snapshotSchemaVersion: 4
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        _ = try VNextHistoryCacheHydrator().hydrateCompleted(
+            [fixture.completed], existingHistories: [], existingProducts: [],
+            existingClosetItems: [], modelContext: context
+        )
+        let history = try #require(context.fetch(FetchDescriptor<RecommendationHistory>()).first)
+        let wrongRemote = ComparisonHistoryRemoteStub(
+            pending: nil, completed: other.completed
+        )
+        let wrongCoordinator = FitMatchComparisonSyncCoordinator(remote: wrongRemote)
+        wrongCoordinator.prepareForAuthenticatedUser(fixture.userID)
+        #expect(try await wrongCoordinator.recoverVerifiedAlternativeSizeAnalysis(for: history) == nil)
+
+        let gate = JourneyAsyncGate()
+        let delayedRemote = ComparisonHistoryRemoteStub(
+            pending: nil, completed: fixture.completed, historyGates: [1: gate]
+        )
+        let coordinator = FitMatchComparisonSyncCoordinator(remote: delayedRemote)
+        coordinator.prepareForAuthenticatedUser(fixture.userID)
+        let pending = Task { @MainActor in
+            try await coordinator.recoverVerifiedAlternativeSizeAnalysis(for: history)
+        }
+        await gate.waitForArrival(atLeast: 1)
+        coordinator.prepareForAuthenticatedUser(other.userID)
+        await gate.open()
+        #expect(try await pending.value == nil)
+    }
+
     @Test func completedReplayPreservesBothV1PoliciesAndNewV2() throws {
         for (version, reliability) in [("v1", 2), ("v1", 1), ("v2", 1)] {
             let fixture = try ComparisonHistoryFixture(completedJSONTransform: { json in

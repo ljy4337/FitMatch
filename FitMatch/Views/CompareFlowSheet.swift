@@ -74,6 +74,11 @@ struct CompareFlowSheet: View {
                 comparisonInputContent
             }
         }
+        .onAppear {
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .resultToOtherClothesSheet, event: "sheet_appeared", finished: true
+            )
+        }
         // This persistent root remains alive through the normal input → Result
         // switch. It therefore owns actual sheet dismissal, not disappearance
         // of the input subtree which is an expected successful transition.
@@ -526,6 +531,11 @@ private extension CompareFlowSheet {
                 }
             }
 
+        }
+        .onAppear {
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .resultToCandidates, event: "candidates_appeared", finished: true
+            )
         }
     }
 
@@ -1282,7 +1292,10 @@ private extension CompareFlowSheet {
                   $0.clientItemID == row.id && $0.isSelectable
               }) == true else { return }
         selectedReferenceItemID = row.id
-        startForegroundComparisonTask(locksReferenceSelection: true) { requestID, userID in
+        startForegroundComparisonTask(
+            locksReferenceSelection: true,
+            performanceRoute: .comparisonCardToResult
+        ) { requestID, userID in
             await calculateAndSaveTemporaryRecommendation(
                 selectedReferenceItem: row.item,
                 requestID: requestID,
@@ -1382,9 +1395,13 @@ private extension CompareFlowSheet {
     func startForegroundComparisonTask(
         locksReferenceSelection: Bool = false,
         traceID: UUID? = nil,
+        performanceRoute: FitMatchPerformanceRoute? = nil,
         _ operation: @escaping @MainActor (UUID, UUID?) async -> Void
     ) {
         invalidateForegroundComparison()
+        if let performanceRoute {
+            FitMatchPerformanceDiagnosticsStore.shared.begin(performanceRoute)
+        }
         let requestID = traceID ?? UUID()
         let userID = authSession.authenticatedUserID
         activeComparisonRequestID = requestID
@@ -1408,6 +1425,11 @@ private extension CompareFlowSheet {
 
     func invalidateForegroundComparison() {
         let requestID = activeComparisonRequestID
+        if requestID != nil {
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "cancelled", finished: true
+            )
+        }
         activeComparisonRequestID = nil
         activeComparisonUserID = nil
         comparisonTask?.cancel()
@@ -1881,6 +1903,9 @@ private extension CompareFlowSheet {
         }
         guard case .finished(let history) = outcome else { return }
         guard let history else {
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "comparison_failed", finished: true
+            )
             errorMessage = viewModel.errorMessage
                 ?? "서버 비교 정책 또는 실측 조건을 충족하지 못했습니다."
             setStep(.error)
@@ -1900,15 +1925,24 @@ private extension CompareFlowSheet {
             guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
                 return
             }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "history_saved"
+            )
             #if DEBUG
             print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 성공] 상품=\(history.product.name), 추천사이즈=\(history.recommendedSize.name), 선택옷=\(history.userFit.displayName)")
             #endif
             setStep(.result(history))
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "result_step_selected"
+            )
         } catch {
             guard isCurrentForegroundComparison(requestID: requestID, userID: userID) else {
                 return
             }
             modelContext.rollback()
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "history_save_failed", finished: true
+            )
             #if DEBUG
             print("[화면: 상품 비교][동작: 수동 비교 기록 저장][상태: 실패] 오류=\(error.localizedDescription), 상품=\(history.product.name)")
             #endif

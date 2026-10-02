@@ -242,6 +242,7 @@ final class FitMatchMetricsRecorder: FitMatchMetricsRecording {
         }
         lines.append("recent_events_limit=\(Self.recentEventLimit)")
         lines.append(contentsOf: recent.suffix(Self.recentEventLimit))
+        lines.append(FitMatchPerformanceDiagnosticsStore.shared.report())
         return lines.joined(separator: "\n") + "\n"
     }
 

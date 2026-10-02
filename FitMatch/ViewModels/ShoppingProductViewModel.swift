@@ -1899,8 +1899,14 @@ final class ShoppingProductViewModel: ObservableObject {
                 errorMessage = authorization.blockReason.userMessage
                 return nil
             }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "reference_authorized"
+            )
             let permit = try await coordinator.beginAuthorizedComparison(authorization)
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "begin_completed"
+            )
             return permit
         } catch is CancellationError {
             return nil
@@ -2093,6 +2099,9 @@ final class ShoppingProductViewModel: ObservableObject {
             recommendation = nil
             return nil
         }
+        FitMatchPerformanceDiagnosticsStore.shared.mark(
+            .comparisonCardToResult, event: "product_prepared"
+        )
         let comparisonDetailCategory = detailCategory
 
 
@@ -2151,11 +2160,17 @@ final class ShoppingProductViewModel: ObservableObject {
                 permit: permit
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "analysis_completed"
+            )
             let completion = try await serverAuthorityCoordinator.completeAuthorizedComparison(
                 permit: permit,
                 analysis: analysis
             )
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "server_completion_received"
+            )
             guard let history = recommendationService.makeCompletedVNextHistory(
                 product: authorizedProduct,
                 selectedReferenceItem: reference,
@@ -2167,6 +2182,9 @@ final class ShoppingProductViewModel: ObservableObject {
                 return nil
             }
             guard isCurrentComparison(comparisonRequestID) else { return nil }
+            FitMatchPerformanceDiagnosticsStore.shared.mark(
+                .comparisonCardToResult, event: "history_projected"
+            )
             VNextComparisonSessionStore.shared.store(
                 analysis,
                 historyID: history.id
