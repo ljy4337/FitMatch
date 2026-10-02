@@ -1,0 +1,438 @@
+{
+  "product_id": "E485616",
+  "product_name": "BT AIRism코튼크루넥T(패치)",
+  "canonical_url": "https://www.uniqlo.com/kr/ko/products/E485616-000/00",
+  "observed_ids": [
+    "E485616-000"
+  ],
+  "source_path": "신생아(0개월~2세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔)",
+  "source_depth_names": [
+    "신생아(0개월~2세)",
+    "티셔츠 & 스웨트셔츠",
+    "티셔츠(반팔)"
+  ],
+  "source_depth_codes": [
+    "57980",
+    "58104",
+    "126278"
+  ],
+  "audience": "BABY",
+  "gender_name": "baby",
+  "gender_category": "BABY",
+  "product_type": "unknown",
+  "product_type_kr": "",
+  "size_chart_payload": {
+    "result": [
+      {
+        "productId": "E485616-000",
+        "sizeChart": [
+          {
+            "sizeCode": "CMA080",
+            "displayCode": "080",
+            "name": "80(12-18개월)",
+            "sizeParts": [
+              {
+                "code": "body-length-back",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "35",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "27.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "32",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "23.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA090",
+            "displayCode": "090",
+            "name": "90(18-24개월)",
+            "sizeParts": [
+              {
+                "code": "body-length-back",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "38",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "34",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "25.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA100",
+            "displayCode": "100",
+            "name": "100(24-36개월)",
+            "sizeParts": [
+              {
+                "code": "body-length-back",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "41",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "16 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "30.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "36",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "27.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA110",
+            "displayCode": "110",
+            "name": "110(35개월-5세)",
+            "sizeParts": [
+              {
+                "code": "body-length-back",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "44",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "32",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "38",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bodyMeasurements": [
+          {
+            "sizeCode": "CMA080",
+            "displayCode": "080",
+            "name": "80(12-18개월)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75-85",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2-33 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-weight",
+                "name": "체중",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "11 kg",
+                    "unit": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA090",
+            "displayCode": "090",
+            "name": "90(18-24개월)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "85-95",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33 1/2-37 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-weight",
+                "name": "체중",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "13 kg",
+                    "unit": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA100",
+            "displayCode": "100",
+            "name": "100(24-36개월)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "95-105",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "37 1/2-41 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-weight",
+                "name": "체중",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "16 kg",
+                    "unit": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMA110",
+            "displayCode": "110",
+            "name": "110(35개월-5세)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "105-115",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "41 1/4-45 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-weight",
+                "name": "체중",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "19 kg",
+                    "unit": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imageUrl": "https://image.uniqlo.com/UQ/ST3/AsianCommon/imagesgoods/485616/item/goods_10_485616_3x4.jpg",
+        "colorCode": ""
+      }
+    ]
+  },
+  "size_count_official": 4
+}

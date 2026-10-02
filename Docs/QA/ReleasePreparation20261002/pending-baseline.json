@@ -1,0 +1,9 @@
+{
+  "reason": "Complete missing lifecycle and matrix bindings; preserve original corpus and oracle; authenticated integration guarded by real dedicated sessions.",
+  "previous_plan_hashes": {
+    "smoke-selectors.json": "4f34cda5eb3ae20247061c7d8c491a47f03f43dce56f2896df495a29e8a59040",
+    "full-selectors.json": "a9ff82003f17e51a87cddaa736895fb63588538c84425c5d2b2356d57e250797",
+    "oracle.json": "1964fbb68bd7bd58c9e382ca7f97485728a4e2d4248dec0bcc8350b3fbc4d5c1",
+    "policy-expectations.json": "125b6b6a7e0d0df307cf559d777cf0ca01a1af57fccd6c7f4a07500842e290ea"
+  }
+}

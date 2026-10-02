@@ -6,6 +6,9 @@ struct CompareFlowSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var authSession: FitMatchAuthSessionStore
+    #if DEBUG
+    @Environment(\.fitMatchReleaseSelectionProbe) private var releaseSelectionProbe
+    #endif
     @Query(sort: \UserFit.createdAt, order: .reverse) private var cachedUserFits: [UserFit]
     @Query(sort: \Brand.name) private var brands: [Brand]
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
@@ -59,6 +62,25 @@ struct CompareFlowSheet: View {
         _productURL = State(initialValue: initialURL ?? "")
     }
 
+    #if DEBUG
+    /// Injects only the existing transport owner for mounted, offline tests.
+    init(testingViewModel: ShoppingProductViewModel, initialURL: String) {
+        self.initialURL = initialURL
+        self.initialHistoricalProduct = nil
+        _viewModel = StateObject(wrappedValue: testingViewModel)
+        _productURL = State(initialValue: initialURL)
+    }
+
+    var releaseSelectionStep: String { step.logName }
+    var releaseSelectedClosetID: UUID? { selectedReferenceItemID }
+    var releaseCandidateIDs: [UUID] { comparisonSummaryRows.map(\.id) }
+    func releaseChooseCloset(_ id: UUID) -> Bool {
+        guard let row = comparisonSummaryRows.first(where: { $0.id == id }) else { return false }
+        openComparisonDetail(row)
+        return true
+    }
+    #endif
+
     @ViewBuilder
     var body: some View {
         ZStack {
@@ -75,6 +97,9 @@ struct CompareFlowSheet: View {
             }
         }
         .onAppear {
+            #if DEBUG
+            releaseSelectionProbe?.flow = self
+            #endif
             FitMatchPerformanceDiagnosticsStore.shared.mark(
                 .resultToOtherClothesSheet, event: "sheet_appeared", finished: true
             )
@@ -222,6 +247,21 @@ struct CompareFlowSheet: View {
         }
     }
 }
+
+#if DEBUG
+/// Optional observer of mounted views; never owns or replaces selection state.
+@MainActor
+final class FitMatchReleaseSelectionProbe {
+    var flow: CompareFlowSheet?
+    var result: RecommendationResultView?
+    var resultAppearances: [UUID] = []
+    var resultDisappearances: [UUID] = []
+}
+
+extension EnvironmentValues {
+    @Entry var fitMatchReleaseSelectionProbe: FitMatchReleaseSelectionProbe? = nil
+}
+#endif
 
 private struct PreparedComparison {
     let product: Product

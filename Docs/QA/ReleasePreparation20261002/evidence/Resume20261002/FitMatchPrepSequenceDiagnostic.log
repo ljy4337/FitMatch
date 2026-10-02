@@ -1,0 +1,9 @@
+Writing result bundle at path:
+	/tmp/FitMatchPrepSequenceDiagnostic.xcresult
+
+2026-10-02 18:17:53.584 xcodebuild[62836:27161937] [MT] IDETestOperationsObserverDebug: 32.474 elapsed -- Testing started completed.
+2026-10-02 18:17:53.584 xcodebuild[62836:27161937] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 18:17:53.584 xcodebuild[62836:27161937] [MT] IDETestOperationsObserverDebug: 32.474 sec, +32.474 sec -- end
+** TEST FAILED **
+
+Testing started

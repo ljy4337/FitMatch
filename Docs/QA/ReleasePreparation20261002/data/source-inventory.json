@@ -1,0 +1,140 @@
+{
+  "schema_version": "fitmatch-release-source-inventory-v1",
+  "sources": [
+    {
+      "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+      "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+      "selector": null,
+      "bytes": 3370926
+    },
+    {
+      "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+      "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+      "selector": null,
+      "bytes": 8187
+    },
+    {
+      "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+      "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+      "selector": null,
+      "bytes": 5843380
+    },
+    {
+      "path": "FitMatchTests/ThreeProductActualSizeFixtures.json",
+      "sha256": "4eef56dde46df224d6ea862bb4cf5a1b2750d533c3149fccdc00fba3e5728a3a",
+      "selector": null,
+      "bytes": 5889
+    },
+    {
+      "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+      "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+      "selector": null,
+      "bytes": 646298
+    },
+    {
+      "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+      "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+      "selector": null,
+      "bytes": 11039
+    },
+    {
+      "path": "ZARAAudit/zara_production_sample_30_manifest.jsonl",
+      "sha256": "eb243c913b19933cc33fe80d4809a915869df0cb8ba002a9cccc2e0f34e58860",
+      "selector": null,
+      "bytes": 32013
+    },
+    {
+      "path": "Docs/QA/ClothingURLs-20260916/products.json",
+      "sha256": "9608b38cf8ba5e21ee004810acb0d9568511062a2998315b3ffbcc53ae58a2e1",
+      "selector": null,
+      "bytes": 9941
+    },
+    {
+      "path": "Docs/QA/SuppliedLinksAudit-20260930/Report.md",
+      "sha256": "691a3bf762c90a05d73eae81c701c6be81ed2679a183efef00c769e46d13ce95",
+      "selector": null,
+      "bytes": 7127
+    },
+    {
+      "path": "Docs/TestEvidence/CurrentUniqloCatalog-20260815/CurrentUniqloATestSummary.json",
+      "sha256": "36acb00d193730375ef86e4e756d077b366ad7069ff31d7ec37bd8a9f12d7565",
+      "selector": null,
+      "bytes": 1646
+    },
+    {
+      "path": "Docs/ReleaseATestReport-20260815.md",
+      "sha256": "c69f942e5a984146f9a6304349b1650ab17e8cff75afdf9d3c127d277fdd2741",
+      "selector": null,
+      "bytes": 20931
+    },
+    {
+      "path": "scripts/run-live-a-test-100.py",
+      "sha256": "8c678f5e2f81bfe884a119c574463de341ea22d0a75ff84f3e4b23b48c5866c1",
+      "selector": null,
+      "bytes": 14594
+    },
+    {
+      "path": "scripts/collect-musinsa-parser-inputs.py",
+      "sha256": "7dd2f20f53418133e7ba7f770b6365745be66006bd9e94edb9fdb05fd0b73646",
+      "selector": null,
+      "bytes": 9551
+    },
+    {
+      "path": "scripts/collect-uniqlo-parser-inputs.py",
+      "sha256": "80151a3ef992ed3501fea5760aec138fea15d73362d4f93e187915d4d6f6c486",
+      "selector": null,
+      "bytes": 14900
+    },
+    {
+      "path": "FitMatchTests/FitMatchCollectedFixtureReplayTests.swift",
+      "sha256": "c41a191fae53b3651ffa3284d241a6f1975cd0da3550fc88fde0dc7920b53819",
+      "selector": null,
+      "bytes": 19994
+    },
+    {
+      "path": "FitMatchTests/FitMatchReleaseLiveProductAuditTests.swift",
+      "sha256": "2214a142b1987ce0588bde1997bda7b1370765a869688027ca4111fc54af70f3",
+      "selector": null,
+      "bytes": 6882
+    }
+  ],
+  "counts": {
+    "supplied_link_records": 186,
+    "supplied_historical_status": {
+      "PARSED_WITH_MEASUREMENTS": 184,
+      "PARTIAL_RECOVERY_REQUIRED": 1,
+      "FAILED": 1
+    },
+    "uniqlo_chart_corpus_records": 880,
+    "zara_production_variant_receipts": 45,
+    "zara_receipt_shapes": {
+      "garment_measure": 42,
+      "body_only": 3
+    },
+    "musinsa_incremental_actual_size_files": 231,
+    "musinsa_options_files_excluded_from_measurement_evidence": 231
+  },
+  "historical_A_test_warning": "2026-08-15 A-test report uses retired reference_on/reference_off, detailed classification and automatic compare expectations. Reuse source facts only; do not promote old outcomes to current policy or execution.",
+  "external_fixture_root": {
+    "path": "/Users/jinyoung/Documents/RetailerCatalogCollector/data/fitmatch_fixtures",
+    "exists": false
+  },
+  "selected_counts": {
+    "musinsa": 30,
+    "uniqlo": 30,
+    "zara": 30
+  },
+  "selected_unique_product_ids": {
+    "musinsa": 29,
+    "uniqlo": 27,
+    "zara": 30
+  },
+  "selected_null_product_identity_inputs": 1,
+  "fixture_counts": {
+    "uniqlo:real_retailer_raw": 25,
+    "musinsa:real_retailer_raw": 5,
+    "zara:real_retailer_raw": 26,
+    "zara:synthetic_contract_input": 1
+  },
+  "new_http_raw_receipts": 3
+}

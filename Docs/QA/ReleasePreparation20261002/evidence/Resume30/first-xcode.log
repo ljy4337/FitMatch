@@ -1,0 +1,769 @@
+Writing result bundle at path:
+	/tmp/FitMatchResume30Focused.xcresult
+
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift:77:94: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context
+        remote: any FitMatchClosetRegistrationRemoteServicing = FitMatchSupabaseDomainClient.shared
+                                                                                             ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchSupabaseProductResolver.swift:1962:16: note: static property declared here
+    static let shared = FitMatchSupabaseDomainClient()
+               ^
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX8_8_6expectfMf_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:9:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://compare"))) == .openPendingProductCompare)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX9_8_6expectfMf0_.swift:1:111: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                              ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:10:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(other)://compare"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0042FitMatchEnvironmentRoutingTestsswift_IyBInfMX10_8_6expectfMf1_.swift:1:109: warning: main actor-isolated conformance of 'FitMatchProductEntryRouting.DeepLinkAction' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkValue(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore,expression: .__fromSyntaxNode(#"FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore"#),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchEnvironmentRoutingTests.swift:11:9: note: in expansion of macro 'expect' here
+        #expect(FitMatchProductEntryRouting.action(for: try #require(URL(string: "\(own)://unknown"))) == .ignore)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/CategoryLiveComparisonAuditTests.swift:676:101: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+                                + "reference_id=\(reference.input.productID) reason=\(strict.reason ?? "unknown")"
+                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~
+                                                                                                   
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX217_8_6expectfMf_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(cache.compare(measurements, minimum: 1),{ $0 == $1() },baseline,expression: .__fromBinaryOperation(.__fromSyntaxNode("cache.compare(measurements, minimum: 1)"),"==",.__fromSyntaxNode("baseline")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX270_12_6expectfMf0_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(unavailableOrUnknown.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("unavailableOrUnknown.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX286_8_6expectfMf4_.swift:1:70: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(noObservation.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("noObservation.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                     ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX307_8_6expectfMf_.swift:1:74: warning: main actor-isolated conformance of 'MeasurementComparisonExclusion' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(result.recommended.result.exclusions,{ $0 == $1() },[
+                                                                         ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX217_8_6expectfMf_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(cache.compare(measurements, minimum: 1),{ $0 == $1() },baseline,expression: .__fromBinaryOperation(.__fromSyntaxNode("cache.compare(measurements, minimum: 1)"),"==",.__fromSyntaxNode("baseline")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX270_12_6expectfMf0_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(unavailableOrUnknown.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("unavailableOrUnknown.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX286_8_6expectfMf4_.swift:1:70: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(noObservation.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("noObservation.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                     ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX307_8_6expectfMf_.swift:1:74: warning: main actor-isolated conformance of 'MeasurementComparisonExclusion' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(result.recommended.result.exclusions,{ $0 == $1() },[
+                                                                         ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX217_8_6expectfMf_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(cache.compare(measurements, minimum: 1),{ $0 == $1() },baseline,expression: .__fromBinaryOperation(.__fromSyntaxNode("cache.compare(measurements, minimum: 1)"),"==",.__fromSyntaxNode("baseline")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX270_12_6expectfMf0_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(unavailableOrUnknown.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("unavailableOrUnknown.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX286_8_6expectfMf4_.swift:1:70: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(noObservation.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("noObservation.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                     ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX307_8_6expectfMf_.swift:1:74: warning: main actor-isolated conformance of 'MeasurementComparisonExclusion' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(result.recommended.result.exclusions,{ $0 == $1() },[
+                                                                         ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX217_8_6expectfMf_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(cache.compare(measurements, minimum: 1),{ $0 == $1() },baseline,expression: .__fromBinaryOperation(.__fromSyntaxNode("cache.compare(measurements, minimum: 1)"),"==",.__fromSyntaxNode("baseline")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX270_12_6expectfMf0_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(unavailableOrUnknown.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("unavailableOrUnknown.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX286_8_6expectfMf4_.swift:1:70: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(noObservation.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("noObservation.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                     ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX307_8_6expectfMf_.swift:1:74: warning: main actor-isolated conformance of 'MeasurementComparisonExclusion' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(result.recommended.result.exclusions,{ $0 == $1() },[
+                                                                         ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX217_8_6expectfMf_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(cache.compare(measurements, minimum: 1),{ $0 == $1() },baseline,expression: .__fromBinaryOperation(.__fromSyntaxNode("cache.compare(measurements, minimum: 1)"),"==",.__fromSyntaxNode("baseline")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:218:9: note: in expansion of macro 'expect' here
+        #expect(cache.compare(measurements, minimum: 1) == baseline)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX270_12_6expectfMf0_.swift:1:77: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(unavailableOrUnknown.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("unavailableOrUnknown.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:271:13: note: in expansion of macro 'expect' here
+            #expect(unavailableOrUnknown.recommended.result == baseline.recommended.result)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX286_8_6expectfMf4_.swift:1:70: warning: main actor-isolated conformance of 'MeasurementComparisonResult' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(noObservation.recommended.result,{ $0 == $1() },baseline.recommended.result,expression: .__fromBinaryOperation(.__fromSyntaxNode("noObservation.recommended.result"),"==",.__fromSyntaxNode("baseline.recommended.result")),comments: [],isRequired: false,sourceLocation: Testing.SourceLocation.__here()).__expected()
+                                                                     ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:287:9: note: in expansion of macro 'expect' here
+        #expect(noObservation.recommended.result == baseline.recommended.result)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@__swiftmacro_13FitMatchTests0037FitMatchVNextContractTestsswift_emGFlfMX307_8_6expectfMf_.swift:1:74: warning: main actor-isolated conformance of 'MeasurementComparisonExclusion' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+Testing.__checkBinaryOperation(result.recommended.result.exclusions,{ $0 == $1() },[
+                                                                         ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/FitMatchVNextContractTests.swift:308:9: note: in expansion of macro 'expect' here
+        #expect(result.recommended.result.exclusions == [
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:50: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                                       ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                 String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:85: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                             ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                    String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:50: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                                       ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                 String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:85: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                             ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                    String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:50: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                                       ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                 String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:85: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                             ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                    String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:50: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                                       ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                 String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:85: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                             ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                    String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:442:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=BLOCKED reason=\(compatibility.reason)")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:54: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                                           ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:66: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                     ~~~~~~~~~~~~^~~~~~~~~
+                                                     String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:89: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: provide a default value to avoid this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                                 ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:450:104: note: use 'String(describing:)' to silence this warning
+                        print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=INSUFFICIENT")
+                                                                                        ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                        String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:50: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                                       ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:62: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                 ~~~~~~~~~~~~^~~~~~~~~
+                                                 String(describing:   )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:85: warning: string interpolation produces a debug description for an optional value; did you mean to make this explicit?
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: provide a default value to avoid this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                                             ?? <#default value#>
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatchTests/LiveThreeProductComparisonTests.swift:458:100: note: use 'String(describing:)' to silence this warning
+                    print("THREE_RESULT target=\(target.info.productID) reference=\(reference.info.productID)/\(referenceSize.name) status=OK recommended=\(history.recommendedSize.name) score=\(history.recommendationScore) method=\(history.comparisonMethod) differences=\(differences)")
+                                                                                    ~~~~~~~~~~~~~~~^~~~~~~~~
+                                                                                    String(describing:      )
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Models/ProductSize.swift:32:52: warning: call to main actor-isolated static method 'hasAnyMeasurement(in:)' in a synchronous nonisolated context
+        return parsedProduct.sizes.contains(where: hasAnyMeasurement(in:))
+                                                   ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Models/ProductSize.swift:37:17: note: calls to static method 'hasAnyMeasurement(in:)' from outside of its actor context are implicitly asynchronous
+    static func hasAnyMeasurement(in size: ParsedProductSize) -> Bool {
+                ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchSupabaseProductResolver.swift:3099:41: warning: call to main actor-isolated static method 'fromTaxonomyCode' in a synchronous nonisolated context
+            return ClosetDetailCategory.fromTaxonomyCode(garmentTypeCode) == .other
+                                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Models/UserFitMetadata.swift:179:17: note: calls to static method 'fromTaxonomyCode' from outside of its actor context are implicitly asynchronous
+    static func fromTaxonomyCode(_ code: String) -> ClosetDetailCategory {
+                ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchSupabaseProductResolver.swift:3354:13: warning: variable 'structuredFacts' was never mutated; consider changing to 'let' constant
+        var structuredFacts = metadata.structuredFacts.reduce(into: [String: String]()) {
+        ~~~ ^
+        let
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/UniqloParser.swift:673:48: warning: call to main actor-isolated static method 'normalizedDisplayCode' in a synchronous nonisolated context
+        let normalizedPLD = pldDisplayCode.map(Self.normalizedDisplayCode)
+                                               ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/UniqloParser.swift:753:25: note: calls to static method 'normalizedDisplayCode' from outside of its actor context are implicitly asynchronous
+    private static func normalizedDisplayCode(_ value: String) -> String {
+                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:180:28: warning: call to main actor-isolated static method 'preferredClosetComparisonSummary' in a synchronous nonisolated context
+        summaries.sort(by: Self.preferredClosetComparisonSummary)
+                           ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:290:25: note: calls to static method 'preferredClosetComparisonSummary' from outside of its actor context are implicitly asynchronous
+    private static func preferredClosetComparisonSummary(
+                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:228:29: warning: call to main actor-isolated static method 'preferredClosetPreviewAnalysis' in a synchronous nonisolated context
+                .sorted(by: Self.preferredClosetPreviewAnalysis)
+                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:268:25: note: calls to static method 'preferredClosetPreviewAnalysis' from outside of its actor context are implicitly asynchronous
+    private static func preferredClosetPreviewAnalysis(
+                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:231:29: warning: call to main actor-isolated static method 'preferredClosetPreviewAnalysis' in a synchronous nonisolated context
+                .sorted(by: Self.preferredClosetPreviewAnalysis)
+                            ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:268:25: note: calls to static method 'preferredClosetPreviewAnalysis' from outside of its actor context are implicitly asynchronous
+    private static func preferredClosetPreviewAnalysis(
+                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:255:28: warning: call to main actor-isolated static method 'preferredClosetComparisonSummary' in a synchronous nonisolated context
+        summaries.sort(by: Self.preferredClosetComparisonSummary)
+                           ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/RecommendationService.swift:290:25: note: calls to static method 'preferredClosetComparisonSummary' from outside of its actor context are implicitly asynchronous
+    private static func preferredClosetComparisonSummary(
+                        ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift:77:94: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context
+        remote: any FitMatchClosetRegistrationRemoteServicing = FitMatchSupabaseDomainClient.shared
+                                                                                             ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchSupabaseProductResolver.swift:1962:16: note: static property declared here
+    static let shared = FitMatchSupabaseDomainClient()
+               ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchComparedProductClosetSubmissionAction.swift:77:94: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context
+        remote: any FitMatchClosetRegistrationRemoteServicing = FitMatchSupabaseDomainClient.shared
+                                                                                             ^
+/Users/jinyoung/Developer/FitMatchLocal/FitMatch/FitMatch/Services/FitMatchSupabaseProductResolver.swift:1962:16: note: static property declared here
+    static let shared = FitMatchSupabaseDomainClient()
+               ^
+2026-10-02 20:36:38.608 xcodebuild[85519:27333125] [MT] IDETestOperationsObserverDebug: 43.935 elapsed -- Testing started completed.
+2026-10-02 20:36:38.609 xcodebuild[85519:27333125] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 20:36:38.609 xcodebuild[85519:27333125] [MT] IDETestOperationsObserverDebug: 43.935 sec, +43.935 sec -- end
+** TEST FAILED **
+
+Testing started

@@ -1,0 +1,5222 @@
+[
+  {
+    "elapsedSeconds" : 0.56999301910400391,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "엑스트라 와이드 투 턱 히든 밴딩 슬랙스 [미디엄 그레이]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5746364",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 109
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 37.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 68
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 41.899999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27
+          }
+        ],
+        "name" : "28"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 109.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 38.75
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 69.25
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 42.549999999999997
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.25
+          }
+        ],
+        "name" : "29"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 110
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 40
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 43.200000000000003
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 35
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.5
+          }
+        ],
+        "name" : "30"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 110.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 41.25
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 71.75
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 43.850000000000001
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 35.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.75
+          }
+        ],
+        "name" : "31"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 111
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 42.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 44.5
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28
+          }
+        ],
+        "name" : "32"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 111.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 43.75
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 74.25
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 45.149999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28.25
+          }
+        ],
+        "name" : "33"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 112
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 75.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 45.799999999999997
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28.5
+          }
+        ],
+        "name" : "34"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 113
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 47.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 78
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 47.100000000000001
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 38
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 29
+          }
+        ],
+        "name" : "36"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 114
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 80.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 48.399999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 29.5
+          }
+        ],
+        "name" : "38"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "바지 > 슈트 팬츠\/슬랙스",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/musinsa.onelink.me\/PvkC\/tlrprnvi"
+  },
+  {
+    "elapsedSeconds" : 0.19501101970672607,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "(우먼) 스퀘어 로고 반소매 티셔츠_화이트",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "4096130",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 44.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14.5
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 45.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15.300000000000001
+          }
+        ],
+        "name" : "M"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/4096130"
+  },
+  {
+    "elapsedSeconds" : 34.777941107749939,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "코튼스판 반팔 티셔츠_MIWHWG509A",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6372903",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 84
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 28
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          }
+        ],
+        "name" : "S(090)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 88
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 29.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "M(095)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 94
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 30.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 57
+          }
+        ],
+        "name" : "L(100)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6372903"
+  },
+  {
+    "elapsedSeconds" : 0.27314496040344238,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "Basic T-shirt [WHITE]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1481640",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 21.5
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 75
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 22
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 77
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 55.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 22.5
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 78.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 56.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 23.5
+          }
+        ],
+        "name" : "XXL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1481640"
+  },
+  {
+    "elapsedSeconds" : 0.27436292171478271,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "심플 베이직 슬림라인 스판 반소매 티셔츠_블랙",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6193571",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 35
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 42
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 11
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 12
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 13
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6193571"
+  },
+  {
+    "elapsedSeconds" : 0.2882230281829834,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "[코스모폴리탄X쿠빈X꼼파뇨] 화이트 반팔티셔츠 _ Money Is The Best",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6176194",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 68
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 21
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 22
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 57
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 23
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6176194"
+  },
+  {
+    "elapsedSeconds" : 0.31781601905822754,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "소프트 U넥 반소매 티셔츠 블루",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "3907950",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 21.5
+          }
+        ],
+        "name" : "FREE"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/3907950"
+  },
+  {
+    "elapsedSeconds" : 0.24732708930969238,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "로블록스 x MUSINSA 콘트라스트 스티치 반소매 티셔츠",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6864173",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 64
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 20.600000000000001
+          }
+        ],
+        "name" : "00S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 21.899999999999999
+          }
+        ],
+        "name" : "00M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 23.199999999999999
+          }
+        ],
+        "name" : "00L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 40
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 425
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 16.699999999999999
+          }
+        ],
+        "name" : "140"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 57
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 42
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 18
+          }
+        ],
+        "name" : "150"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 47.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 19.300000000000001
+          }
+        ],
+        "name" : "160"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6864173"
+  },
+  {
+    "elapsedSeconds" : 39.144804000854492,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "버튼업 반팔 티셔츠",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6372893",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 76
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 26
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54
+          }
+        ],
+        "name" : "S(090)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 80
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 28
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          }
+        ],
+        "name" : "M(095)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 86
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 29
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 16
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "L(100)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6372893"
+  },
+  {
+    "elapsedSeconds" : 0.24208402633666992,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "배색 레이어드 반팔 티셔츠_MIWHWG703A",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6383143",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 31
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 11
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 15.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18
+          }
+        ],
+        "name" : "090"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 32.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 15.5
+          }
+        ],
+        "name" : "095"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 32
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 41
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 42
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 16
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 20
+          }
+        ],
+        "name" : "100"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6383143"
+  },
+  {
+    "elapsedSeconds" : 0.23785400390625,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "에센셜 코튼 반소매 티셔츠_WHITE",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6067466",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 38
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15
+          }
+        ],
+        "name" : "FREE"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6067466"
+  },
+  {
+    "elapsedSeconds" : 0.13148999214172363,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "베이식 긴소매 티셔츠 [화이트]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1144989",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 21.699999999999999
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 57.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.100000000000001
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          }
+        ],
+        "name" : "2XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 62.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 25.699999999999999
+          }
+        ],
+        "name" : "3XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1144989"
+  },
+  {
+    "elapsedSeconds" : 0.14593493938446045,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "베이식 긴소매 티셔츠 2팩",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "2149254",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 21.699999999999999
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 22.5
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 23.300000000000001
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 57.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.100000000000001
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.899999999999999
+          }
+        ],
+        "name" : "2XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 62.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 25.699999999999999
+          }
+        ],
+        "name" : "3XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/2149254"
+  },
+  {
+    "elapsedSeconds" : 0.20210301876068115,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "베이식 긴소매 티셔츠 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1129745",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 22.5
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 23.300000000000001
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 57.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.100000000000001
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.899999999999999
+          }
+        ],
+        "name" : "2XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 62.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 25.699999999999999
+          }
+        ],
+        "name" : "3XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1129745"
+  },
+  {
+    "elapsedSeconds" : 0.20634400844573975,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 스트라이프 보트 넥 긴소매 티셔츠 [블랙\/아이보리]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1920872",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.700000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 49.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 51.299999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 47.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.199999999999999
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 17.399999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 52
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 52
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.800000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18.199999999999999
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.299999999999997
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 52.700000000000003
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.199999999999999
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 52.600000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 57
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 53.399999999999999
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.800000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1920872"
+  },
+  {
+    "elapsedSeconds" : 0.21880996227264404,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 슬림 크롭 스퀘어 넥 링거 긴소매 티셔츠 [블랙\/화이트]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "3730388",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 33.200000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 37.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.100000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 31.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.4000000000000004
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18.199999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 34.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 40
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.799999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 34
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.8000000000000007
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 35.799999999999997
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 42.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 61.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.1
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19.800000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37.100000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 62.299999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.4
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 20.600000000000001
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/3730388"
+  },
+  {
+    "elapsedSeconds" : 0.15097606182098389,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 울 텐셀 홀터 레이어드 긴소매 티셔츠 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5695778",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 48.399999999999999
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36.399999999999999
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 64
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 35
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.3000000000000007
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 17.5
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 49.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 38
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 65
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 37.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.8000000000000007
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18.300000000000001
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 50.600000000000001
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39.600000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 41.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 66
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 40
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.300000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19.100000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 51.700000000000003
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 41.200000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 67
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 42.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.800000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19.899999999999999
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5695778"
+  },
+  {
+    "elapsedSeconds" : 0.21047294139862061,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 울 텐셀 슬림 긴소매 티셔츠 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5151554",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53.200000000000003
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37.399999999999999
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59.700000000000003
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.3000000000000007
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 15.199999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.8000000000000007
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 16
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 56.799999999999997
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 40.600000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 41.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 61.299999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 41.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.300000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 16.800000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 58.600000000000001
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 42.200000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 62.100000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.800000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 17.600000000000001
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5151554"
+  },
+  {
+    "elapsedSeconds" : 0.25630390644073486,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "베이식 긴소매 티셔츠 [스모크 핑크]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1144999",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          }
+        ],
+        "name" : "2XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          }
+        ],
+        "name" : "3XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1144999"
+  },
+  {
+    "elapsedSeconds" : 0.20265495777130127,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "베이식 긴소매 티셔츠 [머쉬룸]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "1446486",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 52.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 25.300000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 26.100000000000001
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 57.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 26.899999999999999
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 61
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 13.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 27.699999999999999
+          }
+        ],
+        "name" : "2XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          }
+        ],
+        "name" : "3XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/1446486"
+  },
+  {
+    "elapsedSeconds" : 0.30670905113220215,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 홀터 스트링 레이어드 긴소매 티셔츠 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5626708",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 50.899999999999999
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36.899999999999999
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 35.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 59.799999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 15.199999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 52
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 38.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 38
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.799999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 16
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53.100000000000001
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 40.100000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 40.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 61.799999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 41.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 16.800000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54.200000000000003
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 41.700000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 62.799999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 17.600000000000001
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 긴소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5626708"
+  },
+  {
+    "elapsedSeconds" : 0.25941193103790283,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 린넨 블렌드 보트 넥 시어 니트 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "2448867",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 47.200000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 48.299999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18.699999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 47
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19.5
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 48
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 49.799999999999997
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 49.700000000000003
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 20.300000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.100000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 50.399999999999999
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 21.100000000000001
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 니트\/스웨터",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/2448867"
+  },
+  {
+    "elapsedSeconds" : 0.27876198291778564,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 스퀘어 넥 니트 슬리브리스 탑 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "2448874",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 32
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 49.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 34.5
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 50.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 37
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 39.5
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 니트\/스웨터",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/2448874"
+  },
+  {
+    "elapsedSeconds" : 0.28050601482391357,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "우먼즈 린넨 블렌드 보트 넥 시어 니트 [라이트 베이지]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "2448866",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 47.200000000000003
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 48.299999999999997
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 18.699999999999999
+          }
+        ],
+        "name" : "XS"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 47
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 19.5
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 48
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 49.799999999999997
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 49.700000000000003
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 51.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 20.300000000000001
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 51.100000000000001
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 56.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 50.399999999999999
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 21.100000000000001
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 니트\/스웨터",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/2448866"
+  },
+  {
+    "elapsedSeconds" : 0.24283802509307861,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "워셔블 수피마 코튼 크루 넥 니트 [블랙]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "4682241",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 65.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 45.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 58.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 41
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 23.100000000000001
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 67.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 47.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 55.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 43.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 9.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 23.899999999999999
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 69
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 61.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 24.699999999999999
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 50.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 60.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 62.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 48.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 10.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 25.5
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 52
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 63
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 63.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 51
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 11
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 26.300000000000001
+          }
+        ],
+        "name" : "2XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 니트\/스웨터",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/4682241"
+  },
+  {
+    "elapsedSeconds" : 0.20010590553283691,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "하프 위트 버튼 스트라이프 니트_블랙",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5107472",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 64.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 54.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 23.5
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 65.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 47
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 57
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 24
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 12.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 28
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 66.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 59.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 24.5
+          }
+        ],
+        "name" : "XL"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 니트\/스웨터",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5107472"
+  },
+  {
+    "elapsedSeconds" : 0.17386698722839355,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "[10주년기획] © 모두의 에센셜 데님 팬츠_(커브드 핏) 4 COLOR",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "7051965",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 104.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 36.399999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 33.600000000000001
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 26.5
+          }
+        ],
+        "name" : "1 (30)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 106.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 41.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 37.700000000000003
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34.299999999999997
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27
+          }
+        ],
+        "name" : "2 (32)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 108.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 27.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.5
+          }
+        ],
+        "name" : "3 (34)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "바지 > 데님 팬츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/7051965"
+  },
+  {
+    "elapsedSeconds" : 0.2157520055770874,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "클래식 릴랙스드 데님 팬츠 Faded Blue",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "4213064",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 109
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 41
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 32
+          }
+        ],
+        "name" : "30"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 111
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 33
+          }
+        ],
+        "name" : "32"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 112
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34
+          }
+        ],
+        "name" : "34"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "바지 > 데님 팬츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/4213064"
+  },
+  {
+    "elapsedSeconds" : 0.19787001609802246,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "[10주년기획] © 모두의 셀비지 데님 팬츠_4 COLOR",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5864299",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 104
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 31.399999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 30.600000000000001
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 24
+          }
+        ],
+        "name" : "0 (28)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 105.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 38.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 32.700000000000003
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 31.300000000000001
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 24.5
+          }
+        ],
+        "name" : "1 (30)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 107
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 41
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 34
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 32
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 25
+          }
+        ],
+        "name" : "2 (32)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 108.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 43.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 35.299999999999997
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 32.700000000000003
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 25.5
+          }
+        ],
+        "name" : "3 (34)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 110
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 36.600000000000001
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 33.399999999999999
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 26
+          }
+        ],
+        "name" : "4 (36)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "바지 > 데님 팬츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5864299"
+  },
+  {
+    "elapsedSeconds" : 0.23186898231506348,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "심플 베이직 슬림라인 스판 반소매 티셔츠_소라",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6193525",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 53
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 35
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 42
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 11
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 44
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 12
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 46
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 13
+          }
+        ],
+        "name" : "L"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6193525"
+  }
+]

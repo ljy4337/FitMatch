@@ -1,0 +1,290 @@
+[
+  {
+    "source_measurement_code": "musinsa.armhole.armhole_method_unspecified",
+    "fitmatch_measurement_code": "armhole_measurement_unspecified",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+    "fitmatch_measurement_code": "back_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.chest_width.chest_pit_to_pit",
+    "fitmatch_measurement_code": "chest_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+    "fitmatch_measurement_code": "front_rise",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+    "fitmatch_measurement_code": "hem_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+    "fitmatch_measurement_code": "hip_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.outseam.waist_to_outer_hem",
+    "fitmatch_measurement_code": "outseam",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.shoulder_width.shoulder_seam_to_seam",
+    "fitmatch_measurement_code": "shoulder_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.sleeve_length.sleeve_raglan_neck_to_cuff",
+    "fitmatch_measurement_code": "sleeve_raglan_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff",
+    "fitmatch_measurement_code": "sleeve_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.sleeve_opening_width.cuff_opening_edge_to_edge",
+    "fitmatch_measurement_code": "sleeve_opening_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+    "fitmatch_measurement_code": "thigh_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.under_bust.under_bust_edge_to_edge",
+    "fitmatch_measurement_code": "under_bust_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+    "fitmatch_measurement_code": "waist_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+    "fitmatch_measurement_code": "back_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.back_panel_length.back_panel_reference_to_hem",
+    "fitmatch_measurement_code": "back_panel_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+    "fitmatch_measurement_code": "chest_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.collar_height.collar_base_to_point",
+    "fitmatch_measurement_code": "collar_height",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.front_length.front_neck_to_hem",
+    "fitmatch_measurement_code": "front_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.front_rise.front_crotch_to_waist",
+    "fitmatch_measurement_code": "front_rise",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.gathered_body_width.body_width_including_gather_and_tack",
+    "fitmatch_measurement_code": "gathered_body_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.hem_width.hem_edge_to_edge",
+    "fitmatch_measurement_code": "hem_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.hip_circumference.garment_hip_circumference",
+    "fitmatch_measurement_code": "hip_circumference",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.inseam.crotch_to_inner_hem",
+    "fitmatch_measurement_code": "inseam",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.lining_back_length.lining_back_neck_to_hem",
+    "fitmatch_measurement_code": "lining_back_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.lining_body_width.lining_body_edge_to_edge",
+    "fitmatch_measurement_code": "lining_body_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.neck_circumference.garment_neck_circumference",
+    "fitmatch_measurement_code": "neck_circumference",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.outseam.waist_to_outer_hem",
+    "fitmatch_measurement_code": "outseam",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.petticoat_length.petticoat_waist_to_hem",
+    "fitmatch_measurement_code": "petticoat_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.petticoat_waist_circumference.petticoat_garment_waist_circumference",
+    "fitmatch_measurement_code": "petticoat_waist_circumference",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+    "fitmatch_measurement_code": "shoulder_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+    "fitmatch_measurement_code": "sleeve_center_back_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.sleeve_length.sleeve_shoulder_seam_to_cuff",
+    "fitmatch_measurement_code": "sleeve_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.thigh_width.thigh_crotch_to_outer",
+    "fitmatch_measurement_code": "thigh_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.total_length.source_defined_total_length",
+    "fitmatch_measurement_code": "source_total_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.total_length.waist_to_skirt_hem",
+    "fitmatch_measurement_code": "total_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "uniqlo.waist_circumference.garment_waist_circumference",
+    "fitmatch_measurement_code": "waist_circumference",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.back_rise.back_crotch_to_waist",
+    "fitmatch_measurement_code": "back_rise",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.back_width.back_armhole_to_armhole",
+    "fitmatch_measurement_code": "back_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.chest_width.chest_pit_to_pit",
+    "fitmatch_measurement_code": "chest_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.front_length.front_shoulder_to_hem",
+    "fitmatch_measurement_code": "front_length_shoulder_to_hem",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.front_rise.front_crotch_to_waist",
+    "fitmatch_measurement_code": "front_rise",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.hem_width.hem_edge_to_edge",
+    "fitmatch_measurement_code": "hem_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.hip_width.hip_at_widest",
+    "fitmatch_measurement_code": "hip_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.outseam.waist_to_outer_hem",
+    "fitmatch_measurement_code": "outseam",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+    "fitmatch_measurement_code": "sleeve_length",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.upper_arm_width.upper_arm_edge_to_edge",
+    "fitmatch_measurement_code": "upper_arm_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  },
+  {
+    "source_measurement_code": "zara.waist_width.waist_edge_to_edge",
+    "fitmatch_measurement_code": "waist_width",
+    "scale_factor": "1.000000",
+    "offset_value": "0.000000"
+  }
+]

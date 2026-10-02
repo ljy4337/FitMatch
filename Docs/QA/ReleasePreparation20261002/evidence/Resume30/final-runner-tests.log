@@ -1,0 +1,17 @@
+..db.swift_manual: BLOCKED
+...db.swift_cleanup: BLOCKED
+........run.interrupted: BLOCKED
+REPORT: /private/var/folders/tk/61qtbj0j5rd6rqr44xkz87jc0000gn/T/tmp7h6q7wh9/report.md
+.usage: release_qa.py [-h] [--output OUTPUT] [--ledger LEDGER]
+                     {preflight,smoke,full,report,cleanup}
+release_qa.py: error: Output must be a new or empty directory; use report mode for prior results
+..matrix.synthetic_coverage: BLOCKED
+.matrix.synthetic_coverage: FAIL
+matrix.synthetic.musinsa-to-uniqlo-A-complete_shared_canonical: PASS
+matrix.synthetic.musinsa-to-musinsa-A-raw_zero: PASS
+matrix.synthetic.zara-to-musinsa-G-exact_identity_mismatch: PASS
+..................
+----------------------------------------------------------------------
+Ran 35 tests in 0.123s
+
+OK

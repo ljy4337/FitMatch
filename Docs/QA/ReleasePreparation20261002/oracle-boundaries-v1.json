@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "kind": "CHARACTERIZATION",
+  "policy_approval": "UNRESOLVED for formula, rounding and tie break",
+  "scope": "Additive synthetic approved-snapshot arithmetic inputs; no live server or product-policy approval. Existing oracle.json and policy-expectations.json remain unchanged.",
+  "expected_value_origin": "Literal hand calculations recorded without invoking the production scoring engine. Current-contract assumptions were read from the production owner; this is not an independent policy oracle.",
+  "current_contract_assumption": "Per-item max(0,min(100,round(100-5*absolute_delta))), then round(weighted mean of integer item scores). Positive half values round upward. Ranking: descending score, ascending weighted absolute delta, ascending exact UUID.",
+  "size_ids": {
+    "UUID1": "40000000-0000-0000-0000-000000000001",
+    "UUID2": "40000000-0000-0000-0000-000000000002",
+    "UUID3": "40000000-0000-0000-0000-000000000003"
+  },
+  "shared_size_label": "M",
+  "unit": "CM",
+  "integer_tolerance": 0,
+  "floating_tolerance": 0.000001,
+  "cases": [
+    {
+      "id": "item-half",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean",
+      "metrics": ["chest_width", "shoulder_width"],
+      "reference": [50, 48], "target": [50.5, 46.5],
+      "signed_delta": [0.5, -1.5], "absolute_delta": [0.5, 1.5], "weights": [2, 1.5],
+      "unrounded_item_scores": [97.5, 92.5], "item_scores": [98, 93],
+      "weighted_sum": 335.5, "weight_sum": 3.5,
+      "unrounded_final_score": 95.85714285714286, "score": 96,
+      "counterexample": "Rounding only after averaging raw item scores yields round(333.75/3.5)=95 instead of 96. Ties-to-even yields item score 92 instead of 93."
+    },
+    {
+      "id": "final-half",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores",
+      "metrics": ["chest_width", "back_length", "sleeve_length"],
+      "reference": [50, 70, 60], "target": [50, 74, 58],
+      "signed_delta": [0, 4, -2], "absolute_delta": [0, 4, 2], "weights": [2, 1, 1],
+      "item_scores": [100, 80, 90], "weighted_sum": 370, "weight_sum": 4,
+      "unrounded_final_score": 92.5, "score": 93, "reliability": 3, "coverage": 0.75,
+      "counterexample": "Truncation or ties-to-even at the final weighted mean returns 92. All item scores are already integers."
+    },
+    {
+      "id": "clamp-endpoints",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence",
+      "metrics": ["chest_width"], "reference": [50], "weights": [2],
+      "candidates_in_authorized_input_order": [
+        {"id": "UUID3", "target": [71], "signed_delta": [21], "raw_item_score": -5, "score": 0},
+        {"id": "UUID2", "target": [70], "signed_delta": [20], "raw_item_score": 0, "score": 0},
+        {"id": "UUID1", "target": [50], "signed_delta": [0], "raw_item_score": 100, "score": 100}
+      ],
+      "ranked_ids": ["UUID1", "UUID2", "UUID3"], "ranked_scores": [100, 0, 0],
+      "ranked_weighted_absolute_delta": [0, 20, 21],
+      "completion_evidence_signed_delta": [21, 20, 0],
+      "counterexample": "Removing the lower clamp yields -5; overwriting large evidence with zero loses the literal delta 21. Valid absolute deltas cannot exercise a raw score above 100, so the upper endpoint is checked without claiming upper-clamp branch coverage."
+    },
+    {
+      "id": "weighted-delta-tie",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID",
+      "metrics": ["chest_width", "shoulder_width"], "reference": [50, 48], "weights": [2, 1.5],
+      "candidates_in_authorized_input_order": [
+        {"id": "UUID1", "target": [49.5, 48], "signed_delta": [-0.5, 0], "item_scores": [98, 100], "weighted_sum": 346, "score": 99, "weighted_absolute_delta": 0.2857142857142857},
+        {"id": "UUID2", "target": [50, 48.5], "signed_delta": [0, 0.5], "item_scores": [100, 98], "weighted_sum": 347, "score": 99, "weighted_absolute_delta": 0.21428571428571427}
+      ],
+      "weight_sum": 3.5, "ranked_ids_for_both_input_orders": ["UUID2", "UUID1"],
+      "completion_evidence_signed_delta_forward": [-0.5, 0, 0, 0.5],
+      "completion_evidence_signed_delta_reversed": [0, 0.5, -0.5, 0],
+      "counterexample": "UUID-first, input-order or unweighted-absolute-mean ties choose UUID1; the observed weighted-delta rule chooses UUID2."
+    },
+    {
+      "id": "negative-absolute-evidence",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore",
+      "reference": [50], "target": [50.5], "signed_delta": [0.5], "forged_absolute_delta": [-0.5],
+      "expected": "VNextComparisonEngineAdapterError.invalidEvidence(UUID1); no result or completion payload",
+      "counterexample": "Clamping an invalid negative absolute delta into a superficially valid score of 100 must not replace evidence validation."
+    }
+  ],
+  "existing_coverage_reused": [
+    "FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder",
+    "FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult"
+  ],
+  "evidence_limit": "Real decoder, adapter, scoring engine and completion payload are exercised using synthetic DTOs. This does not establish authenticated DB persistence, preview UI, device behavior or an approved formula."
+}

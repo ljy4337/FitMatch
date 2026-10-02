@@ -1,0 +1,7 @@
+Writing result bundle at path:
+	/tmp/FitMatchPrep20Focused.xcresult
+
+2026-10-02 21:17:24.557 xcodebuild[93979:27395719] [MT] IDETestOperationsObserverDebug: 11.661 elapsed -- Testing started completed.
+2026-10-02 21:17:24.557 xcodebuild[93979:27395719] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 21:17:24.557 xcodebuild[93979:27395719] [MT] IDETestOperationsObserverDebug: 11.661 sec, +11.661 sec -- end
+Testing started

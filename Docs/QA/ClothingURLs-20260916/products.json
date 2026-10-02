@@ -1,0 +1,309 @@
+{
+  "checked_at": "2026-09-15T22:47:30.645Z",
+  "scope": "10 clothing URLs per retailer; absent from current Closet",
+  "closet_distinct_products_checked": 29,
+  "deduplication": "musinsa goods ID / uniqlo E ID / zara URL style reference; not server identity equivalence",
+  "items": [
+    {
+      "source": "musinsa",
+      "category": "셔츠",
+      "name": "덱스터 웨스턴 데님 셔츠 [BLACK]",
+      "id": "7035474",
+      "url": "https://www.musinsa.com/products/7035474",
+      "index": 1,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "블라우스",
+      "name": "Check frill pintuck blouse_2colors",
+      "id": "7119658",
+      "url": "https://www.musinsa.com/products/7119658",
+      "index": 2,
+      "verification": "official_browser_product_page",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "니트",
+      "name": "플러피 브러쉬 카라 니트 [BROWN]",
+      "id": "7037384",
+      "url": "https://www.musinsa.com/products/7037384",
+      "index": 3,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "니트",
+      "name": "[소프트얀] 딥 브이넥 니트_SPKWG49G01",
+      "id": "7169307",
+      "url": "https://www.musinsa.com/products/7169307",
+      "index": 4,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "티셔츠",
+      "name": "Seoul College Address Tee_M/Grey",
+      "id": "7085209",
+      "url": "https://www.musinsa.com/products/7085209",
+      "index": 5,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "데님 팬츠",
+      "name": "레오파드 배색 아일렛 스트랩 포시즌 와이드 데님 팬츠 [흑청]",
+      "id": "7011736",
+      "url": "https://www.musinsa.com/products/7011736",
+      "index": 6,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "데님 팬츠",
+      "name": "[노미스 X 인템포무드] 빈티지 스트레이트 데님_빈티지인디고",
+      "id": "7024050",
+      "url": "https://www.musinsa.com/products/7024050",
+      "index": 7,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "슬랙스",
+      "name": "[AW] Santiago Slacks (Khaki Brown)",
+      "id": "7107117",
+      "url": "https://www.musinsa.com/products/7107117",
+      "index": 8,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "스커트",
+      "name": "프레이드 로즈 미디 스커트 (크림)",
+      "id": "7044828",
+      "url": "https://www.musinsa.com/products/7044828",
+      "index": 9,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "musinsa",
+      "category": "재킷",
+      "name": "[ON]스웨이드 스탠 에리 오버핏 바이커 트러커 - 2color",
+      "id": "6978446",
+      "url": "https://www.musinsa.com/products/6978446",
+      "index": 10,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "긴팔 티셔츠",
+      "name": "AIRism코튼크루넥T(긴팔)",
+      "id": "E465193",
+      "url": "https://www.uniqlo.com/kr/ko/products/E465193-000/00",
+      "index": 11,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "반팔 티셔츠",
+      "name": "크루넥T",
+      "id": "E422992",
+      "url": "https://www.uniqlo.com/kr/ko/products/E422992-000/00",
+      "index": 12,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "니트",
+      "name": "워셔블밀라노립크루넥스웨터",
+      "id": "E453754",
+      "url": "https://www.uniqlo.com/kr/ko/products/E453754-000/00",
+      "index": 13,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "반팔 니트",
+      "name": "워셔블밀라노립니트T(반팔)",
+      "id": "E481004",
+      "url": "https://www.uniqlo.com/kr/ko/products/E481004-000/00",
+      "index": 14,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "셔츠",
+      "name": "브러시드코튼셔츠",
+      "id": "E486610",
+      "url": "https://www.uniqlo.com/kr/ko/products/E486610-000/00",
+      "index": 15,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "셔츠",
+      "name": "드레이프셔츠",
+      "id": "E488801",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488801-000/00",
+      "index": 16,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "파카",
+      "name": "포켓터블UV PROTECTION파카",
+      "id": "E469292",
+      "url": "https://www.uniqlo.com/kr/ko/products/E469292-000/00",
+      "index": 17,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "재킷",
+      "name": "해링턴재킷",
+      "id": "E484610",
+      "url": "https://www.uniqlo.com/kr/ko/products/E484610-000/00",
+      "index": 18,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "치노 팬츠",
+      "name": "배럴치노팬츠",
+      "id": "E487214",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487214-000/00",
+      "index": 19,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "source": "uniqlo",
+      "category": "이지 팬츠",
+      "name": "저지이지워크팬츠",
+      "id": "E488739",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488739-000/00",
+      "index": 20,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "인터록 긴소매 티셔츠",
+      "url": "https://www.zara.com/kr/ko/인터록-긴소매-티셔츠-p04174639.html",
+      "source": "zara",
+      "category": "긴팔 티셔츠",
+      "id": "04174639",
+      "index": 21,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "크롭 반소매 티셔츠",
+      "url": "https://www.zara.com/kr/ko/크롭-반소매-티셔츠-p02335299.html",
+      "source": "zara",
+      "category": "반팔 티셔츠",
+      "id": "02335299",
+      "index": 22,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "스웨이드 메쉬 자수 블라우스",
+      "url": "https://www.zara.com/kr/ko/스웨이드-메쉬-매듭-장식-자수-블라우스-p01008226.html",
+      "source": "zara",
+      "category": "블라우스",
+      "id": "01008226",
+      "index": 23,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "스카프 셔츠",
+      "url": "https://www.zara.com/kr/ko/스카프-셔츠-p07970506.html",
+      "source": "zara",
+      "category": "셔츠",
+      "id": "07970506",
+      "index": 24,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "울 브이넥 스웨터",
+      "url": "https://www.zara.com/kr/ko/울-브이넥-스웨터-p01509003.html",
+      "source": "zara",
+      "category": "니트",
+      "id": "01509003",
+      "index": 25,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "ZW 콜렉션 카고 팬츠",
+      "url": "https://www.zara.com/kr/ko/zw-콜렉션-카고-팬츠-p07627248.html",
+      "source": "zara",
+      "category": "카고 팬츠",
+      "id": "07627248",
+      "index": 26,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "포켓 면 혼방 재킷",
+      "url": "https://www.zara.com/kr/ko/코튼-블렌드-포켓-재킷-p05063840.html",
+      "source": "zara",
+      "category": "재킷",
+      "id": "05063840",
+      "index": 27,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "나이론 드레이프 벌룬 원피스",
+      "url": "https://www.zara.com/kr/ko/나이론-드레이프-벌룬-원피스-p04772928.html",
+      "source": "zara",
+      "category": "원피스",
+      "id": "04772928",
+      "index": 28,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "플리츠 슬리브 미니 원피스",
+      "url": "https://www.zara.com/kr/ko/플리츠-소매-미니-원피스-p07827777.html",
+      "source": "zara",
+      "category": "원피스",
+      "id": "07827777",
+      "index": 29,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    },
+    {
+      "name": "페이크 레더 바이커 재킷",
+      "url": "https://www.zara.com/kr/ko/페이크-레더-점퍼-p04391892.html",
+      "source": "zara",
+      "category": "재킷",
+      "id": "04391892",
+      "index": 30,
+      "verification": "official_product_page_via_web",
+      "closet_overlap": false
+    }
+  ]
+}
+

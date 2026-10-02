@@ -1,0 +1,530 @@
+{
+  "project": "hnkplvyegonlhumlejst",
+  "migration": "20260915064910_cleanup_retired_paths_and_align_group_readiness",
+  "protectedBefore": {
+    "jsonb_build_object": {
+      "closet": "69e694ffa19e20b1808d33e7928d6b0d",
+      "mappings": "9df02d1868298f3699791fb1726aaa26",
+      "products": "06d182902f99535eb408f63428649438",
+      "comparisons": "d5f4ac08aad866bec0b51139741eac96",
+      "current_history": "9ebebfa9637ba7c2d3b2de4d28283a93"
+    }
+  },
+  "protectedAfter": {
+    "jsonb_build_object": {
+      "closet": "69e694ffa19e20b1808d33e7928d6b0d",
+      "mappings": "9df02d1868298f3699791fb1726aaa26",
+      "products": "06d182902f99535eb408f63428649438",
+      "comparisons": "d5f4ac08aad866bec0b51139741eac96",
+      "current_history": "9ebebfa9637ba7c2d3b2de4d28283a93"
+    }
+  },
+  "postflight": {
+    "jsonb_build_object": {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "axis_hash": "4de8982f8bc4ed8d471e74a4c0561b14",
+      "migration": [
+        {
+          "name": "cleanup_retired_paths_and_align_group_readiness",
+          "version": "20260915064910"
+        }
+      ],
+      "old_history": 0,
+      "current_history": 27,
+      "removed_functions": [
+        null,
+        null,
+        null
+      ],
+      "readiness_definition": "CREATE OR REPLACE FUNCTION fitmatch_vnext.product_readiness_with_context(p_product_id uuid, p_effective_classification jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE\n SET search_path TO ''\nAS $function$\ndeclare\n    unit_value jsonb;\nbegin\n    unit_value := fitmatch_vnext.product_comparison_unit_decision(p_product_id);\n    if not coalesce((unit_value ->> 'eligible')::boolean, false) then\n        return jsonb_build_object(\n            'product_id', p_product_id,\n            'ready', false,\n            'status', case when unit_value ->> 'reason' in (\n              'MIXED_GARMENT_SET','MULTIPLE_COMPONENT_MEASUREMENT_CONTRACT'\n            ) then 'NOT_APPLICABLE' else 'CLASSIFICATION_REQUIRED' end,\n            'reason', unit_value ->> 'reason',\n            'comparison_unit', unit_value,\n            'readiness_version', 'fitmatch-vnext-readiness-v3'\n        );\n    end if;\n    return fitmatch_vnext.product_measurement_readiness(\n        p_product_id, p_effective_classification\n    );\nend\n$function$\n"
+    }
+  },
+  "readinessBefore": [
+    {
+      "source_code": "musinsa",
+      "source_product_key": "3346165",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4341120",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4818151",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4971043",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "5746363",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "5922490",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6590793",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6595807",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6948481",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E450543",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E453754",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E465185",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E483512",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E484080",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E486117",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E487929",
+      "group_status": "CONFIRMED",
+      "current_status": "READY",
+      "current_ready": "true",
+      "group_status_expected": "READY",
+      "group_ready_expected": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488397",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488630",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488684",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E489563",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491086",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491294",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491297",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491380",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E492123",
+      "group_status": "REVIEW_REQUIRED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "CLASSIFICATION_REQUIRED",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "548577264",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "555162424",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "556139700",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "560347128",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "561264931",
+      "group_status": "CONFIRMED",
+      "current_status": "CLASSIFICATION_REQUIRED",
+      "current_ready": "false",
+      "group_status_expected": "NOT_APPLICABLE",
+      "group_ready_expected": "false"
+    }
+  ],
+  "readinessAfter": [
+    {
+      "source_code": "musinsa",
+      "source_product_key": "3346165",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4341120",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4818151",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "4971043",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "5746363",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "5922490",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6590793",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6595807",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "musinsa",
+      "source_product_key": "6948481",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E450543",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E453754",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E465185",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E483512",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E484080",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E486117",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E487929",
+      "status": "READY",
+      "ready": "true"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488397",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488630",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E488684",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E489563",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491086",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491294",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491297",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E491380",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "uniqlo",
+      "source_product_key": "E492123",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "548577264",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "555162424",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "556139700",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "560347128",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    },
+    {
+      "source_code": "zara",
+      "source_product_key": "561264931",
+      "status": "CLASSIFICATION_REQUIRED",
+      "ready": "false"
+    }
+  ],
+  "readinessStatusChanges": 0,
+  "testSummary": {
+    "status": "SUCCEEDED",
+    "durationMs": 262868,
+    "counts": {
+      "passed": 779,
+      "failed": 0,
+      "skipped": 42
+    },
+    "target": "simulator"
+  },
+  "testArtifacts": {
+    "buildLogPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/test_sim_2026-09-15T06-42-40-386Z_pid66510_48ddeaf1.log",
+    "xcresultPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T06-42-40-386Z_pid66510_1d99533c.xcresult",
+    "testProductsPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/test-products/test_sim_2026-09-15T06-42-40-386Z_pid66510_82ef27e7.xctestproducts"
+  },
+  "liveSummary": {
+    "status": "SUCCEEDED",
+    "durationMs": 88370,
+    "counts": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "target": "simulator"
+  },
+  "liveArtifacts": {
+    "buildLogPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/test_sim_2026-09-15T06-50-16-588Z_pid66510_e8193989.log",
+    "xcresultPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/result-bundles/test_sim_2026-09-15T06-50-16-588Z_pid66510_4e37fb9d.xcresult",
+    "testProductsPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/test-products/test_sim_2026-09-15T06-42-40-386Z_pid66510_82ef27e7.xctestproducts"
+  }
+}

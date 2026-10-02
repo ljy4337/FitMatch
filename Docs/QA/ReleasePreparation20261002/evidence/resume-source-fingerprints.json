@@ -1,0 +1,11 @@
+{
+  "scripts/release_qa.py": "275e042dd43d2ea906237ce4e3d146b90672e911f9444f3cd5f1298c348f5874",
+  "scripts/tests/test_release_qa.py": "c06f81134721d54f63816e5785266e71d90490df6e8e05249025707a82abcc73",
+  "scripts/release_qa_db.py": "eaf98e88ea44654998635fdcc3a46a381d5101704688bbdf657155196bd3ca8b",
+  "scripts/test_release_qa_db.py": "80652a6defa72f8736c308a8b48521abc91eba9ffd9816685f40a031cf6fcbd5",
+  "FitMatchTests/FitMatchReleaseContinuationTests.swift": "689cbcdd7284209f3223804d157bafe94670bfd3e3cb36cf7541682591283207",
+  "FitMatchTests/FitMatchReleaseTransportFaultTests.swift": "20ade8f1a77b84f2c3071f9dae159d37a38a1676e9c28b91d28dfc427326b9a7",
+  "FitMatchTests/FitMatchReleasePreparationTests.swift": "f87e73765231ca702dc532617157e36e7f782656b6278e01dc40f44728b53590",
+  "FitMatchTests/FitMatchReleaseRawFixtureTests.swift": "600cb57d2232f83b790ef3d1f547491570e8d7ced43524ccfdda66c7e42d09eb",
+  "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift": "064fa24284ca9daf35890c8979199bc14671e878d8be8fbeab5df9f9150ee728"
+}

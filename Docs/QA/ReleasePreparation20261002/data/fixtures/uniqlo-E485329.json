@@ -1,0 +1,661 @@
+{
+  "product_id": "E485329",
+  "product_name": "캐시미어크루넥가디건",
+  "canonical_url": "https://www.uniqlo.com/kr/ko/products/E485329-000/00",
+  "observed_ids": [
+    "E485329-000"
+  ],
+  "source_path": "니트 & 가디건 > 가디건 > 캐시미어",
+  "source_depth_names": [
+    "니트 & 가디건",
+    "가디건",
+    "캐시미어"
+  ],
+  "source_depth_codes": [
+    "95353",
+    "128380",
+    "128384"
+  ],
+  "audience": "WOMEN",
+  "gender_name": "women",
+  "gender_category": "WOMEN",
+  "product_type": "unknown",
+  "product_type_kr": "",
+  "size_chart_payload": {
+    "result": [
+      {
+        "productId": "E485329-000",
+        "sizeChart": [
+          {
+            "sizeCode": "SMA002",
+            "displayCode": "002",
+            "name": "XS",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "49.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "19 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "38",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "44",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "73",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA003",
+            "displayCode": "003",
+            "name": "S",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "51",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "20",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "39",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "46.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "18 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "74.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA004",
+            "displayCode": "004",
+            "name": "M",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "53",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "20 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "40",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "49",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "19 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA005",
+            "displayCode": "005",
+            "name": "L",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "55",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "21 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "41.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "16 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "52",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "20 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "77.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA006",
+            "displayCode": "006",
+            "name": "XL",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "57",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "22 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "43",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "55",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "21 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA007",
+            "displayCode": "007",
+            "name": "XXL",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "59.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "23 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "44",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "58",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "22 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "31",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA008",
+            "displayCode": "008",
+            "name": "3XL",
+            "sizeParts": [
+              {
+                "code": "knit-body-length-front",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "60",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "23 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "45",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "61",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "24",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "79",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "31",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bodyMeasurements": [
+          {
+            "sizeCode": "SMA002",
+            "displayCode": "002",
+            "name": "XS",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "73-79",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28 3/4-31",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA003",
+            "displayCode": "003",
+            "name": "S",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "77-83",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 1/4-32 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA004",
+            "displayCode": "004",
+            "name": "M",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "81-87",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "32-34 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA005",
+            "displayCode": "005",
+            "name": "L",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "85-91",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33 1/2-35 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA006",
+            "displayCode": "006",
+            "name": "XL",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "91-97",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "35 3/4-38 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA007",
+            "displayCode": "007",
+            "name": "XXL",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "97-103",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "38 1/4-40 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA008",
+            "displayCode": "008",
+            "name": "3XL",
+            "sizeParts": [
+              {
+                "code": "nude-bust",
+                "name": "가슴둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "103-109",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "40 1/2-43",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imageUrl": "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/485329/item/krgoods_10_485329_3x4.jpg",
+        "colorCode": ""
+      }
+    ]
+  },
+  "size_count_official": 7
+}

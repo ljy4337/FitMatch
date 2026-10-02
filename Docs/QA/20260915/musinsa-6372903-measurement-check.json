@@ -1,0 +1,113 @@
+{
+  "sourceImage": "https://fit6.cre.ma/mixxo.cafe24.com/fit/products/12726/combined_fit_product.jpg?width=780",
+  "method": "Official image visually read, then compared with fresh full production parser output",
+  "productURL": "https://www.musinsa.com/products/6372903",
+  "elapsedSeconds": 157.3260909318924,
+  "checks": [
+    {
+      "size": "S(090)",
+      "field": "어깨너비",
+      "expected": 36,
+      "actual": 36,
+      "status": "PASS"
+    },
+    {
+      "size": "S(090)",
+      "field": "가슴둘레",
+      "expected": 84,
+      "actual": 84,
+      "status": "PASS"
+    },
+    {
+      "size": "S(090)",
+      "field": "팔둘레",
+      "expected": 28,
+      "actual": null,
+      "status": "FAIL"
+    },
+    {
+      "size": "S(090)",
+      "field": "소매길이",
+      "expected": 13,
+      "actual": 13,
+      "status": "PASS"
+    },
+    {
+      "size": "S(090)",
+      "field": "총장",
+      "expected": 55,
+      "actual": 55,
+      "status": "PASS"
+    },
+    {
+      "size": "M(095)",
+      "field": "어깨너비",
+      "expected": 37,
+      "actual": 37,
+      "status": "PASS"
+    },
+    {
+      "size": "M(095)",
+      "field": "가슴둘레",
+      "expected": 88,
+      "actual": 88,
+      "status": "PASS"
+    },
+    {
+      "size": "M(095)",
+      "field": "팔둘레",
+      "expected": 29.5,
+      "actual": null,
+      "status": "FAIL"
+    },
+    {
+      "size": "M(095)",
+      "field": "소매길이",
+      "expected": 14,
+      "actual": 14,
+      "status": "PASS"
+    },
+    {
+      "size": "M(095)",
+      "field": "총장",
+      "expected": 56,
+      "actual": 56,
+      "status": "PASS"
+    },
+    {
+      "size": "L(100)",
+      "field": "어깨너비",
+      "expected": 39,
+      "actual": 39,
+      "status": "PASS"
+    },
+    {
+      "size": "L(100)",
+      "field": "가슴둘레",
+      "expected": 94,
+      "actual": 94,
+      "status": "PASS"
+    },
+    {
+      "size": "L(100)",
+      "field": "팔둘레",
+      "expected": 30.5,
+      "actual": null,
+      "status": "FAIL"
+    },
+    {
+      "size": "L(100)",
+      "field": "소매길이",
+      "expected": 15,
+      "actual": 15,
+      "status": "PASS"
+    },
+    {
+      "size": "L(100)",
+      "field": "총장",
+      "expected": 57,
+      "actual": 57,
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+        "deviceName" : "iPhone 17 Pro",
+        "modelName" : "iPhone 17 Pro",
+        "osBuildNumber" : "23D8133",
+        "osVersion" : "26.3.1",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 0,
+      "passedTests" : 1,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "FitMatch-QA · Built with macOS 15.7.7",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1790930828.999,
+  "passedTests" : 1,
+  "result" : "Passed",
+  "skippedTests" : 0,
+  "startTime" : 1790930813.334,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - FitMatch-QA",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 1
+}

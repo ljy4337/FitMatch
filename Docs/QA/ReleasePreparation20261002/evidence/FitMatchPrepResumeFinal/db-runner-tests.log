@@ -1,0 +1,15 @@
+COMMAND: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 scripts/test_release_qa_db.py -v
+test_cleanup_refuses_foreign_project_or_identity_before_rpc (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_cleanup_refuses_marker_mismatch_before_delete (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_empty_read_does_not_complete_ambiguous_create (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_exact_dev_fixture_passes_local_guard_only (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_foreign_expired_and_elevated_user_tokens_blocked (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_missing_dedicated_attestation_blocked (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_production_and_host_confusion_blocked (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_same_user_pair_blocked (__main__.DevelopmentDatabaseSafetyTests) ... ok
+test_secret_and_service_role_keys_blocked (__main__.DevelopmentDatabaseSafetyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.006s
+
+OK

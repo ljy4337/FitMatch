@@ -1,0 +1,5 @@
+{
+  "scripts/release_qa_session.py": "4fdd943301066f0003a6e3cd1ec4c0fa042084d9e55a1929b5111bcbb37c876b",
+  "scripts/tests/test_release_qa_session.py": "50b53d5a93917773490e1fc249bc20e429d835bd912b0e4a31793bb55a6d32ca",
+  "FitMatchUITests/FitMatchReleaseAlternativeSelectionUITests.swift": "dfde9dfa8451832c05ceaca9438056d085149811d3fe3cabc0a402baacc8e16a"
+}

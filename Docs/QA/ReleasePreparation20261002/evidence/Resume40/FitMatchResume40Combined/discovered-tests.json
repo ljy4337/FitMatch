@@ -1,0 +1,3008 @@
+{
+  "errors" : [
+
+  ],
+  "values" : [
+    {
+      "disabledTests" : [
+        {
+          "identifier" : "FitMatchTests/BodyShapeRemovalTests/categoryBaseWeightsRemainUnchanged()"
+        },
+        {
+          "identifier" : "FitMatchTests/BodyShapeRemovalTests/formerBodyShapeOnlyMeasurementsDoNotEnterTopRecommendation()"
+        },
+        {
+          "identifier" : "FitMatchTests/BodyShapeRemovalTests/legacyBodyShapeValuesDoNotChangeRecommendation()"
+        },
+        {
+          "identifier" : "FitMatchTests/BodyShapeRemovalTests/newSnapshotContainsNoBodyShapeState()"
+        },
+        {
+          "identifier" : "FitMatchTests/BodyShapeRemovalTests/temporarySizeAnalysisUsesSameComparisonEngine()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryLive300ShadowAuditTests/testCurrentClassifierAuditsLive300WithoutGoldPromotion()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryLiveComparisonAuditTests/auditsAllProductsAgainstMusinsaReferenceCloset()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryLiveComparisonAuditTests/auditsAllProductsAgainstUniqloReferenceCloset()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryLiveComparisonAuditTests/auditsEveryDirectedPairAndReferenceSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryLiveComparisonAuditTests/registersOneOfficialMeasurementReferencePerStoredCategoryWithoutComparing()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryValidation5026AuditTests/testCurrentProductionClassifierReclassifiesAll5026Products()"
+        },
+        {
+          "identifier" : "FitMatchTests/CategoryValidation5026AuditTests/testLiveProductionParserRevalidatesOfflineAmbiguousAndOtherProducts()"
+        },
+        {
+          "identifier" : "FitMatchTests/ClosetPreviewMeasurementRegressionTests/rawPresentationDoesNotDuplicateCanonicalProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/ClosetPreviewMeasurementRegressionTests/rawSnapshotsDoNotReplaceComparisonEvidence(source:rawValue:)"
+        },
+        {
+          "identifier" : "FitMatchTests/ClosetRegistrationDuplicateRawTests/preservesDistinctRawRowsWithDuplicateLocalCodes(localCode:)"
+        },
+        {
+          "identifier" : "FitMatchTests/ClosetRegistrationDuplicateRawTests/referenceSnapshotRetainsServerCodesWithoutPromotingRetailerFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/CurrentUniqloCatalogAuditTests/testCurrentOfficialCatalogProductionClassificationAndATest()"
+        },
+        {
+          "identifier" : "FitMatchTests/DBLogicReliabilityAuditTests/testCurrentBatchProductsNotPresentIn5026Corpus()"
+        },
+        {
+          "identifier" : "FitMatchTests/DBLogicReliabilityAuditTests/testDBLogic5049615KeepsProviderFactSeparateFromServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/DBLogicReliabilityAuditTests/testLegacyDBLogicParserFactsRemainFrozenWithoutDefiningServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/capturedMusinsaFixtureProducesAuditableOldNewRanking()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/capturedUniqloFixtureProducesAuditableOldNewRanking()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/highSimilarityWithLowCoverageAndFailedEligibilityIsNotRecommendable()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/observationPayloadPreservesConflictAndUnknownRawEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/productionParityConfigurationMatchesEverySupportedExperimentalAxis()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/stretchChangesPenaltyOnlyWithVerifiedEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/supportedCategoryFixturesReuseProductionEligibilityAndWeights()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/toleranceBoundaryAndDirectionalPenaltyStayExplicit()"
+        },
+        {
+          "identifier" : "FitMatchTests/ExperimentalMeasurementScoreV2Tests/validatedZARAPantsValuesRemainEligibleInShadowRanking()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAudienceMappingRegressionTests/absentAndMixedAudienceFailClosedAsUnknownOrUnisex()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAudienceMappingRegressionTests/canonicalAudienceContractDoesNotCreateImplicitGeneric()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAudienceMappingRegressionTests/classificationReviewAndNotComparableUseDistinctHeadlines()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAudienceMappingRegressionTests/explicitUniqloUnisexProductsPreserveOfficialAudienceAnd58395Scope()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAudienceMappingRegressionTests/same58395MenProductsRemainCanonicalMenRequests()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/accountDeletionKeepsSessionStateAndReportsSafeErrorAfterFailure()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/accountDeletionSignsOutAfterServerSuccess()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/appleNonceHasExpectedLengthAndAllowedCharacters()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/appleNonceHashMatchesKnownSHA256Value()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/appleSessionActionPreservesSuccessFailureLogoutAndReloginTransitions()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchAuthSessionStoreTests/cm016AccountDeletionActionSeparatesServerAndLocalCleanupOutcomes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/candidateCannotAlsoBeBlocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/differentProductIsRejected()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/differentVariantIsRejected()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateBlockedCandidateIsRejected()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateSelectableCandidateIsRejected()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateServerRowsRejectInsteadOfTrappingOrChoosingFirst()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/emptyCandidateListRemainsValid()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/exactEnvelopePreservesServerOrderAndLegacyFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCandidateEnvelopeTests/previewCannotBelongToAnotherProductOrBypassExactCandidateMembership()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/accountChangeCannotCommit(stage:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/accountChangeWhileWaitingStopsEvenWhenSyncFinishes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/busySyncFinishesBeforeDeletionStarts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/cancelledWaitCannotContinueDeletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/deletionOrderRequiresReceiptBeforeLocalCommit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/failedListCannotBeMistakenForAlreadyDeleted()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/historyFailureCannotStartDeletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/idleDeletionDoesNotWait()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/localSaveFailureRemainsFailureAfterServerSuccess()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/stalledSyncHasBoundedWait()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/wrongReceiptNeverCommits(wrongID:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/accountDeletionPurgesLocalClosetDataAndResetsSyncState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/accountSwitchNeverPresentsForeignLocalCacheBeforePreparationCompletes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/actualImportedPickerEditBecomesUserExplicitButSizeOnlyEditDoesNot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingManualSetIsRejectedBeforeServerEvaluator()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingRemoteRowRetainsExactIDsAndUsesAtomicOverrideOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/finalStaleAutomaticHydrationCannotUndoFailedV4Resolve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/firstLoginEmptyCacheNeverClearsRemoteReferences()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/foreignAccountCacheIsPurgedBeforeRemoteSyncCanExposeIt()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/historyOnlyReferenceSnapshotNeverEntersClosetMutationPipeline()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceFlagsAreHydratedWithoutAnyReferenceMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceFlagsAreNeverWrittenFromLocalState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceReplacementIsNotRestoredBySynchronization()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditDoesNotRestoreRetiredReferenceConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetSizeEditRejectsMissingExactObservationBeforeUpdate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/localHintNeverCreatesOverrideAndServerConfirmedWins()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualClosetFormStampsExplicitUserAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualCompositeSetCannotBecomeComparisonAuthorityOrReference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditAppliesVerifiedServerReadback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotMutateLocalItemWhenServerRejects()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationDefiniteRejectionAllowsCorrectedInput(localPayloadError:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationDoesNotPublishWithoutAuthoritativeReadback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationPreflightFailureKeepsInputEditable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationRejectsChangedAccountWithoutLocalSave()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationRetriesReadbackWithoutSecondWrite(source:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualSetPickerEditRemainsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/onlyExplicitUserClassificationCreatesServerOverride()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/overlappingAccountSwitchKeepsNewAccountCacheOwnership()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/overlappingSameAccountSyncSharesUnchangedPass()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/ownedReferencePreservesAbsentLengthDespiteSharedProductLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/ownerlessLegacyCacheFailsClosedAndPurgesAllUserScopedPresentationState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/pendingLinkedSizeEditUsesExactServerSizeAndPreservesLocalChoiceUntilReadBack()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/promotionRequiredUsesObservationThenPersistsServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyAutomaticItemRestoresIdentityButWaitsForActiveV4Authority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyManualOverrideRetainsExplicitUserAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyReviewAndNotComparableStatesRemainFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/runtimeFailureIsNotSwallowedAndCannotKeepLocalHintEligible()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/serverNotComparableClearsReferenceAndNeverUpsertsLocalClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/serverReviewRequiredClearsReferenceAndNeverUpsertsLocalHint()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/shoppingPersonalAuthorityNeverPromotesASourcedClosetRow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedReviewRequiredExplicitClosetEditBecomesUserAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedSetPickerEditRemainsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedTerminalServerFailuresRemainFailClosedAfterPickerEdits()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/unchangedClosetRowDoesNotIssueUpdateButMeaningfulLocalEditDoes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/unchangedRemoteLinkedSnapshotHydratesWithoutRuntimeOrMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/classificationAxisPayloadKeepsVerifiedOuterwearAndExistingTopBottomAxes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/historyVisibilityClassifiesOnlyExactServerCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/lengthProjectionDoesNotUseResponseOrderForTotalAndBackLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/linkedCreationTransportsExactObservationIdentityOnlyWhenProvided()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/linkedCreationUsesExactServerSizeWithoutClientMeasurementConversion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/linkedUpdateUsesTheSameServerSnapshotMeasurementContractAsCreation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/listDTOHydrationRetainsAllCanonicalRecordsAndDeterministicLengthProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/manualFactoryRecordsEncodeVerifiedCanonicalCodesForSharedUpsertAndUpdatePayload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/storedRetailerReplayDoesNotRewriteCanonicalMeasurementRawIDs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/uniqloDetailsRequestPreservesRequestedPriceGroup()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetTransportContractTests/unmappableManualPositiveMeasurementFailsBeforePayloadRPCAndKeepsDraft()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchCollectedFixtureReplayTests/testCollectedRetailerAPIsUseCurrentSwiftParsersAndEncoder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/comparisonFlowUsesOnlyGroupPickerAndDoesNotExposeDetailedRecoveryChoices()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/comparisonSyncCannotPromoteLocalHistoryIntoServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/currentResultOtherClothesReturnsToExistingCandidateFlow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/persistedServerApprovalGuardsAlternativeSizeScoring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/profileMatcherCannotRunMeasurementScorer()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonPermitSequencingTests/releaseComparisonCallSitesRequirePermitBeforeScoring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionKeepsClosetAndHistoryWhenDurableHideFailsThenRetries()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedReplayPreservesBothV1PoliciesAndNewV2()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedReplayRejectsMixedVersionsAndWrongRecommendedIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideIsIdempotentAndRejectsUnknownIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/explicitServerTombstoneRemovesOnlyTheMatchingStaleLocalHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/historyUnavailableReceiptKeepsLocalHistoryAndClosetWithoutLoginMessage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/legacyLocalHistoryIsReadOnlyAndNeverUploaded()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/localOnlyHistoryDoesNotClaimServerVisibilityAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/locallyPersistedHideBlocksAnAlreadyInFlightStaleHistoryResponse()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/orphanedServerApprovedLocalCacheFailsClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/overlappingAccountSwitchCannotHydrateOutgoingHistoryIntoNewAccount()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/overlappingSameAccountHistorySyncUsesNewestFollowUpSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/pendingServerSnapshotRecoversThenHydratesExactlyOnce()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/replayCompatibilityNeverAcceptsCorruptedCompletionEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryCanRecoverOnlyItsVerifiedServerSizeAnalysis()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/schema4HydratedFrozenReferenceResolvesItsOriginalClosetIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F01ReceiptMustBeHiddenAndExactlyMatchRequestedClientIDs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F02InvalidatedSubmissionCannotClearNewerInFlightSubmission()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F03SavedFrozenReferenceResolvesBackToItsOriginalClosetID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F04AConfirmedLegacyStructureReasonIsMeasurementReadiness()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F04BComparisonGroupAcceptsDeployedMappingSourceKey()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F04ReadinessIsClosedAndMissingBeginStatusCannotDefaultToPending()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchContractClosureRegressionTests/F05EngineRejectsDirectlyConstructedUnsupportedSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchEnvironmentRoutingTests/customLinksCannotCrossEnvironments()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeClosetReceiptDoesNotOverwriteSharedRetailerProductSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeClosetReceiptOverridesPreSubmitMeasurementsAndRetainsUnknownCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeReceiptProjectionFailureDoesNotRollbackUnrelatedPendingChanges()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/candidateAuthorityHandoffIsOneUseEvenAfterFailureAndCancellation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/canonicalMeasurementServerRejectionUsesFriendlyClosetMessage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/closetDetailEditActionsKeepSourcedAuthoritySeparateFromExplicitPickerIntent()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/closetPresentationUsesOnlyActiveOwnedRowsAndPreservesFilterSortIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSaveUsesTheProductionBoundaryAndRejectsDuplicateSubmit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/deepLinkRoutingConsumesOnlyAnExplicitCompareRoute()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/deterministicFirstClosetRejectReturnsToEditableAndUsesNewClientID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationConstructsDistinctAdultAndChildState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationPersistsValidUserOwnedFactsWithoutPromotingCompositeSets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationRequiredAndInvalidValuesFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetSaveFailurePreservesFormAndRetriesThroughTheSameAction()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/directRegistrationIgnoresRetiredReferenceFlagAndPreservesSaveFailure()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/effectivePersonalTupleIsConsumedAtomicallyWithoutGlobalFieldCoalescing()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/failureCopySeparatesRetryableTransportFromServiceInspection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/frozenFinalCatalogHasEveryStableFeatureIDExactlyOnce()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/homeAndCompareDirectEntryShareTheMeaningfulUnsupportedLinkContract()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/hydratedHistoryRecompareUsesCanonicalURLOrReturnsMeaningfulUnavailableState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/lateResponseAfterAccountSwitchNeverProjectsIntoAnotherUsersCache()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkDraftPrecedesServerCompletionAndCancellationCannotPublishAuthority(cancel:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkRegistrationActionRunsTheActualParserAuthorityAndPreparationPipeline()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkRegistrationInputFailsClosedBeforeParserForEmptyMalformedAndUnsupportedURLs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkedClosetRegistrationNeverFallsBackToLocalOnlyPersistence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/pendingShareTTLAndGenerationCASFailClosedWithoutDroppingNewerShare()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/referenceReplacementAndIndependentCategoriesUseTheProductionMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/releasedProviderBoundaryAcceptsThreeAndRejectsCOS()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/retiredReferenceRequestNeverCallsRemoteReferenceMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/sameIDBeginReplayRecoversStrictProofOnlyFromItsImmutableSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionNeverPersistsBeforeRemoteUpsert()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstConfirmedRegistrationHydratesServerConfirmedAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/shareAttachmentExtractionActionTraversesTheProductionAttachmentContractInOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/shareRoutingSkipsAnUnsupportedAttachmentAndUsesTheFirstSupportedProductURL()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/sharedAttachmentExtractorUsesActualProviderOrderBeforeHandoff()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/sharedAttachmentRoutingCreatesOneApprovedEphemeralAppHandoff()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/sharedHandoffEntryActionDistinguishesNoIntentExpiredAndMalformedPayloads()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/shoppingPersonalClassificationNeedsSeparateClosetIntent()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/stalePendingShareDoesNotReenterAProductFlow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryHydrationReplacesHeadWithoutChangingItsAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/zeroMeasurementLinkedClosetSubmissionIsRejectedBeforeRemoteMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderFactsReachTheFullServerAuthorizedComparisonPath()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderLinkRegistrationsPersistOnlyPresentedSizesAndRejectDuplicateSubmit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderParserFailureThenRetryResetsStateForEveryApprovedProvider()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr012MusinsaCapturedFallbackRecoveryPersistsOnlyTheValidatedSelectedSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr014ApprovedProviderParserFailuresRetryTheExactRetailerPath()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr016CapturedProviderOwnedSizeSelectionNeverFabricatesASize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/en001ApprovedDirectURLsAndCustomCompareRouteReachTheirExactTargets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/musinsaCapturedOfficialActualSizeResponseReachesTheLinkRegistrationAction()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/sequentialCapturedProviderLoadsResetCurrentProductStateWithoutProviderLeakage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/uniqloCapturedOfficialSizeResponseReachesTheLinkRegistrationAction()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/zaraBodyOnlyGuideReachesTheProductionPartialRegistrationRecoveryState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/zaraCapturedGarmentMeasureGuideReachesTheLinkRegistrationActionAndBodyOnlyGuideFailsClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/closetDeletionAccountOwnershipAndStartupActionsCoverManagementRecoveryStates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm002ManualDetailEditPersistsIdentityClassificationAndSelectedSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm005ManualDetailMemoAndPreferencePersistWithoutClassificationDrift()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm007IndependentTopAndBottomReferencesDoNotConflict()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm009DeletedReferenceCannotReappearOrAuthorizeAfterReconstruction()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm011LegacyHistoryDeletionStaysLocalWithoutATombstoneRequest()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm012ImportedEditPersistenceFailureThenRetryKeepsSourcedAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm013DuplicateCreationAndInactiveHistoryOnlyFilteringUseProductionActions()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm014ReferenceLifecycleCreatesANewComparisonWithoutRewritingOldHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm018ClosetPresentationFiltersAndSortsOnlyTheOwnedActiveIdentitySet()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr003KidsAndBabyDirectRegistrationPersistsAudienceWithoutReferencePromotion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr007ManualMemoAndFitPreferenceSurviveFreshClosetReconstruction()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr019SignedOutOnboardingRouteWaitsForTheCurrentUsersCachePreparation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr020ReviewRequiredLinkRegistrationRemainsReasonedAndFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/directClosetRegistrationAndManagementActionsCoverCRAndCMStates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/en009LegacyMeasurementMigrationFailureThenRetryKeepsExistingRowsSafe()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/en010GlobalSearchUsesExactOwnedVisibleClosetAndHistoryIdentities()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/entryAuthAndPendingShareDataContractsCoverENAndBHeadlessParts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/frozen137ClassificationReconcilesWithoutAddingOrDroppingAScenario()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi001FreshGlobalHistoryHydrationPreservesExactCompletedSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/historyDeletionHydrationAndCurrentAuthorityCoverHIAndResultFlows()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/historyPresentationKeepsSameTargetComparisonIdentitiesSearchableAndDistinct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/latestHistoricalRowReplacesPriorVisibleProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/providerLinkPreparationAndComparedProductSaveCoverCR011ThroughCR022()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/recoveryManualCrossAndStaleAuthorityPathsCoverTheRemainingComparisonStates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/resultPresentationHistoryRecomparisonAndOutboundActionsUseCurrentProductionProofs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/retryRaceAndSyncCoalescingUseProductionAsyncBoundaries()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx004ParserFailureThenRetryRestartsTheSameProductionEntry()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx009AuthorityAndReferenceFailuresRetryThroughTheirExactProductionGates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx010EligibleAndBeginFailuresRetryWithoutUsingStaleCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/staticContractsCoverOnlyFrozenShellAndGlobalSearchRows()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/v4HistoryHydrationKeepsLatestResultPerProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/actualProductionSwiftFullChainRequiresBeginBeforeCompletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/automaticComparisonUsesOnlyServerReturnedReferenceCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/changedEligibleAuthorityBeforeBeginFailsClosedWithoutCompletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/completedResultLocalPersistenceFailureThenRetryCreatesExactlyOneHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/completedResultRetryWaitsForServerCompletionAndPersistsOneHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/completedUserExplicitHistoryRequiresExactCurrentServerProof()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp007NotApplicableProductStopsAtEffectiveAuthorityWithReason()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp012FutureGlobalAuthoritySupersedesOnlyTheNextComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp015ManualReferenceSelectionUsesTheExactServerCandidateID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp016StaleDeletedChangedAndMeasurementEditedReferenceNeverBegins()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp018IncompatibleAudienceCategoryAndUnruledTypeFailClosedBeforeEngine()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp023FullMinimumAndOptionalMeasurementEvidenceProduceTheirOwnResults()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp025SemanticAndCanonicalMeasurementContradictionsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp026PartialCoverageUsesOnlyTheServerAuthorizedSurvivingSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp027MultipleAndSingleAvailableSizeSetsReachExactBeginSnapshots()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp028AvailabilityDoesNotBlockButChangedAuthorizedSetDoes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp029UnusualLabelsPreserveOrderAndDuplicateCandidateIDsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp034LaterGlobalNotApplicableBlocksOnlyTheFutureComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp037AndCp038SemanticRemovalNoTableBlockButSoldOutCompletes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp039NegativeGateOrderKeepsEveryPathBeforeEngine()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/everyValidFiniteJourneyScenarioExecutes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/failedResultRecompareLeavesTheDisplayedHistoricalTargetUntouched()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/globalResultRecompareUsesAutomaticServerCandidateWithoutMutatingTheOldHistoryTarget()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/headlessHarnessDoesNotDuplicateBusinessAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/resultRecompareBuildsDetachedCurrentServerAuthorizedTarget()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/reviewReloadKeepsGroupChoiceExplicitWithoutLegacyMutations()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/rs003ResultEvidenceAndInsufficientStateUseProductionTerminalData()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/rx003DelayedStaleBeginAfterReferenceMutationCannotCreateAResult()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/sameClientIDBeginReplayRetainsStrictServerProofForCompletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/serverAuthorizedSingleCanonicalRuntimeMetricReachesPermitEngineAndCompletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHistoryClosetPreparationRequestGateTests/anotherHistoryCannotStartWhileRegistrationIsPreparing()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHistoryClosetPreparationRequestGateTests/dismissedOrSignedOutRequestCannotPresent()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHistoryClosetPreparationRequestGateTests/invalidatedCompletionCannotPresentOrUnlockNewRequestForSameHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/blockedComparisonRecordsFunnelExit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/diagnosticReportExportsOnlySortedAggregateCounters()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/productLoadRecordsFiniteParserDimensionsWithoutProductData()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/providerResolutionRejectsLookalikeHosts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/recentDiagnosticsAreBoundedAndPersistWithoutRawData()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/recorderPersistsOnlyAggregateCounterKeys()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchMetricsRecorderTests/zaraHostAndLookalikesRemainDistinct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0ActualUniqloBottomRecommendationUsesOnlyBottomMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0AmbiguousMusinsaOtherTopRequiresUserConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0BaseLayerServerFamilyIsNeverRewrittenByLocalComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0CanonicalProfileApplyPreservesTrustedAuthorityTuples()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0EqualSizeTieAlwaysKeepsFirstDisplayOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0ExactProductCategoryChoiceDoesNotSpreadToSiblingProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0ExistingClosetItemSurvivesStartupBackfillAndDiskReload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0FailureThenSuccessClearsStaleError()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0LongCoatAndHalfJacketAreManualOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0MissingSleeveExclusionIsPersistedInSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0MusinsaCapturedFixturesPreserveOfficialMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0OuterWithOneCommonCanonicalMetricCanCompare()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0RecommendationSurvivesTemporaryDiskReload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0RecommendedSizeAndAlternativeAnalysisAgreeForSameSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0ReferencePlanRequiresExplicitCandidateSelectionAndPreservesTrustedTShirtTuples()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0SequentialAToBToARestoresTheOriginalProductState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0SharedURLStoreConsumesOnlyTheExpectedURL()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0ShortAndLongPantsAreManualOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0SingleCompatibleRepresentativeStillRequiresExplicitSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0TopAndBottomRemainBlockedEvenWhenUserSelectsManually()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloAmbiguousPLDInventoryRemainsUnknown()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloBottomKeepsRiseAndContainsNoUpperBodyMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloBottomLegacyLengthDoesNotReuseRise()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloCapturedFixturesPreserveOfficialMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloGraphicTShirtDoesNotFallIntoOtherTops()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0UniqloL2InventoryIsJoinedByColorSizeAndPLD()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p1ClassificationConflictCannotBypassStandardSizeComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p1CompatibleAndAdjudicatedClassificationEvidenceRemainsSafe()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p1ExplicitCriticalClassificationContradictionsRequireReview()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p1IneligibleReferenceCannotBypassStandardSizeComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p1SourcedProductConflictCannotBecomeAuthorityLocally()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/completedVNextHistoryPreservesExactServerIdentityAcrossReload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/completedVNextHistoryReplacesSameProductForDifferentReference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/exactHistoryAndDeletedReferenceLifecycleRemainIndependent()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/historyOnlySnapshotsAreExcludedFromActiveClosetAndPickerSurfaces()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/historySearchFilterSortAndFavoriteUseTheSamePresentationPathAsTheHistoryScreen()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0RemediationRegressionTests/homeRecentHistoryKeepsDistinctCompletedComparisonsForTheSameProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchPerformanceDiagnosticsStoreTests/comparisonMilestonesStayOrderedAndStopAfterCompletion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchPerformanceDiagnosticsStoreTests/frameCadenceAndSlowWorkAreBoundedAndContainNoProductData()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchPerformanceDiagnosticsStoreTests/ignoresUnstartedRoutesAndBoundsStoredEvents()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchPerformanceDiagnosticsStoreTests/recordsOnlyTypedNavigationAndScrollSummaries()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedTests/dedicatedDevelopmentAccountsExerciseRealSwiftAH()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedTests/dedicatedDevelopmentAccountsExerciseRealSwiftClosetLifecycle()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedTests/interruptedDevelopmentRunCleansOnlyValidatedLedger()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseConfigurationTests/releaseLinksAcceptOnlyPublicHTTPSURLs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseConfigurationTests/shareExtensionAcceptsAllReleasedRetailerHosts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseLiveProductAuditTests/suppliedURLsLoadThroughTheFullProductionParser()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseMatrixTests/fullSyntheticCorpusCases()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseParserRepairTests/prefersNumericSizeSuffixEvidenceWithoutRewritingRetailerIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseParserRepairTests/preservesOfficialArmCircumferenceWithoutInventingComparisonMeaning()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseParserRepairTests/prioritizesEmbeddedOfficialFitChartBeforeLongMarketingImages()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseParserRepairTests/storedRetailerVariantSurvivesReplayAndOldPayloadRemainsReadable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchResultPresentationPerformanceTests/repeatedPresentationReusesExactlyEquivalentComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchResultPresentationPerformanceTests/sameIdentityEditsInvalidateValuesSemanticsAndProvenance()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchResultPresentationPerformanceTests/sizeIdentityAndCategoryChangesNeverReusePreviousEntry()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchResultPresentationPerformanceTests/temporarySnapshotMatchesExistingCalculationForEveryRead()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchRetailerAPIEvidenceTests/dataOnlyCapturePreservesExactBytesWithoutCreatingAnUnusedProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchRetailerAPIEvidenceTests/invalidOrNonObjectBodiesKeepExistingOmissionBehavior()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchRetailerAPIEvidenceTests/reusesCaptureProjectionWithoutChangingObservationEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/activeUserExplicitReselectsWithFreshContractAndCurrentRevision()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/clearInvalidatesPersonalAuthorityAndLeavesReviewFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/completeCandidatesProjectToUniqueGarmentFirstGroups()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorRejectsClientCandidateOutsideServerContractBeforeMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorRejectsDuplicateCandidateFingerprint()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorRejectsIncompleteServerCandidate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorRejectsUnknownVersionAndInvalidV7UnknownFieldsBeforeMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorRejectsV7BoundCountAndFixedFactViolationsBeforeMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/coordinatorSendsOnlyOpaqueCandidateAndServerContractProvenance()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/groupSelectionDoesNotRequestObsoleteRecoveryEvenIfItsTransportWouldFail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/oneGarmentWithTwoSleevesStartsAxisFollowUpAndResets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/recoveryContractKeepsKnownFactsAndOnlyBoundedServerCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/retailerRecoveryContractsAcceptOneThrough64ButReject65()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/retailerRecoveryRequiresCandidateAudienceToMatchFixedFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/reviewRecoverySaveKeepsTransportFailureDistinctAndRefreshesSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/reviewRequiredLoadRoutesToGroupSelectionWithoutLegacyRecovery()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/singleCandidateGarmentReturnsExactServerCandidateWithoutSaving()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/snapshotV4PreservesPersonalProjectionAsImmutableJSONEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/v7CoordinatorSendsExactServerCandidateAndProvenance()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/v7RecoveryContractAcceptsWholeCandidateUnknownFieldsButKeepsGarmentFirstPresentation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/v7RecoveryContractRetainsAxisFollowUpOnlyWithinSelectedGarment()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/v7RecoveryContractTreatsNilAndValueAsDifferentButAllNilAsKnown()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReviewRequiredRecoveryTests/v7SingleCandidateGarmentDoesNotCreateRedundantAxisQuestionOrMutation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonKeepsExactCandidateReasonCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonPreservesPendingDirectPermitIdentities()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRPCFailureProducesNoPermit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsMalformedStatusAndCompatibility()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsServerBlock()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/cancellingProductContextClearsRequestedComparisonGroup()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateAggregateStateMismatchFailsClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateHandoffRejectsAnotherProductsAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateReadinessMismatchFailsClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/changedPreviewPromotesThroughObservationAndRequeriesRuntime()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentMeasurementsRequiredSubmitsAvailableMeasurementsAndRequeries()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentNotComparableNeverPromotesMeasurementObservation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentPreviewWithoutPersistedAuthorityPromotesBeforeRuntime()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentResolutionReusesRuntimeButPromotionRefreshesIt()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentReviewSubmitsNewCoherentProviderMeasurementsAndRequeries()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentReviewWithoutImprovedProviderEvidenceRemainsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshRetailerProductPersistsObservationBeforeRuntimeRead()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/goldProductsUsePersistedServerTuples()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/homewearTopToBottomServerPolicyBlocks()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/initialCandidatePlanReusesExactPreparedTargetAndStillQueriesServerCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/locallyEditedReferenceCannotReuseStaleServerAuthorization()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/measurementHydrationFailureDoesNotReturnConfirmedAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/missingServerCandidateRemainsBlocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/promotionRequiredRuntimePromotesThenRequeriesPersistedAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referenceDiscoveryDoesNotRunUntilConfirmedRuntimeIsReady()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanExposesOnlyServerManualCandidatesInServerOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanFailsClosedWhenAutomaticProjectionIsMissing()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsBlockedRepresentativeOutOfEverySelectionSet()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsMeasurementsRequiredOutsideSelectionSets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsRepresentativeManualOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanPreservesServerAutomaticCandidateOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/rejectedPromotionFailsClosedWithoutRuntimeFallback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/requestedComparisonGroupResponseRetainsServerAuthorityContext()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/sameTypeServerPolicyAllowsAutomaticResponse()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/serverAutomaticCandidateIsAuthorized()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/sourcedReferencePromotionIsRequiredBeforeCandidateAuthorization()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/staleSourcedReferenceWithoutRetailerFactsRemainsBlocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/targetClassificationRequiredRetriesCandidateLookupOnce()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchServerAuthorityIntegrationTests/tshirtToBaseLayerTopServerPolicyBlocks()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchShareClosetEntryTests/appRouteAcceptsOnlyOwnShareDestinations()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchShareClosetEntryTests/olderSharePayloadStillOpensComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchShareClosetEntryTests/sharedURLCanChooseClosetWithoutChangingItsIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/authenticatedClosetContractDecodesCanonicalSnapshotAndMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/beginAndCompleteContractsDecodeTransactionalIdentifiers()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/closetDetailSnapshotPreservesBlouseInsteadOfLossyShirtFamilyProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/closetDetailWithoutSnapshotRetainsLegacyTupleProjection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/eachFormerlyDroppedCanonicalRuntimeMetricSurvivesItsOwnRuntime()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/emptyLocalClosetDoesNotTerminateBeforeServerConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/existingSetSemanticsEmitExplicitRetailerStructureWithoutGarmentInference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/historyClosetPreparationRequiresExplicitFreshSizeSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkClosetPreparationDefersReviewRequiredMessagingToRegistrationSheet()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkClosetPreparationUsesExactServerTupleInsteadOfLocalParserHint()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkRegistrationAllowsReviewButRejectsUnavailableAndNotApplicable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkRegistrationNextRequiresAtLeastOneRegisterableExactIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedClosetPickerShowsAllSizesWithoutChangingRegistrationEligibility()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedOuterwearSubmissionPreservesServerSleeveAndBodyAxes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedRegistrationKeepsDuplicateDisplayLabelsAsDistinctExactSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedRegistrationKeepsRetailerMeasurementsMissingFromCanonicalRuntime()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedRegistrationPreselectsOnlyConfirmedDatabaseCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedRegistrationUsesRuntimeMeasurementsOnlyWithoutAnAPIRow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/linkedRegistrationUsesTheExactRetailerSnapshotInsteadOfRuntimeReplacement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/musinsaActualSizeTypeNameIsForwardedWithoutReplacingNumericSizeType()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/networkAndRejectedPromotionRemainUnavailableWithoutLocalConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/numericSizeTypeIsNeverSynthesizedAsStructuredAuthorityOnReplay()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/observationKeepsRepeatedRawCodesAsDistinctSourceFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/observationRetainsFiniteZeroAndRawCodeWhenProviderLabelIsEmpty()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/parserServiceRecordsTypedProvenanceInObservationPayload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/persistedProductReplayPreservesStructuredFactsExactly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/persistedReplayDoesNotCreateObservedStructureFromStoredName()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/productObservationPreservesRawSizeChartEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/productRuntimeContractDecodesSizeIDsAndCanonicalMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/referenceCandidateContractDecodesDatabasePolicyEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/reportedZaraFourSizeLabelsSurviveUnmappedClosetPreparation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksExactPreferenceThatConflictsWithObservedVariant()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksSourcedProductWhenServerUnavailable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksVNextMultiVariantWhenPreferredSizeIsAbsent()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksVNextMultiVariantWithAmbiguousExactSizeID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationKeepsSoleVNextVariantWhenPreferredSizeHasGone()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationLeavesInvalidExactPreferenceUnselected()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationRestoresFullRuntimeAndKeepsCurrentExactSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationRetainsReviewRequiredRawMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueLegacyVariantByExactPreferredSizeID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueVNextVariantByExactPreferredSizeID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/resultClosetPreparationUsesExactIDForDuplicateRuntimeLabels()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/retailerAPIRawJSONIsNestedWithoutChangingStringFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/retailerPayloadUsesStableProductAndCategoryEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/reviewAndNotComparableServerResultsNeverBecomeEligibleProducts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/selectedSizeSummaryKeepsEveryAvailableNumericMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/serverReadyRuntimeKeepsAllCanonicalRecordsAndAllowsOneServerMetricProductPath()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/shoppingProductGoldThreePersistExactServerTuples()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/shoppingProductUsesServerConfirmedTupleOverConflictingLocalInference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/sourceVariantKeyStillWinsForMultiVariantURLLoadWithoutPreference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/typedRetailerFactsAreEncodedAtTheResolutionAndObservationPayloadLevel()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/uniqloBraTopKeepsUnderwearFamilyInLocalSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/unknownParserMeasurementStateNeverBecomesNone()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/unsupportedClosetDetailSnapshotIsPreservedWithoutFamilyReplacement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/vNextClosetMutationUsesExactIdentityAndNestedOverrideOnlyWhenExplicit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchSupabaseProductResolverTests/zaraObservationKeepsStyleVariantAndInternalProductIDsSeparate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/adultCrossGenderBottomsCanUseDirectMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/adultCrossGenderUnderwearRemainsIncompatible()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/alternativeSizeSummariesUseCategorySpecificMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/ambiguousUniqloTShirtPathUsesStrongProductFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/automaticFlowRetainsCandidateWithoutCreatingResultOrEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/automaticMatchRejectsKnownConstructionConflict()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/automaticMatcherDoesNotCrossMajorCategoriesForSamePantsFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/automaticMatcherDoesNotTreatAdultUnisexAsKidsCompatible()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/automaticMatcherRequiresCompatibleDetailCategoryWithinOuterwearFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/bottomComparisonUsesAvailablePolicyMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/bottomLengthGuideUsesOutseamDefinition()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/bottomWidthAndLengthAllowComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/briefLinedRunningBottomsDoNotBecomeUnderwear()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/brownBottomNamesDoNotBecomeBras()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/cancelledProductLoadCannotApplyLateParserResult()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/canonicalProfileSnapshotRoundTripsWithoutLosingPolicyIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/canonicalTaxonomyBundleDecodesAndResolvesMusinsaID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/canonicalTaxonomyBundleResolvesUniqloTargetPathAndRejectsUnsupportedUse()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/canonicalTaxonomyRejectsMusinsaBriefcasesAsBags()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/categoryChangeRejectsInvalidDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/changingReferenceItemRecalculatesRecommendedSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/closetCategoryChangeInvalidatesStoredComparisonAttributes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/closetSaveMatchesStoredProductBeforeMatchingSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparingDifferentProductsKeepsSeparateHistoriesAndGraphs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonDifferenceTextUsesClosetItemAsReference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonLengthDisplayUsesGarmentContext()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonProfileCoversEverySupportedClosetDetailFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonProfileStoresGarmentSleeveAndConstructionAttributes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonRepairsLegacyUniqloRiseStoredAsTotalLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/compatibleOtherBrandOutranksSameBrandWithLessMeasurementEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/compositeAndOptionDependentGarmentsRequireConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/detectedLongSleeveKnitDoesNotMatchShortKnitWithoutNameKeyword()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/detectedLongSleeveKnitMatchesLongSleeveKnit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/differentPlatformFormatsRequireCanonicalMeasurementCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/differentShortTopStructureShowsManualExpansionNotice()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/directMeasuredBottomUsesBottomSpecificCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/directMeasuredOuterIncludesHemWidth()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/directMeasurementRejectsValuesOutsideSafetyRange()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/directMeasurementStandardDefinesEveryMeasurementKind()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/editingLegacyOtherSizeChartPreservesMeasurementSource()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/exactDetailCategoryOutranksRepresentativeFromAnotherOuterwearDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/example()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitCardiganNameUsesCardiganStructureAcrossProviderBuckets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitCurrentClassificationOverridesConflictingStoredProductChoice()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitHalfSleeveUsesShortSleeveDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitLeggingsAndCoachJacketOverrideWrongProviderBuckets()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitLengthOverridesConflictingCanonicalSourcePathLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitManualComparisonOpensForMaxiCoatAndHalfOuterwear()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitOuterwearNameRefinesOnlyCompatibleProviderMajor()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitProviderPoloFamilyWinsOverConflictingKnitName()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitShirtAndBlouseStructureWinsOverSleeveLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/explicitThreeQuarterFractionUsesThreeQuarterSleeveDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/fitMatchCandidateRecommendationsAreLimitedToThree()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/fitmatchMeasuredEntryCreatesComparableStandardRecords()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/genericBottomAndLeggingsPathsUseExplicitProductLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/genericBottomPathDoesNotTreatJumpsuitAsLongPants()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/genericMusinsaPathsUseProductNameForSpecificComparisonCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/hyphenatedSleeveNamesResolveLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/identicalChestDefinitionIsUsedForConfirmedRecommendation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/identicalSetInSleeveCodesRemainComparable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/importedChestCircumferenceReachesSizeFormWithoutWidthConversion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/inactiveTaxonomyOptionsAreHidden()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/incompatibleRepresentativeBlocksGeneralAutomaticSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/insufficientRecommendationReturnsUnsavedReferenceEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/insufficientRepresentativeEvidenceBlocksAutomaticSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/insufficientResultReferenceChangeKeepsPersistedHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/intermediateSleeveAndPantsLengthsDoNotCrossMatch()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/invalidTaxonomyUsesControlledFallback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/koreanSizePresentationDoesNotChangeStoredSizeTokens()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/latestProductLoadOwnsViewModelState()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/learnedPlatformLengthBoundariesClassifyUnspecifiedGarments()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/legacyKoreanTaxonomyAliasesMapWithoutOverwritingSnapshots()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/legacyShortTopWithoutStoredProfileStillBecomesExpansionCandidate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/legacyUniqloProductWithoutImageDerivesDefaultThumbnail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/lengthAwareAndLengthIndependentCategoriesUseTheirOwnRules()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/linkedMusinsaClosetEntryKeepsSourceAndRequiresUnknownGenderSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/longSleeveKnitMayAutoMatchLongSleeveKnit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/longTopStructureGroupsRemainSeparated()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualClosetEntryRequiresMeasurementSource()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualClosetItemAndMeasurementRecordsPersistTogether()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualClosetSourceAutomaticallyUsesFitMatchMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualClosetSourceStoresFitMatchStandardVersion()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualComparisonEntryPreservesChestCircumferenceMeaning()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualComparisonEntryPreservesWaistCircumferenceMeaning()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualCrossDetailOuterwearRemainsReferenceOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualSelectionRecommendationIsUnaffectedByRepresentativePolicy()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/manualTopSleeveLengthMismatchAllowsBodyOnlyComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/mappingUpgradePreservesCanonicalRecordsAndRemovesLegacyDuplicates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/matchingComparisonAttributesCannotCrossClosetCategories()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/matchingRawLabelsNeverOverrideConflictingCanonicalCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/measurementComparisonExcludesDifferentSleeveDefinitions()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/measurementComparisonUsesOnlyIdenticalVerifiedCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/measurementResolverDisplaysCircumferenceRecordsWithTheirMeaning()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/measurementResolverRejectsUnknownAndAmbiguousRecords()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/measurementResolverUsesCanonicalRecordBeforeZeroLegacyScalar()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/migrationPreservesUniqloCircumferencesAcrossRepeatedRuns()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/migrationVersionSevenConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/migrationVersionSevenRecoversOnlyVerifiedMusinsaTopUnknownTotalLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/mixedActualAndStandardComparisonConvertsBothOptionNames()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/multipleCompatibleRepresentativesRemainUserSelectable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaActualSizeAcceptsLetterSizesWithProductDescriptors()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaActualSizeLengthPreservesKnitFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaActualSizePreservesRawFieldsAndRaglanMeaning()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaBottomWidthsAndExplicitLengthsUseCommonCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaClosetSourceOffersOnlyMusinsaChartAndDirectMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaDeepLinkCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaDenimPantsMapToLongPantsWhilePreservingDenimFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackCanonicalizesKoreanAliasesWithoutMergingDifferentMethods()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackCombinesSplitOCRGridsAndDeduplicatesRows()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackConvertsLowerCircumferencesToComparableWidths()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackDefaultsMissingUnitToCentimetersAndRejectsSingleSizeRows()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackDetectsSmallTableInsideVeryLongImage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackDoesNotInventSizesFromNumericFragment()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackJoinsAdjacentAndOverlappingTableFragments()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackKeepsRowWithOneMissingOptionalMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackKeepsStrictTableRejections()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesCellUnitsAndLowerCircumferenceAliases()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesGiordanoUpperLongImageTableGrid()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesKoreanShoeConversionRowAndRejectsSingleReference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesLetterFirstCompositeSizesForExplicitSpecTables()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesLooseHeaderAndScopesUnitsToCurrentTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesMeasurementItemTransposedCompositeSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesProduct4351517HTMLTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesProduct4351517WidthsAndFiveSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesReebokUpperImageTables()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesSlashCompositeSizesFrom6045676HTML()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesUnitCellTransposedGiordanoTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackParsesValidUpperHTMLTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackPreservesSeparateFrontAndBackLengths()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackRecoversReebokBrokenSizeHeaderSafely()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackRejectsDescriptionNumbersWithoutTableStructure()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackRejectsNonSizeSlashLabels()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackRetriesAndParsesSmallNoisyGiordanoTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaFallbackSeparatesShoesFromApparelFootRanges()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaLegacyRaglanAndSetInSleevesStaySeparate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaLegacyTypeFiveRestoresVerifiedShoulderChestAndSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaOfficialOuterwearLeavesResolveBeforeMaterialKeywords()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaOfficialTypeTableMapsOnlyAuditedLabels()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaOfficialUpperTypesMapExactTotalLengthLabel()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaPipelineFixturesParseDeterministically()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaRecompareReusesPersistedSizeByName()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaSingleFreeSizeRequiresAValidMeasurementStructure()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaSizeTokenNormalizerSupportsSharedHTMLAndOCRFormats()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaSourcePriorityAndGenericTopFallbackAreDeterministic()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaStandardSizeAvailabilityUsesFlagsAndActualData()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaStandardSizeFallbackIsLimitedToBodyChestCategories()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaSweatshirtNamesDoNotBecomeShirtsBySubstring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaTopAndOuterExactTotalLengthUseCommonCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaTopBottomSetIsExplicitlyUnsupported()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaTypeFiveAndTwentyOneCompareCommonTotalLength()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaTypeFiveMapsOfficialDiagramChestWidth()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaURLResolverPrefersExplicitVariantProductID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/musinsaURLResolverUsesCanonicalProductURLWithoutRedirectRequest()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/nonUniqloSixDigitProductDoesNotDeriveUniqloThumbnail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/normalizedParsedProductReplacesOtherWithMeasuredLengthCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/normalizedProductTypeDoesNotSplitReferenceGarmentScope()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/officialProductURLParserRejectsCOSBeforeAnyProviderParserRuns()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/oneMatchingAxisRetainsCandidateDespiteDifferentSleeveMethod()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/otherSizeChartPreservesValuesWithoutClaimingCompatibility()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/outerComparisonUsesAvailablePolicyMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/outerHemGuideUsesUnstretchedGarmentDefinition()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/outerShoulderAndSleeveWithoutChestRemainComparable()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/outerwearBodyLengthPreventsLongAndShortGarmentPairing()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedCanonicalClassificationFallsBackToActiveTaxonomyDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedCanonicalClassificationPreservesRefinedUniqloDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedCanonicalClassificationResolvesRequiredSourceFixtures()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedCanonicalClassificationUsesDeepestPaddingCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedMeasurementsBecomeOwnedProductSizeRecords()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedProductSizeStableIDUsesProductAndSizeName()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeNormalizerKeepsDifferentSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeNormalizerKeepsFirstSMLInOriginalOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeNormalizerRemovesSameNameAndSameMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeNormalizerRemovesWhitespaceOnlyNameDuplicates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeValidatorAllowsNonstandardNamesOnlyForTrustedProviderMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeValidatorRejectsSingleShoeReference()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parsedSizeValidatorRejectsUnknownOnlyActualSizeAndKeepsMappedFallback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parserServiceDoesNotRouteFailedMusinsaRequestToAnotherProvider()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/parserServiceRejectsUnsupportedHostsWithoutCallingProviderParsers()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/poloDoesNotAutomaticallyCompareWithWovenShirt()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/poloUsesTshirtFamilyAndManuallyMatchesSameLengthTshirt()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/previousManualSelectionDoesNotAffectNewProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/productNameRefinesOuterwearWithoutTurningFleeceTopsIntoOuterwear()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/productSizeCreationRemovesDuplicatesAndResetsDisplayOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/productSizeNormalizerKeepsSelectionIdentityByProductSizeID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/productTargetTreatsCombinedAdultProviderCodesAsUnisex()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/productURLSupportAcceptsOfficialHostsAndRejectsLookalikes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/recommendationHistoryRecompareReusesPersistedDeterministicSize()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/recommendationHistorySaveReplacesSameProductHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/recommendationStoresUsedCodesAndExclusionReasons()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/referenceGarmentScopeKeepsDifferentGenderOrDetail()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/representativeFromDifferentDetailHasNoSelectionPriority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/requiredAtomicTaxonomyOptionsExist()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/resultReferenceChangePersistsLatestSelectionWithoutDuplicatingProductGraph()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/resultReferenceSelectionKeepsPickerForInsufficientEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/resultReferenceSelectionReplacesResultWhenEvidenceIsCompatible()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/retiredRepresentativeCannotCreateAnUnselectedComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/retiredRepresentativeDoesNotAutoSelectAgainstHigherSimilarity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/retiredRepresentativeDoesNotAutoSelectAgainstSameBrandCandidate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/retiredRepresentativeDoesNotOutrankRicherMeasurementEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/richerMeasurementEvidenceRanksFirstWithoutBypassingUserSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sameBrandIsOnlyATieBreakerAfterSimilarity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sameClosetCategoryDoesNotOverrideDifferentGarmentType()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sharedURLStoreClearsOnlyThePresentedURL()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sharedURLStoreConsumesPendingURLOnlyOnce()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortKnitCanUseShortTshirtAndSleevelessAsManualExpansionCandidates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortSleeveKnitDoesNotAutoMatchLongSleeveKnit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortSleeveSourceHistoryDoesNotOverrideDetectedLongSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortSleeveTShirtDoesNotAutoMatchLongSleeveKnit()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortTopExpansionRequiresTwoCommonCoreMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortTopManualExpansionPolicyMatrix()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/shortsDoNotAutoMatchLongPants()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/similarReferenceCandidatesRequireUserSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/singleCompatibleNonReferenceStillRequiresUserSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/singleExactRepresentativeForUserResolvedCategoryRequiresUserSelection()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sizeChartValuesDoNotUseDirectMeasurementSafetyRange()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sizeTableRecoveryAcceptsExistingSupportedMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sizeTableRecoveryContextDistinguishesCandidateStates()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sizeTableRecoveryRejectsDuplicateSizeNames()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sizeTableRecoveryRejectsEmptyAndMeasurementlessRows()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/skirtAndDressLengthConflictsDoNotAutoMatch()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/skortsResolveAsSkirts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/sourceMeasurementMappingPolicyMapsSourceSpecificUpperMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/standardBodySizeChartNormalizesSupportedOptionsOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/standardSizeFallbackComparesCircumferencesWithoutStoringActualChest()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/storedLargeCorpusExportsProductionClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/storedMusinsaCorpusBuildsActualMeasurementFitPairs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/storedMusinsaCorpusExportsActualSizeAttritionDiagnostics()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/storedMusinsaFourthCorpusActualSizesPassProductionParser()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/storedUniqloCorpusBuildsActualMeasurementFitPairs()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/taxonomyCodesAndParentsAreValidAndDeterministic()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/typedBlouseDetailOverridesBroadTShirtSourceFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloAirismCottonCrewNeckTUsesTShirtStructureDespiteInnerwearPath()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloAirismInnerShortsRemainUnderwearDespitePantsToken()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloAirismLineUsesGarmentCategoryInsteadOfAirismToken()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloAuditedCodesPreserveDifferentDefinitions()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloBottomCircumferencesRemainCircumferencesAndPreserveRawValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloChinoLongPantsMatchesStoredUniqloStraightJeans()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloClosetSourceOffersOnlyUniqloChartAndDirectMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloEmbeddedBreadcrumbRestoresOfficialLeafAndCategoryCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloEmptyColorSpecificSizeChartRetriesGenericProductID()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloGenericColorUsesOfficialSizeAPIRepresentativeImage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloGenericInnerwearTMeasurementsSurviveProductCreation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloGenericPathsUseProductNameForHoodiesAndShortPants()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloGenericSleeveDoesNotPairWithCenterBackSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloGraphicTeeUsesSourceCategoryAndOfficialSleeveMeasurement()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloHydrationProductTypeKrIsForwardedVerbatimAsStructuredFact()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloHydrationProductTypeKrOmitsMissingOrAmbiguousEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloJSONLDParserHandlesArrayAndBreadcrumb()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloJSONLDParserHandlesSingleProductObject()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloKoreanUnderwearPathOverridesIncorrectTopCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloNestedKnitStructureSurvivesGenericLeafCategories()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloPoloInfersShortSleeveFromOfficialSizeChart()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloRecompareWithDifferentReferenceKeepsSingleProductGraph()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloSelectedColorThumbnailIsNotReplacedByGenericSizeChartImage()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloShortPantsRemainShortsBeforeGenericPantsRule()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloSizeAPIParserReturnsNormalizedImageURL()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloSizeAPIParserUsesSizeChartAndRemovesDuplicateSizeNames()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloSizeGenderAloneDoesNotOverrideFemaleAudience()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloStraightJeansMapToLongPantsWhilePreservingDenimFamily()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloSweatFullZipParkaUsesOuterwearJumper()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloThirdCorpusUsesOfficialCutAndSewnAndLoungewearFamilies()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloThumbnailCandidatesRetainSelectedColorThenDefaultColor()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloTranscribedEntryUsesCommonChestAndCenterBackSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloURLResolverExtractsProductAndTwoDigitColor()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloURLResolverPrefersSharedQueryColorOverGenericPathColor()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloURLResolverPreservesLeadingZeroColor()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloUnknownOfficialPathDoesNotDefaultToTops()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/uniqloWideChinoPantsMapToLongPants()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/unspecifiedSleeveLengthUsesMeasuredFallbackInsteadOfConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/unspecifiedTopSleeveTypeUsesMeasurementMethodSpecificLengthRules()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/unsupportedStandardSizeDoesNotCreateZeroPercentRecommendation()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/userCategoryChoiceIsReusedForTheExactProviderProductOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/userFitCopiesMeasurementRecordsAsIndependentSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/userFitOnlyInheritsUnmodifiedVerifiedLegacyValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/zaraClosetSourcePreservesRetailerIdentityWithoutClaimingAnUnverifiedChart()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/zaraParserFailsClosedWhenOnlyBodySizeGuideExists()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchTests/zaraParserMapsOnlyVerifiedUpperGarmentBasis()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/completedReplayReliabilityAcceptsOnlyDocumentedFormulas()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/detailReusesPreviewArithmeticButStillRejectsDeniedBegin()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/eligibleCandidateDTOKeepsStableBlockedReasonCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineAcceptsEveryActiveServerCanonicalMetricCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineRejectsBlockedAuthorizationBeforeScoring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineRejectsSnapshotCandidateSetMismatchBeforeScoring()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/observationSizePreservesRetailerAvailabilityEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/retailerExactV2ContractRequiresExactUnscoredSemanticIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/runtimeDTOSeparatesGarmentAndAllLengthAxes()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchVNextContractTests/serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitPairCorpusXCTests/testMusinsa1037OfficialMeasurementCorpus()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitPairCorpusXCTests/testUniqlo243OfficialMeasurementCorpus()"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/existingCompletedHistoryHydratesWithoutLosingMeasurements(source:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/existingCompletedResultReplays(source:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/existingUserSelectedGroupHistoryRestoresAsSessionAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/rejectedReplacementKeepsExistingHistory()"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/restoredHistorySurvivesStoreReopen(source:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FrozenReleaseHistoryAuditTests/sessionHistoryRejectsConflictingAuthority(field:)"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveManualProductClassificationTests/classifiesManualConfirmationProductsThroughProductionPipeline()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveManualProductClassificationTests/reclassifiesStoredUnknownsThroughLiveProductionAPI()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveMusinsaValidationTests/circumferencePipelineSamplesPreserveParsedValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveMusinsaValidationTests/imageRejectionSamplesNeverProduceInvalidSizes()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveMusinsaValidationTests/sharedSlacksLinksProduceServerObservations()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveProductCorpusValidationTests/replays320StoredProductsThroughProductionClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveProductCorpusValidationTests/validatesAtLeast320LiveProductsThroughFitMatchParser()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveProductGroupURLAuditTests/parsesEveryUniqueURLIntoServerCategoryEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveReleaseQA1200Tests/testSelectedTenCaseBatchOnPhysicalDevice()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveReleaseRetailerProofTests/actualProductToObservation(url:)"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveThreeProductComparisonTests/comparesEverySizeAcrossAllDirectedProductPairs()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveThreeProductComparisonTests/uniqloOxfordShirtLReferenceAutomaticallyComparesNonIronShirt()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveUniqloValidationTests/graphicTeesUseOfficialCategoryAndMeasurementsForShortSleeve()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveUniqloValidationTests/koreanUnderwearProductsUseUnderwearBriefsClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/LiveUniqloValidationTests/legacyPocketableParkaUsesGenericOfficialSizeChart()"
+        },
+        {
+          "identifier" : "FitMatchTests/ManualClosetCategoryXCTests/testCategoryMenuUsesTheSevenLinkedRegistrationGroups()"
+        },
+        {
+          "identifier" : "FitMatchTests/ManualClosetCategoryXCTests/testCategoryOnlyEntryUsesSelectedComparisonGroupWithoutBrandOrProductName()"
+        },
+        {
+          "identifier" : "FitMatchTests/ManualClosetCategoryXCTests/testEntryStillRequiresMeasurementSource()"
+        },
+        {
+          "identifier" : "FitMatchTests/ManualClosetUXRegressionTests/paddedMeasurementPreservesValidatedValueAndRecord()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/differentWaistRepresentationsUseVerifiedConversionWithoutChangingStoredValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/embeddedFallbackPolicyMatchesGroupOnlyComparisonPolicy()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/legacyMethodSourceFallbackIsMerchantAgnosticAndUnknownChannelsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/mappedWaistCodesAllowVerifiedConversionWithoutInventingRetailerIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/sourceIdentityPrefersCanonicalProductMetadata()"
+        },
+        {
+          "identifier" : "FitMatchTests/MeasurementPolicyConsolidationTests/verifiedZARAUpperCodesCompareCrossSourceWithoutMerchantSpecificEngineLogic()"
+        },
+        {
+          "identifier" : "FitMatchTests/MixedTopClassificationRegressionTests/mixedProviderBucketsDoNotOverrideExplicitProductType()"
+        },
+        {
+          "identifier" : "FitMatchTests/MixedTopClassificationRegressionTests/sizeNormalizationPreservesShirtStructure()"
+        },
+        {
+          "identifier" : "FitMatchTests/MixedTopLiveRegressionTests/affectedUniqloProductsUseCorrectCurrentClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/actualSizeAndMetadataReceiveInParallelWithoutChangingCategoryBasedParsing()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/actualSizePreservesZeroRawRowsWithoutMakingThemComparable()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/cancellationAfterDelayedResponsesDoesNotReturnAProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/metadataCancellationDoesNotStartHTMLFallback()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/metadataFailureStillUsesHTMLFallbackAndActualSizeFailureKeepsItsCapture()"
+        },
+        {
+          "identifier" : "FitMatchTests/MusinsaParserConcurrencyTests/metadataURLSessionCancellationDoesNotStartHTMLFallback()"
+        },
+        {
+          "identifier" : "FitMatchTests/MyClosetSwipeDeletionInteractionTests/editDeletionCannotRemoveGarmentWithoutServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchTests/MyClosetSwipeDeletionInteractionTests/nativeSwipeUsesConfirmationForBothEntryPoints()"
+        },
+        {
+          "identifier" : "FitMatchTests/MyClosetSwipeDeletionInteractionTests/pendingDeletionDisablesRowsAndShowsProgress()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/fallbackRecoveryRejectsSetsShortLengthsAndNonFallbackPolicies()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/legacyStoredPrefixedSizeAndFallbackEligibilityRecoverAfterDiskReload()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/musinsaOptionOrderPrefixIsRemovedOnlyFromValidSizeTokens()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/resolvedLongPantsWithEnoughMeasurementsRecoverProductFallbackEligibility()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/storedActualSizeFixturesPreserveSixMeasurementsAndChooseHighestScore()"
+        },
+        {
+          "identifier" : "FitMatchTests/ProductLevelFallbackRegressionTests/unresolvedFallbackWithoutEnoughMeasurementsStaysBlocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testAnorakPantsRetainsBottomTaxonomy()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testComparisonClassificationBoundaryPolicy()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testExplicitCompositeGarmentSetsRequireUserConfirmation()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testExplicitSweatshirtCanResolveMissingOfficialMajorCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testMusinsaDeepReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testMusinsaEligibleReplacementReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testMusinsaExpandedReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testMusinsaReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testMusinsaReferenceCrossPlatformComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testOfficialMeasurementReferenceRegistration()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testOfficialTopTaxonomyIsNotOverriddenByOuterwearName()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testOuterwearNameCanResolveMissingOfficialMajorCategory()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testPlaceholderOtherClassificationIsNotAutoConfirmable()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testRemainingLocalOfficialReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloExpandedReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloLiveDiscoveryReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloMixedKnitBucketKeepsExplicitCardiganProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloMixedKnitBucketKeepsSpecificKnitLeaf()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloMixedPantsAndLeggingsBucketKeepsTerminalPants()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloReferenceCandidateProbe()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloReferenceCrossPlatformComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/ReferenceClosetSetupXCTests/testUniqloSweatFullZipParkaIsJumperNotPadding()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/explicitMixedGarmentSetWinsOverPackCount()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/explicitProviderComponentCompositionIsMixedSetButSetNameAloneIsNot()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/explicitRetailerMultipackWordingIsMultipack(text:)"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/homogeneousMultipackKeepsItsStructureAndGetsOneCoherentContract()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/insufficientRetailerStructureEvidenceStaysAbsent()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/missingMeasurementsAreNotAComparisonContract()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/mixedSetAndMultipleComponentSchemaAreNotCoherent()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/musinsaGenericGoodsMetadataDoesNotSynthesizeSingle()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/musinsaGoodsContentsCSSDoesNotSynthesizeMixedSet()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/oneRetailerSizeTableProducesOneCoherentContract()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/optionalColumnsStayInOneCoherentGarmentTable()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/uniqloE485393IsMultipackWithoutProductSpecificCode()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/uniqloExplicitProviderStructureIsForwardedWithoutLocalClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/RetailerProductStructureContractTests/uniqloPDPIdentityOnlyDoesNotSynthesizeSingle()"
+        },
+        {
+          "identifier" : "FitMatchTests/SuppliedLinkRawPreservationAuditTests/existingSuppliedUniqloReceiptsPreserveRawFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/SwiftDataSchemaMigrationTests/legacyStorePreservesDataAndRelationshipsWhenOpenedWithV1()"
+        },
+        {
+          "identifier" : "FitMatchTests/SwiftDataSchemaMigrationTests/newInstallationCreatesAndReopensEmptyV1Store()"
+        },
+        {
+          "identifier" : "FitMatchTests/UniqloParserConcurrencyTests/cancellationAfterDelayedChartsDoesNotProduceAResult()"
+        },
+        {
+          "identifier" : "FitMatchTests/UniqloParserConcurrencyTests/cancellationPropagatesToChartAndAvailabilityChildren()"
+        },
+        {
+          "identifier" : "FitMatchTests/UniqloParserConcurrencyTests/chartFailuresAndSameAddressKeepExistingFallbackAndRequestCounts()"
+        },
+        {
+          "identifier" : "FitMatchTests/UniqloParserConcurrencyTests/chartsAndAvailabilityBeginBeforeAnyResponseAndKeepLargerChartChoice()"
+        },
+        {
+          "identifier" : "FitMatchTests/UniqloParserConcurrencyTests/tiedChartsKeepPreferredResponseAndAvailabilityFailureDoesNotRetry()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserConcurrencyTests/cancelledSlowGuideCannotProduceALateZaraProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserConcurrencyTests/verifiedPageStartsDetailsBeforeSlowSelectedVariantGuideCompletes()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserConcurrencyTests/verifiedRedirectStartsResolvedVariantGuideWithoutWaitingForSupersededV1()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/URLIdentityParsingHandlesNoVariantAndMalformedURL()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/URLVariantRequestsOfficialSizeGuideBeforeProductPage()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/URLWithoutVariantLoadsProductIdentityBeforeSizeGuide()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/ambiguousSetTitleDoesNotCreateMixedSetRetailerFact()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/bodyOnlyFixtureNeverCreatesParsedMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/challengeHTMLFailsBeforeIdentityOrSizeRequest()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/cp032RealZARAParserUsesServerConfirmedCategoryWithoutLocalRecovery()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/currentOfficialZARALive300RemainsShadowOnlyAndFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/detailsRequestUsesPDPWithExactSelectedVariantAndAjaxFlag()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identityAcceptsSameStyleRedirectWithoutGuessingIDs()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identityAcceptsSelectedColourAmongMultipleStructuredVariants()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identityRecordsSelectedVariantWhenURLHasNoV1()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identityRejectsVariantMismatchRedirectedStyleAndMissingProductID()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identityRequiresJSONLDToCorroborateStyleAndVariantWhenPublished()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/identitySeparatesStyleVariantAndInternalProductID()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/inertChallengeSymbolInsideValidProductPageDoesNotBlockImport()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/invalidDirectPageUsesStructuredWebViewFallbackWithoutChangingVariant()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/liveDefaultLoaderResolvesOfficialProductIdentityAndGarmentGuide()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/liveURLVariantDirectlyResolvesOfficialGarmentGuideWithoutProductPage()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/liveUserSharedZARAURLReachesProductionParser()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/malformedAndEmptyGuideFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/missingOrNonCentimeterUnitsNeverCreateComparableMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/missingStructuredSectionOrFamilyFailsClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/officialPDPCompositionCreatesMixedSetRetailerFact()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/onlyCatentryIDIsPassedToSizeGuideLoader()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/parsedMetadataPreservesVariantAndCategoryPolicyProvenance()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/partiallyMissingSizeMeasurementsPreserveOnlyValidRawValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/registrationKeepsDistinctRawRowsAndUnknownUnitsWithoutCanonicalCoalescing()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/reviewedStructuredCategoryPathsMapToExactFitMatchDetails()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/shadowCorpusStructuredCategoriesNeverCrossGarmentDomain()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/shadowDiscoveredAmbiguousFamiliesAndStructuredConflictsFailClosed()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/singlePantsMeasurementReachesServerWithoutLocalComparisonGate()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/sizeGuideHTTPFailureIsPartialAndNonComparable()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/structuredKnitAndCardiganRemainCanonicalAfterViewModelApply()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/unavailableProductPageFailsExplicitly()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/unclassifiedOvershirtPreservesMeasurementsForClosetAndComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/unknownCategoryCarriesParentVariantRawEvidenceBeforeClassification()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/unknownMixedAndExcludedCategoriesDoNotBecomeShortSleeveTops()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/userConfirmedAmbiguousZARAProductsHaveStableCategories()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/userConfirmedBottomResumesVerifiedZARAMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/userConfirmedCategoryPreservesRawFactsWithoutInventingCanonicalMeasurements()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/userConfirmedProductOverridesFlowThroughURLParser()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/verifiedDressSubsetMapsFlatChestWaistAndHip()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/verifiedOuterGarmentSubsetIsComparisonReadyWithoutPromotingFrontLengthOrArmWidth()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/verifiedPantsSubsetMapsWaistHipAndFrontRiseOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/verifiedUpperGarmentSubsetMapsChestShoulderAndSleeveOnly()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/viewModelKeepsUserCategoryWhileResumingZARAImport()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/zaraKnitRegistrationDisplaysAllRawGarmentMeasurementsWithoutCanonicalPromotion()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserPhase1_5Tests/zipJacketDoesNotMatchFurOuterwearSubstring()"
+        }
+      ],
+      "enabledTests" : [
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetDeletionTransactionTests/ambiguousNetworkFailureKeepsIntentAndLocalItemThenRetryConfirmsAbsence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationCancellationDuringReadbackDoesNotPublish()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchClosetSyncCoordinatorTests/rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp013EmptyClosetHasNoReferenceAndNeverStartsComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp024RequiredMeasurementAbsenceStatesBlockWithNoCompletedResult()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchHeadlessUserJourneyTests/resultRecompareRunsANewServerAuthorizedCompletionWithoutMutatingTheOldResultTarget()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/comparisonCleanupRequiresExactHistoryOrUnambiguousTombstone()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/duplicateIDsMarkerTamperingAndBrokenIdentityTuplesAreBlocked()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/exactDevelopmentLedgerRoundTripsWithoutInventingScope()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/foreignProjectVersionOwnersRunAndMalformedUUIDAreBlockedBeforeNetwork()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/itemDeletionRequiresOneExactLiveOwnershipProof()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests/recordedDeletionNeverPermitsAnUnexpectedActiveRow()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseContinuationTests/compareRegisterOwnedSizeThenCompareUsingAuthoritativeRegisteredItem()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseLifecycleTests/asyncManualMeasurementEditRereadsBeforeExplicitNewComparison()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseMatrixTests/smokeRepresentativeCorpusCases()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseRawFixtureTests/musinsaArchivedChartPreserves24RawFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseRawFixtureTests/uniqloArchivedChartPreserves32RawFacts()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseRawFixtureTests/zaraArchivedGuidePreserves20RawFactsWithSyntheticPageShell()"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseTransportFaultTests/closetDeleteTransportFailurePreservesIntentAndPreventsLocalCommit(_:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseTransportFaultTests/mutationRPCFaultsReachRealHTTPBoundaryAndNeverReturnSuccess(_:)"
+        },
+        {
+          "identifier" : "FitMatchTests/FitMatchReleaseTransportFaultTests/successfulDeleteReceiptReachesRealDecoderAndCommitsExactlyOnce()"
+        },
+        {
+          "identifier" : "FitMatchTests/ZARAParserConcurrencyTests/cancellationWhilePageIsPendingCancelsSpeculativeGuideBeforePageCompletes()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchAuthenticatedRegistrationUITests/testSlacksRegistrationThenExplicitClosetComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveClosetRegistrationAndDirectURLComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveClosetRegistrationAndSafariShareComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveDeleteMissingReferenceAndReregisterRecovery()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveTenUserJourneysThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveThirtyBalancedPairsThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveThirtyRetailerClosetRegistrations()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveTwoHundredUserJourneysThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test02MusinsaFactsStayVisibleWithoutServerRegistrationAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test03UniqloFactsStayVisibleWithoutServerRegistrationAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test04ManualRegistrationRemainsAvailableAfterGuide()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test05NextPersistsOnboardingCompletionAcrossRelaunch()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test06UnownedSeedDataDoesNotLeakIntoTheTestAccount()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test07RepeatedLoadCannotReportSaveWithoutServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test08SignedOutRootShowsLoginBeforeOnboarding()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/testFourGuidePagesHaveOnlyNextAndFinish()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentOnboardingNextReachHome()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentTabsAndPrivacySupportNavigation()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testLinkedClosetEmptyInputCannotLoadOrAdvance()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testMalformedComparisonLinkShowsActionableMessage()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testLaunchPerformance()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testLocalCategoryFixtureCannotBypassServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testNewTaskOpensComparisonInput()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testPrimaryTabsOpenExpectedEmptyStates()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testPrivacyPolicyAndSupportAreReachableFromMyPage()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testUnsupportedURLIsRejectedBeforeNetworkRequest()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITestsLaunchTests/testFreshInstallShowsOnboarding()"
+        }
+      ],
+      "testPlan" : "FitMatch-QA"
+    }
+  ]
+}

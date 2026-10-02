@@ -1,0 +1,56 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+        "deviceName" : "iPhone 17 Pro",
+        "modelName" : "iPhone 17 Pro",
+        "osBuildNumber" : "23D8133",
+        "osVersion" : "26.3.1",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 51,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "FitMatch-QA · Built with macOS 15.7.7",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1790935383.608,
+  "passedTests" : 39,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1790935323.472,
+  "statistics" : [
+    {
+      "subtitle" : "14 test runs",
+      "title" : "2 tests ran with dynamic parameters"
+    }
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "Expectation failed: (failures → [\"musinsa-to-musinsa-A-raw_zero: Latest user zero-hidden expectation failed for musinsa; original raw value must remain preserved\", \"zara-to-musinsa-G-exact_identity_mismatch: conflictingProof(\\\"authorized_candidate_product_size_ids\\\")\"]).isEmpty → false: musinsa-to-musinsa-A-raw_zero: Latest user zero-hidden expectation failed for musinsa; original raw value must remain preserved | zara-to-musinsa-G-exact_identity_mismatch: conflictingProof(\"authorized_candidate_product_size_ids\")",
+      "targetName" : "FitMatchTests",
+      "testIdentifier" : 30,
+      "testIdentifierString" : "FitMatchReleaseMatrixTests/smokeRepresentativeCorpusCases()",
+      "testIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseMatrixTests/smokeRepresentativeCorpusCases()",
+      "testName" : "smokeRepresentativeCorpusCases()"
+    }
+  ],
+  "title" : "Test - FitMatch-QA",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "100% of duration",
+      "text" : "2 longest test runs with outlier durations exceeding 0.62s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 40
+}

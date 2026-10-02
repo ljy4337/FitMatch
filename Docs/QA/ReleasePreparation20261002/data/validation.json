@@ -1,0 +1,36 @@
+{
+  "schema_version": "fitmatch-data-validation-v1",
+  "status": "PASS",
+  "checks": {
+    "url_items": 90,
+    "unique_urls": 90,
+    "cohorts": {
+      "musinsa": {
+        "normal-candidate": 20,
+        "boundary": 10
+      },
+      "uniqlo": {
+        "normal-candidate": 20,
+        "boundary": 10
+      },
+      "zara": {
+        "normal-candidate": 20,
+        "boundary": 10
+      }
+    },
+    "fixture_items": 57,
+    "fixture_kinds": {
+      "real_retailer_raw": 56,
+      "synthetic_contract_input": 1
+    },
+    "valid_json_artifacts": "PASS",
+    "expected_invalid_json_fixtures": [
+      "Docs/QA/ReleasePreparation20261002/data/fixtures/synthetic-zara_malformed_synthetic.json"
+    ],
+    "fixture_sha256": "PASS",
+    "collector_python_compile": "PASS",
+    "synthetic_contract_specs": 756
+  },
+  "errors": [],
+  "test_execution": "NOT RUN; artifact structure/hashes and expected-invalid fixture classification only"
+}

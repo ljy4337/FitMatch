@@ -1,0 +1,462 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/552352094/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "97ab6e3d972647b55e9ed9a754faf09da22298a1aa09ec49bb376ea4f947aa15",
+  "response": {
+    "sizeGuideInfo": null,
+    "measureGuideInfo": {
+      "id": "74f88b82-c335-4de7-a516-548184cbb64e",
+      "name": "아론 레빈 x ZARA 롱 슬리브 티셔츠",
+      "sizes": [
+        {
+          "id": "2",
+          "name": "S (KR 90)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "S (KR 90)"
+            },
+            {
+              "units": "in",
+              "value": "S (KR 90)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "55.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "21.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "66.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "26.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length",
+              "descriptionZone": "zone-name-front-length-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "63.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "24.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-sleeve-length",
+              "descriptionZone": "zone-name-sleeve-length-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "45.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "17.7"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-width",
+              "descriptionZone": "zone-name-back-width-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "18.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "7.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-arm-width",
+              "descriptionZone": "zone-name-arm-width-description"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "M (KR 95-100)"
+            },
+            {
+              "units": "in",
+              "value": "M (KR 95-100)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "58.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "22.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "68.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "26.8"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length",
+              "descriptionZone": "zone-name-front-length-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "64.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "25.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-sleeve-length",
+              "descriptionZone": "zone-name-sleeve-length-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "48.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "18.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-width",
+              "descriptionZone": "zone-name-back-width-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "19.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "7.5"
+                }
+              ],
+              "tableTitleZone": "zone-name-arm-width",
+              "descriptionZone": "zone-name-arm-width-description"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "L (KR 100-105)"
+            },
+            {
+              "units": "in",
+              "value": "L (KR 100-105)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "61.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "24.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "70.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "27.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length",
+              "descriptionZone": "zone-name-front-length-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "65.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "25.6"
+                }
+              ],
+              "tableTitleZone": "zone-name-sleeve-length",
+              "descriptionZone": "zone-name-sleeve-length-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "51.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "20.1"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-width",
+              "descriptionZone": "zone-name-back-width-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "20.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "7.9"
+                }
+              ],
+              "tableTitleZone": "zone-name-arm-width",
+              "descriptionZone": "zone-name-arm-width-description"
+            }
+          ]
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "XL (KR 105-110)"
+            },
+            {
+              "units": "in",
+              "value": "XL (KR 105-110)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "A",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "64.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "25.2"
+                }
+              ],
+              "tableTitleZone": "zone-name-chest",
+              "descriptionZone": "zone-name-chest-description"
+            },
+            {
+              "zoneId": "B",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "72.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "28.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-front-length",
+              "descriptionZone": "zone-name-front-length-description"
+            },
+            {
+              "zoneId": "C",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "66.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "26.0"
+                }
+              ],
+              "tableTitleZone": "zone-name-sleeve-length",
+              "descriptionZone": "zone-name-sleeve-length-description"
+            },
+            {
+              "zoneId": "D",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "54.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "21.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-back-width",
+              "descriptionZone": "zone-name-back-width-description"
+            },
+            {
+              "zoneId": "E",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "21.0"
+                },
+                {
+                  "unitId": "in",
+                  "value": "8.3"
+                }
+              ],
+              "tableTitleZone": "zone-name-arm-width",
+              "descriptionZone": "zone-name-arm-width-description"
+            }
+          ]
+        }
+      ],
+      "image": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../../assets/public/8a44/201c/8bc2444a96c4/c6d45231b986/",
+            "name": "../../59cdc07bdd82",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "comments": [],
+      "defaultSize": "S (KR 90)",
+      "cleanImage": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "image",
+            "path": "../../assets/public/d9c6/2448/c1f74defb577/a9a73ab45c98",
+            "name": "../../CroCamiseta",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": null
+          }
+        ]
+      },
+      "section": {
+        "id": "2",
+        "name": "MAN"
+      },
+      "productImages": [
+        {
+          "xmedia": [
+            {
+              "datatype": "xmedia",
+              "set": 2,
+              "type": "image",
+              "kind": "image",
+              "path": "../../../assets/public/4fce/ac51/27a74b59ad54/684b7e0d4fc6/01887320712-e1/",
+              "name": "../../01887320712-e1",
+              "width": 2048,
+              "height": 3072,
+              "timestamp": "1585094400000",
+              "allowedScreens": [
+                "small",
+                "large"
+              ],
+              "isArrowsImage": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

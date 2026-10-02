@@ -1,0 +1,3522 @@
+{
+  "schema_version": "fitmatch-release-url-manifest-v1",
+  "version": "2026-10-02.v1",
+  "baseline_commit": "086617f",
+  "prepared_at": "2026-10-02T08:34:55.978666+00:00",
+  "scope": "Preparation only; 20 normal candidates + 10 boundary inputs per provider. Cohort is test intent, not verification result. One malformed original supplied URL intentionally retained.",
+  "current_parser_status": "NOT RUN",
+  "prohibited_inferences": [
+    "retailer_category_to_comparison_group",
+    "style_code_to_zara_catentry",
+    "HTTP_success_to_Swift_parser_success",
+    "historical_result_to_current_PASS"
+  ],
+  "items": [
+    {
+      "id": "musinsa-01",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1481640",
+      "identities": {
+        "product_id": "1481640",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[14]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 12,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-02",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/6193571",
+      "identities": {
+        "product_id": "6193571",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[15]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 21,
+        "zero_records": 9,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-03",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/6176194",
+      "identities": {
+        "product_id": "6176194",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[16]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 21,
+        "zero_records": 9,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-04",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/6067466",
+      "identities": {
+        "product_id": "6067466",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[21]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 1,
+        "raw_records": 7,
+        "zero_records": 3,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-05",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1144989",
+      "identities": {
+        "product_id": "1144989",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[22]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 9,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-06",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/2149254",
+      "identities": {
+        "product_id": "2149254",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[23]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-07",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1129745",
+      "identities": {
+        "product_id": "1129745",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[24]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 3,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-08",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1920872",
+      "identities": {
+        "product_id": "1920872",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[25]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-09",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/3730388",
+      "identities": {
+        "product_id": "3730388",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[26]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-10",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/5695778",
+      "identities": {
+        "product_id": "5695778",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[27]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-11",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/5151554",
+      "identities": {
+        "product_id": "5151554",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[28]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-12",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1144999",
+      "identities": {
+        "product_id": "1144999",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[29]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 18,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-13",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/1446486",
+      "identities": {
+        "product_id": "1446486",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[30]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 6,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-14",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/5626708",
+      "identities": {
+        "product_id": "5626708",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 긴소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[31]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-15",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/2448867",
+      "identities": {
+        "product_id": "2448867",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 니트/스웨터",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[32]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-16",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/2448866",
+      "identities": {
+        "product_id": "2448866",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 니트/스웨터",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[34]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-17",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/4682241",
+      "identities": {
+        "product_id": "4682241",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 니트/스웨터",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[35]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 5,
+        "raw_records": 35,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-18",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/5107472",
+      "identities": {
+        "product_id": "5107472",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 니트/스웨터",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[36]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 21,
+        "zero_records": 6,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-19",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/5864299",
+      "identities": {
+        "product_id": "5864299",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "바지 > 데님 팬츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[39]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 5,
+        "raw_records": 30,
+        "zero_records": 5,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-20",
+      "provider": "musinsa",
+      "cohort": "normal-candidate",
+      "url": "https://www.musinsa.com/products/6193525",
+      "identities": {
+        "product_id": "6193525",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[40]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 21,
+        "zero_records": 9,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-21",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/6372903",
+      "identities": {
+        "product_id": "6372903",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[13]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_parser_seconds_37.6",
+        "circumference_semantics_recovery"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 15,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-22",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/6372893",
+      "identities": {
+        "product_id": "6372893",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[19]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_actual_size_data_null",
+        "historical_parser_seconds_42.1"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 15,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-23",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/4096130",
+      "identities": {
+        "product_id": "4096130",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[12]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 2,
+        "raw_records": 14,
+        "zero_records": 6,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "current_http_receipt": {
+        "status": "PASS",
+        "http_status": 200,
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "response_sha256": "8e837d5e4bfda77e414ea422783dd09f10ebfaae8ebbf4cfe128fa0492aa6745",
+        "started_at": "2026-10-02T08:37:25.187748+00:00",
+        "scope": "measurement_endpoint_structural_response_only"
+      }
+    },
+    {
+      "id": "musinsa-24",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/3907950",
+      "identities": {
+        "product_id": "3907950",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[17]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "single_size",
+        "raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 1,
+        "raw_records": 7,
+        "zero_records": 3,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-25",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/2448874",
+      "identities": {
+        "product_id": "2448874",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 니트/스웨터",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[33]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "no_parsed_regular_sleeve_metric",
+        "raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 20,
+        "zero_records": 12,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-26",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/7051965",
+      "identities": {
+        "product_id": "7051965",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "바지 > 데님 팬츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[37]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "bottom_total_length_semantics",
+        "raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 18,
+        "zero_records": 3,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-27",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/4213064",
+      "identities": {
+        "product_id": "4213064",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "바지 > 데님 팬츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[38]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "bottom_raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 18,
+        "zero_records": 9,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-28",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/6864173",
+      "identities": {
+        "product_id": "6864173",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[18]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "six_sizes",
+        "raw_zero_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 42,
+        "zero_records": 18,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-29",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://www.musinsa.com/products/6383143",
+      "identities": {
+        "product_id": "6383143",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": "상의 > 반소매 티셔츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[20]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "mixed_positive_and_zero_unknown_rows"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 3,
+        "raw_records": 21,
+        "zero_records": 1,
+        "raw_codes": [],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "musinsa-30",
+      "provider": "musinsa",
+      "cohort": "boundary",
+      "url": "https://musinsa.onelink.me/PvkC/rz4cmoa784%87%E1%85%A1%E1%84%8C%E1%85%B5-p00774307.html?v1=556169729&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "identities": {
+        "product_id": null,
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null
+      },
+      "source_category_path": null,
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[185]"
+      },
+      "historical_parser_status": "FAILED",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "original_malformed_mixed_retailer_url",
+        "historical_parser_failure",
+        "intended_product_identity_unresolved"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 0,
+        "raw_records": 0,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": []
+      }
+    },
+    {
+      "id": "uniqlo-01",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E465185-000/00?colorDisplayCode=65",
+      "identities": {
+        "product_id": "E465185",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E465185",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": "65",
+        "pld_display_code": null
+      },
+      "source_category_path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "A",
+        "display_name": "상의",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57967:58039:58390"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[1]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 32,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-02",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E485454-000/00?colorDisplayCode=65",
+      "identities": {
+        "product_id": "E485454",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E485454",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": "65",
+        "pld_display_code": null
+      },
+      "source_category_path": "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[3]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 32,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-03",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E482522-000/01?colorDisplayCode=63&sizeDisplayCode=004&pldDisplayCode=000&utm_medium=social&utm_source=appshare",
+      "identities": {
+        "product_id": "E482522",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": "004",
+        "core_product_id": "E482522",
+        "url_suffix": "-000",
+        "price_group": "01",
+        "color_display_code": "63",
+        "pld_display_code": "000"
+      },
+      "source_category_path": "이너웨어 > 에어리즘 > 코튼",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "F",
+        "display_name": "이너웨어",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57970:58061:58506"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[4]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 32,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-04",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487214-000/00",
+      "identities": {
+        "product_id": "E487214",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487214",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 치노 팬츠 > 와이드",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "C",
+        "display_name": "바지",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57968:58047:98360"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[43]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 10,
+        "raw_records": 60,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-05",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488739-000/00",
+      "identities": {
+        "product_id": "E488739",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E488739",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 캐주얼 팬츠 > 이지 팬츠",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[44]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 24,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-06",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E484875-000/00",
+      "identities": {
+        "product_id": "E484875",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E484875",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 와이드 팬츠 > UNIQLO : C",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "C",
+        "display_name": "바지",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57968:58046:100085"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[45]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 48,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-07",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488743-000/00",
+      "identities": {
+        "product_id": "E488743",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E488743",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 진(청바지) > 와이드",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[46]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 12,
+        "raw_records": 72,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-08",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487220-000/00",
+      "identities": {
+        "product_id": "E487220",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487220",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 와이드 팬츠 > 슬랙스",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[50]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 48,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-09",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E492365-000/00",
+      "identities": {
+        "product_id": "E492365",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E492365",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 진(청바지) > 배기",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[51]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 42,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-10",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E474175-000/00",
+      "identities": {
+        "product_id": "E474175",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E474175",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "아우터 > 파카 & 블루종 > 포켓터블",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[53]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 21,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-11",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487394-000/00",
+      "identities": {
+        "product_id": "E487394",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487394",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "스포츠 유틸리티 웨어 > 아우터 > 포켓터블",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[54]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-12",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487517-000/00",
+      "identities": {
+        "product_id": "E487517",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487517",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[56]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-13",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487883-000/00",
+      "identities": {
+        "product_id": "E487883",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487883",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "아우터 > 파카 & 블루종 > Uniqlo U",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[59]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 18,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-14",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487846-000/00",
+      "identities": {
+        "product_id": "E487846",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487846",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "아우터 > 재킷 > 캐주얼 재킷",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[61]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-15",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488298-000/00",
+      "identities": {
+        "product_id": "E488298",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E488298",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "A",
+        "display_name": "상의",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57892:57959:57995:58142"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[63]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-16",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E489060-000/00",
+      "identities": {
+        "product_id": "E489060",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E489060",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "셔츠 & 블라우스 & 폴로셔츠 > 폴로셔츠 (카라티) > 긴팔",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[69]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-17",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E469411-000/00",
+      "identities": {
+        "product_id": "E469411",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E469411",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "니트 & 가디건 > 가디건 > 메리노",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[73]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-width",
+          "knit-body-length-front",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-18",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487005-000/00",
+      "identities": {
+        "product_id": "E487005",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487005",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "니트 & 가디건 > 가디건 > 스무드 코튼",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[74]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-width",
+          "knit-body-length-front",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-19",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E485329-000/00",
+      "identities": {
+        "product_id": "E485329",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E485329",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "니트 & 가디건 > 가디건 > 캐시미어",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[75]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-width",
+          "knit-body-length-front",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-20",
+      "provider": "uniqlo",
+      "cohort": "normal-candidate",
+      "url": "https://www.uniqlo.com/kr/ko/products/E485340-000/00",
+      "identities": {
+        "product_id": "E485340",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E485340",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "니트 & 가디건 > 가디건 > 그 외",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[76]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-width",
+          "knit-body-length-front",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-21",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E486627-000/00",
+      "identities": {
+        "product_id": "E486627",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E486627",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": null,
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[164]"
+      },
+      "historical_parser_status": "PARTIAL_RECOVERY_REQUIRED",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_missing_size_chart",
+        "historical_partial_recovery"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 0,
+        "raw_records": 0,
+        "zero_records": 0,
+        "raw_codes": [],
+        "raw_units": []
+      }
+    },
+    {
+      "id": "uniqlo-22",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E491320-000/00",
+      "identities": {
+        "product_id": "E491320",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E491320",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[153]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "suffix_identity_equivalence_unverified"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 16,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-23",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E491320-001/00",
+      "identities": {
+        "product_id": "E491320",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E491320",
+        "url_suffix": "-001",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[183]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "suffix_identity_equivalence_unverified"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 16,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-24",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E491320-002/00",
+      "identities": {
+        "product_id": "E491320",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E491320",
+        "url_suffix": "-002",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[184]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "suffix_identity_equivalence_unverified"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 16,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-25",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487688-000/00?colorDisplayCode=31&sizeDisplayCode=005&pldDisplayCode=000&utm_medium=social&utm_source=appshare",
+      "identities": {
+        "product_id": "E487688",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": "005",
+        "core_product_id": "E487688",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": "31",
+        "pld_display_code": "000"
+      },
+      "source_category_path": "아우터 > 파카 & 블루종 > 재킷",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "B",
+        "display_name": "아우터",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57966:58035:98331"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[0]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "color_specific_vs_generic_chart_identity",
+        "center_back_sleeve_semantics"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      },
+      "current_http_receipt": {
+        "status": "PASS",
+        "http_status": 200,
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "response_sha256": "28d17bc69abb4fc69d4dd0f4950b562ffbd4056cf1d4dbe4be60584fd6c049ac",
+        "started_at": "2026-10-02T08:37:25.303460+00:00",
+        "scope": "measurement_endpoint_structural_response_only"
+      }
+    },
+    {
+      "id": "uniqlo-26",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E487688-000/00",
+      "identities": {
+        "product_id": "E487688",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E487688",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "아우터 > 파카 & 블루종 > 재킷",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "B",
+        "display_name": "아우터",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "uniqlo:57893:57966:58035:98331"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[42]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "color_specific_vs_generic_chart_identity",
+        "center_back_sleeve_semantics"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 28,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-27",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488397-000/00",
+      "identities": {
+        "product_id": "E488397",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E488397",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 진(청바지) > 배기",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "REVIEW",
+        "group_code": null,
+        "display_name": null,
+        "mapping_source": "UNMAPPED",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[48]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_stored_product_group_unmapped"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 48,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-28",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E488630-000/00",
+      "identities": {
+        "product_id": "E488630",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E488630",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "팬츠 > 진(청바지) > 배기",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "REVIEW",
+        "group_code": null,
+        "display_name": null,
+        "mapping_source": "UNMAPPED",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[49]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_stored_product_group_unmapped"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 8,
+        "raw_records": 48,
+        "zero_records": 0,
+        "raw_codes": [
+          "bottom-width",
+          "hip-product-size",
+          "inseam",
+          "rising-length",
+          "thigh",
+          "waist-product-size"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      }
+    },
+    {
+      "id": "uniqlo-29",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E490470-000/00",
+      "identities": {
+        "product_id": "E490470",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E490470",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "남아 & 공용 > 아우터 > 블루종 & 파카",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[152]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "official_child_audience_path"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 12,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length",
+          "body-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "uniqlo-30",
+      "provider": "uniqlo",
+      "cohort": "boundary",
+      "url": "https://www.uniqlo.com/kr/ko/products/E485616-000/00",
+      "identities": {
+        "product_id": "E485616",
+        "variant_id": null,
+        "size_id": null,
+        "url_size_display_code": null,
+        "core_product_id": "E485616",
+        "url_suffix": "-000",
+        "price_group": "00",
+        "color_display_code": null,
+        "pld_display_code": null
+      },
+      "source_category_path": "신생아(0개월~2세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔)",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[175]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "official_newborn_audience_path"
+      ],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 16,
+        "zero_records": 0,
+        "raw_codes": [
+          "body-length-back",
+          "body-width",
+          "shoulder-width",
+          "sleeve-length-cb"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-01",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%B2%E1%84%90%E1%85%B5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06786003.html?v1=549838589&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "identities": {
+        "product_id": "549829596",
+        "variant_id": "549838589",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "549829596",
+        "catentry_id": "549838589",
+        "url_v1": "549838589",
+        "style_code": "06786003"
+      },
+      "source_category_path": "ZARA > 남성 > 스포츠 재킷 > B. Cazadora",
+      "comparison_group_current": null,
+      "historical_group": {
+        "status": "COMPARABLE",
+        "group_code": "B",
+        "display_name": "아우터",
+        "mapping_source": "RETAILER_CATEGORY",
+        "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+        "source_category_key": "zara:2:78:12467"
+      },
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[5]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 20,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-arm-width",
+          "zone-name-back-width",
+          "zone-name-chest",
+          "zone-name-front-length",
+          "zone-name-sleeve-length"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      },
+      "historical_group_provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+        "sha256": "82db4e13a8b0bf8fca50741de81b35315d3b688e2b7b74d2fde88e6bb0733432",
+        "selector": "source_code/source_product_key match; old stored product only"
+      },
+      "current_http_receipt": {
+        "status": "PASS",
+        "http_status": 200,
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "response_sha256": "83e714214aaf9e1c3e8ee63063b26a34645ba7f6bf49c48e751a0436ec290e46",
+        "started_at": "2026-10-02T08:37:25.552562+00:00",
+        "scope": "measurement_endpoint_structural_response_only"
+      }
+    },
+    {
+      "id": "zara-02",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%85%E1%85%AE%E1%84%8C%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%87%E1%85%A1%E1%84%8C%E1%85%B5-p00774307.html?v1=556169729&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "identities": {
+        "product_id": "556140702",
+        "variant_id": "556169729",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "556140702",
+        "catentry_id": "556169729",
+        "url_v1": "556169729",
+        "style_code": "00774307"
+      },
+      "source_category_path": "ZARA > 남성 > 바지 > B. Pant Denim",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[6]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 7,
+        "raw_records": 35,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-back-rise",
+          "zone-name-front-length-lower",
+          "zone-name-front-rise",
+          "zone-name-hips",
+          "zone-name-waist"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-03",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/릴렉스핏-배색-티셔츠-p00722370.html",
+      "identities": {
+        "product_id": "553949188",
+        "variant_id": "553966026",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "553949188",
+        "catentry_id": "553966026",
+        "url_v1": null,
+        "style_code": "00722370"
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > F. Camiseta",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[7]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 20,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-arm-width",
+          "zone-name-back-width",
+          "zone-name-chest",
+          "zone-name-front-length",
+          "zone-name-sleeve-length"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-04",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/인터록-릴렉스핏-티셔츠--04-p05584471.html",
+      "identities": {
+        "product_id": "545419230",
+        "variant_id": "553839163",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "545419230",
+        "catentry_id": "553839163",
+        "url_v1": null,
+        "style_code": "05584471"
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > B. Camiseta",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[8]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 5,
+        "raw_records": 25,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-arm-width",
+          "zone-name-back-width",
+          "zone-name-chest",
+          "zone-name-front-length",
+          "zone-name-sleeve-length"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-05",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/코튼-린넨-컬러-블록-티셔츠-p06264301.html",
+      "identities": {
+        "product_id": "551151802",
+        "variant_id": "551168569",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "551151802",
+        "catentry_id": "551168569",
+        "url_v1": null,
+        "style_code": "06264301"
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > Camiseta M/L",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[9]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 20,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-arm-width",
+          "zone-name-back-width",
+          "zone-name-chest",
+          "zone-name-front-length",
+          "zone-name-sleeve-length"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-06",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/배색-리브드-베이직-티셔츠-p00761414.html",
+      "identities": {
+        "product_id": "545419578",
+        "variant_id": "545425912",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "545419578",
+        "catentry_id": "545425912",
+        "url_v1": null,
+        "style_code": "00761414"
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > B. Camiseta",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[10]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 4,
+        "raw_records": 20,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-arm-width",
+          "zone-name-back-width",
+          "zone-name-chest",
+          "zone-name-front-length",
+          "zone-name-sleeve-length"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-07",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/스트라이프-와이드-팬츠-p04387223.html",
+      "identities": {
+        "product_id": "545478190",
+        "variant_id": "545479776",
+        "size_id": null,
+        "url_size_display_code": null,
+        "internal_product_id": "545478190",
+        "catentry_id": "545479776",
+        "url_v1": null,
+        "style_code": "04387223"
+      },
+      "source_category_path": "ZARA > 여성 > 바지 > B.PANTS",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/results.json",
+        "sha256": "2d0ccf507fc9fadb3fc364dabc1ac3eb41120e2625e9c618fbc4b8e725b9faae",
+        "selector": "$[11]"
+      },
+      "historical_parser_status": "PARSED_WITH_MEASUREMENTS",
+      "historical_evidence_date": "2026-09-30",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_measurement_summary": {
+        "sizes": 6,
+        "raw_records": 30,
+        "zero_records": 0,
+        "raw_codes": [
+          "zone-name-back-rise",
+          "zone-name-front-length-lower",
+          "zone-name-front-rise",
+          "zone-name-hips",
+          "zone-name-waist"
+        ],
+        "raw_units": [
+          "cm"
+        ]
+      }
+    },
+    {
+      "id": "zara-08",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%85%E1%85%A9%E1%86%AB-%E1%84%85%E1%85%A6%E1%84%87%E1%85%B5%E1%86%AB-x-zara-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B0%E1%84%8B%E1%85%B5%E1%84%83%E1%85%B3-%E1%84%80%E1%85%A1%E1%84%8C%E1%85%AE%E1%86%A8-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p05388603.html",
+      "identities": {
+        "product_id": "545406831",
+        "internal_product_id": "545406831",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "545410220"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 스포츠 재킷 > F. Cazadora",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 1"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-09",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B3-%E1%84%87%E1%85%A9%E1%86%B7%E1%84%87%E1%85%A5-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p07782343.html",
+      "identities": {
+        "product_id": "545427337",
+        "internal_product_id": "545427337",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "545431375"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 브레이저 > B.BLAZER",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 2"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-10",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%85%E1%85%A9%E1%86%AB-%E1%84%85%E1%85%A6%E1%84%87%E1%85%B5%E1%86%AB-x-zara-%E1%84%8E%E1%85%A6%E1%84%8F%E1%85%B3-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p01437610.html",
+      "identities": {
+        "product_id": "545428239",
+        "internal_product_id": "545428239",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "545436534"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 스포츠 재킷 > F. Cazadora",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 3"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-11",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/z1975-%E1%84%83%E1%85%A6%E1%84%82%E1%85%B5%E1%86%B7-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p00108022.html",
+      "identities": {
+        "product_id": "545439169",
+        "internal_product_id": "545439169",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "572132324",
+          "576232023"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 스포츠 재킷 > B.SHORT-OUTWEAR",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 4"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-12",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8C%E1%85%A1%E1%84%89%E1%85%AE-%E1%84%91%E1%85%A2%E1%84%90%E1%85%A5%E1%86%AB-%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p01377700.html",
+      "identities": {
+        "product_id": "545473154",
+        "internal_product_id": "545473154",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "545474934"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 바지 > L. PANT. PIJAMA",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 5"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-13",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A9%E1%86%AB%E1%84%90%E1%85%B3%E1%84%85%E1%85%A1%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3-%E1%84%8F%E1%85%A1%E1%86%AF%E1%84%85%E1%85%A1-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B0%E1%84%8B%E1%85%B5%E1%84%83%E1%85%B3-%E1%84%80%E1%85%A1%E1%84%8C%E1%85%AE%E1%86%A8-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p04416336.html",
+      "identities": {
+        "product_id": "545483281",
+        "internal_product_id": "545483281",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "545485983"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 스포츠 재킷 > F. Cazadora",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 6"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-14",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%89%E1%85%AD%E1%86%BA-%E1%84%89%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%84%87%E1%85%B3-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p03431633.html",
+      "identities": {
+        "product_id": "545892778",
+        "internal_product_id": "545892778",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "551168862",
+          "551168863",
+          "551168864"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 티셔츠 > C.CTAS FANTASI",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 7"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-15",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%83%E1%85%B5%E1%84%90%E1%85%A6%E1%84%8B%E1%85%B5%E1%86%AF-%E1%84%89%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%86%B7%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p05252072.html",
+      "identities": {
+        "product_id": "547003473",
+        "internal_product_id": "547003473",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "547014734"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 스포츠 재킷 > T.SHORT-OUTWEAR",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 8"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-16",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%87%E1%85%A5%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p05536064.html",
+      "identities": {
+        "product_id": "547276687",
+        "internal_product_id": "547276687",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "547294158"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 가디건 > KNIT CARDIGAN",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 9"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-17",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%87%E1%85%A2%E1%84%85%E1%85%A5%E1%86%AF-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p08372248.html",
+      "identities": {
+        "product_id": "548577264",
+        "internal_product_id": "548577264",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "582770476",
+          "582770478",
+          "582770479"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 여성 > 바지 > B.PANTS",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 10"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-18",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A9%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%85%E1%85%B5%E1%86%AB%E1%84%82%E1%85%A6%E1%86%AB-%E1%84%92%E1%85%A6%E1%86%AB%E1%84%85%E1%85%B5%E1%84%82%E1%85%A6%E1%86%A8-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p08054344.html",
+      "identities": {
+        "product_id": "550429724",
+        "internal_product_id": "550429724",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "550434327",
+          "550434328"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > Camiseta M/L",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 11"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-19",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/aaron-levine-x-zara-%E1%84%8E%E1%85%A6%E1%84%8F%E1%85%B3-%E1%84%90%E1%85%B3%E1%84%8B%E1%85%B1%E1%86%AF-%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p01063430.html",
+      "identities": {
+        "product_id": "552163213",
+        "internal_product_id": "552163213",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "552172712",
+          "552172713",
+          "552172714"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 셔츠 > F. Camisería",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 12"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-20",
+      "provider": "zara",
+      "cohort": "normal-candidate",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%85%E1%85%A9%E1%86%AB-%E1%84%85%E1%85%A6%E1%84%87%E1%85%B5%E1%86%AB-x-zara-%E1%84%85%E1%85%A9%E1%86%BC-%E1%84%89%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%84%87%E1%85%B3-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p01887320.html",
+      "identities": {
+        "product_id": "552342201",
+        "internal_product_id": "552342201",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "552352094",
+          "552352095"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > Camiseta M/L",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 13"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [],
+      "historical_api_response_types": [
+        "garment_measure"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-21",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%85%E1%85%A9%E1%86%AB-%E1%84%85%E1%85%A6%E1%84%87%E1%85%B5%E1%86%AB-x-zara-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%90%E1%85%B5%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p01887426.html",
+      "identities": {
+        "product_id": "553028015",
+        "internal_product_id": "553028015",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "553031685",
+          "553031686"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 티셔츠 > F. Camiseta",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 14"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_variant_body_only_guide",
+        "selected_variant_requires_current_resolution"
+      ],
+      "historical_api_response_types": [
+        "body_only"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-22",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/aaron-levine-x-zara-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8E%E1%85%B5%E1%84%82%E1%85%A9-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p04025158.html",
+      "identities": {
+        "product_id": "555161842",
+        "internal_product_id": "555161842",
+        "catentry_id": null,
+        "variant_id": null,
+        "known_archived_variant_ids": [
+          "555174282"
+        ],
+        "size_id": null
+      },
+      "source_category_path": "ZARA > 남성 > 바지 > F. Pant Resto",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_production_sample_30_payloads.jsonl",
+        "sha256": "dcec172a8d70b8d04c0485db2a96c4b9bbe46269ce700752320d760a17ee1fde",
+        "selector": "line 18"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": "2026-08-21T08:59:47.657Z",
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "historical_variant_body_only_guide",
+        "selected_variant_requires_current_resolution"
+      ],
+      "historical_api_response_types": [
+        "body_only"
+      ],
+      "identity_note": "Canonical URL lacks selected v1; current parser must resolve exact variant. Known variants do not authorize selecting the first."
+    },
+    {
+      "id": "zara-23",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5-%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p04166166.html?v1=545490346",
+      "identities": {
+        "product_id": "545486853",
+        "internal_product_id": "545486853",
+        "catentry_id": "545490346",
+        "variant_id": "545490346",
+        "style_code": "04166166",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 셔츠 > B. Camisería",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 1"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-24",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/100-%E1%84%8B%E1%85%AE%E1%86%AF-%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%87%E1%85%B3%E1%86%AF%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%8C%E1%85%A5-p05552381.html?v1=551791628",
+      "identities": {
+        "product_id": "551789966",
+        "internal_product_id": "551789966",
+        "catentry_id": "551791628",
+        "variant_id": "551791628",
+        "style_code": "05552381",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 브레이저 > Blasier",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 2"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-25",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%91%E1%85%B3%E1%86%AF%E1%84%85%E1%85%B5%E1%84%8E%E1%85%B3-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%91%E1%85%A2%E1%86%AB%E1%84%8E%E1%85%B3-p06861017.html?v1=555813567",
+      "identities": {
+        "product_id": "555794883",
+        "internal_product_id": "555794883",
+        "catentry_id": "555813567",
+        "variant_id": "555813567",
+        "style_code": "06861017",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 바지 > F. Pant Resto",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 3"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-26",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%82%E1%85%B5%E1%84%90%E1%85%B3-%E1%84%91%E1%85%A9%E1%86%AF%E1%84%85%E1%85%A9%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p05987400.html?v1=545479232",
+      "identities": {
+        "product_id": "545475314",
+        "internal_product_id": "545475314",
+        "catentry_id": "545479232",
+        "variant_id": "545479232",
+        "style_code": "05987400",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 스웨터 > B. Jersey M/C",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 4"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-27",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%86%E1%85%A6%E1%84%90%E1%85%A1%E1%86%AF-%E1%84%90%E1%85%A9%E1%84%80%E1%85%B3%E1%86%AF-%E1%84%85%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%A8%E1%84%89%E1%85%B3%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06987339.html",
+      "identities": {
+        "product_id": "549813606",
+        "internal_product_id": "549813606",
+        "catentry_id": "549815778",
+        "variant_id": "549815778",
+        "style_code": "06987339",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 스포츠 재킷 > B. Cazadora",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 5"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-28",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%87%E1%85%A1%E1%84%8C%E1%85%B5-p04470350.html",
+      "identities": {
+        "product_id": "547363203",
+        "internal_product_id": "547363203",
+        "catentry_id": "547367126",
+        "variant_id": "547367126",
+        "style_code": "04470350",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 바지 > B. Pant Denim",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 6"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-29",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%91%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%91%E1%85%A5%E1%84%87%E1%85%A2%E1%86%A8-%E1%84%8B%E1%85%B0%E1%84%8B%E1%85%B5%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3-%E1%84%8F%E1%85%A9%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%89%E1%85%AD%E1%84%8E%E1%85%B3-p04090032.html",
+      "identities": {
+        "product_id": "555068728",
+        "internal_product_id": "555068728",
+        "catentry_id": "555080429",
+        "variant_id": "555080429",
+        "style_code": "04090032",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 버뮤다반바지 > F.Bermuda Resto",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 7"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    },
+    {
+      "id": "zara-30",
+      "provider": "zara",
+      "cohort": "boundary",
+      "url": "https://www.zara.com/kr/ko/%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A9-%E1%84%87%E1%85%B3%E1%86%AF%E1%84%85%E1%85%A9%E1%86%A8-%E1%84%8C%E1%85%B5%E1%84%91%E1%85%A5%E1%84%82%E1%85%A6%E1%86%A8-%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B0%E1%84%90%E1%85%B3%E1%84%89%E1%85%A7%E1%84%8E%E1%85%B3-p04087303.html",
+      "identities": {
+        "product_id": "549551955",
+        "internal_product_id": "549551955",
+        "catentry_id": "549569317",
+        "variant_id": "549569317",
+        "style_code": "04087303",
+        "size_id": null
+      },
+      "source_category_path": "MAN > 스웨트 셔츠 > F. Sudadera",
+      "comparison_group_current": null,
+      "historical_group": null,
+      "provenance": {
+        "path": "ZARAAudit/zara_phase1_5_identity_samples.jsonl",
+        "sha256": "6d8c5097814c1646b318c43c4802ac09263caa5864d081bd049e10390ef49610",
+        "selector": "line 8"
+      },
+      "historical_parser_status": "NOT RUN",
+      "historical_evidence_date": null,
+      "current_parser_status": "NOT RUN",
+      "boundary_reasons": [
+        "selected_catentry_differs_from_internal_product_id"
+      ],
+      "identity_evidence": "product_page_embedded_analytics"
+    }
+  ]
+}

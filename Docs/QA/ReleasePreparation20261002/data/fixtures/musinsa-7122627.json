@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "result": "SUCCESS",
+    "errorCode": "",
+    "message": "성공적으로 처리하였습니다."
+  },
+  "data": {
+    "typeName": "긴소매티셔츠",
+    "typeNumber": 21,
+    "description": "측정 방법에 따라 약 2cm 정도의 오차가 있을 수 있습니다.",
+    "mobileImage": "//image.musinsa.com/images/size_type/m_detail_img/2026090711323600000057660.png",
+    "webImage": "//image.musinsa.com/images/size_type/detail_img/2026090711323100000052223.png",
+    "sizes": [
+      {
+        "name": "M",
+        "sequence": 0,
+        "items": [
+          { "name": "총장", "value": 63.0, "recommendSizeRange": 2, "sequence": 1 },
+          { "name": "어깨너비", "value": 53.0, "recommendSizeRange": 2, "sequence": 2 },
+          { "name": "가슴단면", "value": 54.0, "recommendSizeRange": 2, "sequence": 3 },
+          { "name": "소매길이", "value": 63.0, "recommendSizeRange": 2, "sequence": 4 },
+          { "name": "밑단단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 5 },
+          { "name": "소매부리단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 6 },
+          { "name": "암홀", "value": 0.0, "recommendSizeRange": 2, "sequence": 7 }
+        ]
+      },
+      {
+        "name": "L",
+        "sequence": 1,
+        "items": [
+          { "name": "총장", "value": 65.0, "recommendSizeRange": 2, "sequence": 1 },
+          { "name": "어깨너비", "value": 55.0, "recommendSizeRange": 2, "sequence": 2 },
+          { "name": "가슴단면", "value": 56.0, "recommendSizeRange": 2, "sequence": 3 },
+          { "name": "소매길이", "value": 64.0, "recommendSizeRange": 2, "sequence": 4 },
+          { "name": "밑단단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 5 },
+          { "name": "소매부리단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 6 },
+          { "name": "암홀", "value": 0.0, "recommendSizeRange": 2, "sequence": 7 }
+        ]
+      },
+      {
+        "name": "XL",
+        "sequence": 2,
+        "items": [
+          { "name": "총장", "value": 67.0, "recommendSizeRange": 2, "sequence": 1 },
+          { "name": "어깨너비", "value": 57.0, "recommendSizeRange": 2, "sequence": 2 },
+          { "name": "가슴단면", "value": 58.0, "recommendSizeRange": 2, "sequence": 3 },
+          { "name": "소매길이", "value": 65.0, "recommendSizeRange": 2, "sequence": 4 },
+          { "name": "밑단단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 5 },
+          { "name": "소매부리단면", "value": 0.0, "recommendSizeRange": 2, "sequence": 6 },
+          { "name": "암홀", "value": 0.0, "recommendSizeRange": 2, "sequence": 7 }
+        ]
+      }
+    ],
+    "mySize": [],
+    "showActualSizeSubmissionNotice": true
+  },
+  "error": null
+}

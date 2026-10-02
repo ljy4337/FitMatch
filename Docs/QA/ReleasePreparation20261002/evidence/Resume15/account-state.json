@@ -1,0 +1,23 @@
+{
+  "environment": "development",
+  "project": "hnkplvyegonlhumlejst",
+  "evidence_kind": "administrator_read_only_counts",
+  "initialization_status": "BLOCKED",
+  "initialization_reason": "Automatic approval review rejected administrator SQL soft-delete; no workaround attempted",
+  "applied_rows": 0,
+  "postflight_accounts": [
+    {
+      "alias": "A",
+      "active_closet_rows": 0,
+      "active_comparison_rows": 0
+    },
+    {
+      "alias": "B",
+      "active_closet_rows": 6,
+      "active_comparison_rows": 9
+    }
+  ],
+  "authenticated_case_count": 0,
+  "auth_sessions_connected": false,
+  "apple_provider_supported_by_harness": true
+}

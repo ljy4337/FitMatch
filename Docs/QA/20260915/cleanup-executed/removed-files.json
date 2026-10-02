@@ -1,0 +1,62 @@
+[
+  {
+    "path": "FitMatch/Views/BrandDatabaseView.swift",
+    "bytes": 3482
+  },
+  {
+    "path": "FitMatch/Views/ShoppingProductFormView.swift",
+    "bytes": 31308
+  },
+  {
+    "path": "FitMatch/Services/MusinsaWebViewParser.swift",
+    "bytes": 11471
+  },
+  {
+    "path": "FitMatch/Services/COSParser.swift",
+    "bytes": 27835
+  },
+  {
+    "path": "maxOffset",
+    "bytes": 0
+  },
+  {
+    "path": "FitMatchPhase1B2ChangedFiles-20260829.zip",
+    "bytes": 851873
+  },
+  {
+    "path": "FitMatchCodexUltraIndependentPreE2EAudit-20260830.zip",
+    "bytes": 171530
+  },
+  {
+    "path": "FitMatchVNextFinalCloseoutChangedFiles-20260829.zip",
+    "bytes": 153879
+  },
+  {
+    "path": "FitMatchVNextProductionUserContractActivation-20260829.zip",
+    "bytes": 166077
+  },
+  {
+    "path": "FitMatchSwiftVNextIntegrationChangedFiles-20260829.zip",
+    "bytes": 297539
+  },
+  {
+    "path": "FitMatchFinal3P0RemediationChangedFiles-20260829.zip",
+    "bytes": 300093
+  },
+  {
+    "path": "FitMatchSwiftVNextFinalXcodeVerification-20260829.zip",
+    "bytes": 299961
+  },
+  {
+    "path": "FitMatchCodexUltraIndependentPreE2EAudit-20260829.zip",
+    "bytes": 171297
+  },
+  {
+    "path": "FitMatchManualCrossMigrationParityRecoveryChangedFiles-20260830.zip",
+    "bytes": 170340
+  },
+  {
+    "path": "FitMatch_Hardcoded_Product_Classification_Ledger_20260828.jsonl",
+    "bytes": 154087701
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "changed": [
+    "FitMatchTests/FitMatchP0RemediationRegressionTests.swift",
+    "FitMatchTests/FitMatchTests.swift",
+    "FitMatch Swift Feature Map.md",
+    "supabase/migrations/20260915093000_align_confirmed_group_readiness_contract.sql"
+  ],
+  "removed": [
+    "FitMatchSwiftVNextIntegrationChangedFiles-20260829.zip",
+    "FitMatchSwiftVNextFinalXcodeVerification-20260829.zip",
+    "FitMatch/Views/ShoppingProductFormView.swift",
+    "FitMatchCodexUltraIndependentPreE2EAudit-20260830.zip",
+    "FitMatchCodexUltraIndependentPreE2EAudit-20260829.zip",
+    "FitMatchFinal3P0RemediationChangedFiles-20260829.zip",
+    "FitMatch/Services/MusinsaWebViewParser.swift",
+    "FitMatch/Services/COSParser.swift",
+    "FitMatch/Views/BrandDatabaseView.swift",
+    "FitMatchVNextProductionUserContractActivation-20260829.zip",
+    "FitMatchManualCrossMigrationParityRecoveryChangedFiles-20260830.zip",
+    "FitMatchVNextFinalCloseoutChangedFiles-20260829.zip",
+    "FitMatchPhase1B2ChangedFiles-20260829.zip",
+    "maxOffset"
+  ],
+  "note": "Ignored duplicate full ledger additionally removed; retained tracked parts match baseline."
+}

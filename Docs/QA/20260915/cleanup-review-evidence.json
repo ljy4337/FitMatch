@@ -1,0 +1,1500 @@
+{
+  "project": "hnkplvyegonlhumlejst",
+  "date": "2026-09-15",
+  "scope": "READ_ONLY",
+  "functions": [
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_user_product_classification_override",
+      "args": "",
+      "oid": "23521",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime_for_swift",
+      "args": "p_source_code text, p_source_product_key text",
+      "oid": "23383",
+      "callers": [
+        "public.fitmatch_vnext_get_product_runtime(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_classification_recovery_options",
+      "args": "p_product_id uuid",
+      "oid": "23538",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "oid": "23539",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "oid": "23540",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_product_readiness",
+      "args": "p_product_id uuid",
+      "oid": "23528",
+      "callers": [
+        "fitmatch_vnext.get_product_runtime_for_swift(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_target_classification_detail_legacy",
+      "args": "p_product_id uuid",
+      "oid": "23523",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "oid": "23524",
+      "callers": [
+        "public.fitmatch_vnext_set_user_product_classification(p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "oid": "23525",
+      "callers": [
+        "public.fitmatch_vnext_clear_user_product_classification(p_product_id uuid, p_mutation_id uuid, p_expected_revision integer)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "oid": "23529",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context_v1",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "oid": "23527",
+      "callers": [
+        "fitmatch_vnext.product_readiness_with_context(p_product_id uuid, p_effective_classification jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_user_classification_feedback_evidence",
+      "args": "",
+      "oid": "23547",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size_with_context",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "oid": "23526",
+      "callers": [
+        "fitmatch_vnext.get_product_runtime_for_swift(p_source_code text, p_source_product_key text)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.product_readiness_with_context_v1(p_product_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.product_measurement_readiness(p_product_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.canonical_measurements_for_session_group(p_product_size_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.apply_linked_closet_snapshot_for_swift(p_request jsonb, p_existing_closet_item_id uuid)",
+        "fitmatch_vnext.upsert_closet_item(p_request jsonb)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.update_closet_item(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_with_group_for_swift",
+      "args": "p_request jsonb",
+      "oid": "25324",
+      "callers": [
+        "public.fitmatch_vnext_upsert_closet_item(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item_with_group_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "oid": "25325",
+      "callers": [
+        "public.fitmatch_vnext_update_closet_item(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "set_updated_at",
+      "args": "",
+      "oid": "17490",
+      "callers": [
+        "fitmatch_vnext.set_updated_at()"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "handle_new_user",
+      "args": "",
+      "oid": "17695",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_unit_decision",
+      "args": "p_product_id uuid",
+      "oid": "23581",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.product_readiness_with_context(p_product_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.product_measurement_readiness(p_product_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.comparison_target_context(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.classification_decision(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_complete_observed_category_path",
+      "args": "p_signal_id uuid",
+      "oid": "23583",
+      "callers": [
+        "fitmatch_vnext.uniqlo_category_parent_chain_safe(p_signal_id uuid)",
+        "fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(p_mapping_id uuid)",
+        "fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(p_target_signal_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_matches_observed_path",
+      "args": "p_signal_id uuid, p_path text[]",
+      "oid": "23584",
+      "callers": [
+        "fitmatch_vnext.uniqlo_category_parent_chain_safe(p_signal_id uuid)",
+        "fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current(p_mapping_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_safe",
+      "args": "p_signal_id uuid",
+      "oid": "23585",
+      "callers": [
+        "fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(p_target_signal_id uuid)",
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_auto_promoted_mapping_is_current",
+      "args": "p_mapping_id uuid",
+      "oid": "23586",
+      "callers": [
+        "fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings(p_external_key text)",
+        "fitmatch_vnext.classification_decision(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "promote_uniqlo_audience_invariant_category_mapping",
+      "args": "p_target_signal_id uuid",
+      "oid": "23587",
+      "callers": [
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "revalidate_uniqlo_auto_promoted_mappings",
+      "args": "p_external_key text",
+      "oid": "23588",
+      "callers": [
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "oid": "23591",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.authorize_comparison(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "oid": "23595",
+      "callers": [
+        "fitmatch_vnext.effective_product_readiness(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "oid": "23601",
+      "callers": [
+        "public.fitmatch_vnext_ingest_product_observation(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation_v2",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "oid": "23599",
+      "callers": [
+        "fitmatch_vnext.ingest_product_observation(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "oid": "23401",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "oid": "23403",
+      "callers": [
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "oid": "23399",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "oid": "23400",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness",
+      "args": "p_product_id uuid",
+      "oid": "23017",
+      "callers": [
+        "fitmatch_vnext.effective_product_readiness(p_product_id uuid)",
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)",
+        "fitmatch_vnext.get_product_runtime(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_measurement_readiness",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "oid": "25485",
+      "callers": [
+        "fitmatch_vnext.product_readiness(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "exact_product_authority_recovery_options",
+      "args": "p_product_id uuid",
+      "oid": "23706",
+      "callers": [
+        "fitmatch_vnext.classification_recovery_options_v6_core(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_garment_axis_values",
+      "args": "",
+      "oid": "21979",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v6_core",
+      "args": "p_product_id uuid",
+      "oid": "23772",
+      "callers": [
+        "fitmatch_vnext.classification_recovery_options_v7_pre_explicit_core(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "enforce_uniqlo_generic_category_leaf_inactive",
+      "args": "",
+      "oid": "23830",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_target_classification",
+      "args": "p_product_id uuid",
+      "oid": "25212",
+      "callers": [
+        "fitmatch_vnext.get_product_runtime_for_swift(p_source_code text, p_source_product_key text)",
+        "fitmatch_vnext.effective_product_readiness(p_product_id uuid)",
+        "fitmatch_vnext.set_user_product_classification(p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer)",
+        "fitmatch_vnext.clear_user_product_classification(p_product_id uuid, p_mutation_id uuid, p_expected_revision integer)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.product_readiness(p_product_id uuid)",
+        "fitmatch_vnext.comparison_target_context(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "fitmatch_vnext.begin_comparison_legacy_20260914(p_request jsonb)",
+        "fitmatch_vnext.upsert_closet_item(p_request jsonb)",
+        "fitmatch_vnext.authorize_comparison(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.update_closet_item(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_target_context",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "oid": "25878",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.begin_comparison(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_session_group",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "oid": "25880",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "oid": "25881",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "oid": "25883",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.authorize_comparison(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_classification_mapping",
+      "args": "",
+      "oid": "22844",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "oid": "25884",
+      "callers": [
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.begin_comparison(p_request jsonb)",
+        "fitmatch_vnext.begin_comparison_legacy_20260914(p_request jsonb)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_tuple_validation",
+      "args": "p_garment_type_code text, p_product_structure_code text, p_audience_code text, p_sleeve_length_code text, p_lower_length_code text, p_body_length_code text",
+      "oid": "22823",
+      "callers": [
+        "fitmatch_vnext.validate_user_product_classification_override()",
+        "fitmatch_vnext.effective_target_classification_detail_legacy(p_product_id uuid)",
+        "fitmatch_vnext.product_readiness_with_context_v1(p_product_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping(p_target_signal_id uuid)",
+        "fitmatch_vnext.exact_product_authority_recovery_options(p_product_id uuid)",
+        "fitmatch_vnext.classification_recovery_options_v6_core(p_product_id uuid)",
+        "fitmatch_vnext.classification_decision(p_source_code text, p_source_product_key text)",
+        "fitmatch_vnext.classification_recovery_options(p_product_id uuid)",
+        "fitmatch_vnext.set_closet_reference(p_closet_item_id uuid)",
+        "fitmatch_vnext.apply_linked_closet_snapshot_for_swift(p_request jsonb, p_existing_closet_item_id uuid)",
+        "fitmatch_vnext.set_closet_classification_override(p_closet_item_id uuid, p_override jsonb)",
+        "fitmatch_vnext.upsert_closet_item(p_request jsonb)",
+        "fitmatch_vnext.update_closet_item(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "oid": "25888",
+      "callers": [
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "oid": "25886",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison",
+      "args": "p_request jsonb",
+      "oid": "25890",
+      "callers": [
+        "public.fitmatch_vnext_begin_comparison(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "oid": "25887",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_product_classification",
+      "args": "p_source_code text, p_source_product_key text, p_apply boolean",
+      "oid": "22918",
+      "callers": [
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_decision",
+      "args": "p_source_code text, p_source_product_key text",
+      "oid": "22916",
+      "callers": [
+        "fitmatch_vnext.classification_recovery_options_v6_core(p_product_id uuid)",
+        "fitmatch_vnext.resolve_product_classification(p_source_code text, p_source_product_key text, p_apply boolean)",
+        "fitmatch_vnext.classification_recovery_options(p_product_id uuid)",
+        "fitmatch_vnext.classification_recovery_options_v7_pre_explicit_core(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options",
+      "args": "p_product_id uuid",
+      "oid": "23522",
+      "callers": [
+        "public.fitmatch_vnext_get_classification_recovery_options(p_product_id uuid)",
+        "fitmatch_vnext.effective_target_classification_detail_legacy(p_product_id uuid)",
+        "fitmatch_vnext.set_user_product_classification(p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v7_pre_explicit_core",
+      "args": "p_product_id uuid",
+      "oid": "24580",
+      "callers": [
+        "fitmatch_vnext.classification_recovery_options(p_product_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "oid": "23023",
+      "callers": [
+        "public.fitmatch_vnext_set_closet_reference(p_closet_item_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_catalog",
+      "name": "sync_product_body_length",
+      "args": "",
+      "oid": "20657",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_completed_comparison",
+      "args": "",
+      "oid": "23081",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "oid": "24623",
+      "callers": [
+        "public.fitmatch_vnext_hide_comparison_history(p_client_comparison_ids uuid[])"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "oid": "24624",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_domain_20260908",
+      "args": "p_policy text",
+      "oid": "24639",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_catalog",
+      "name": "runtime_infer_body_length_code",
+      "args": "p_category_code text, p_product_name text, p_source_category_path text",
+      "oid": "20656",
+      "callers": [
+        "fitmatch_catalog.sync_product_body_length()"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_evidence_20260908",
+      "args": "p_reference_closet_item_id uuid, p_policy text, p_canonical jsonb",
+      "oid": "24640",
+      "callers": [
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "oid": "23202",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size",
+      "args": "p_product_size_id uuid",
+      "oid": "22987",
+      "callers": [
+        "fitmatch_vnext.canonical_measurements_for_size_with_context(p_product_size_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.get_product_runtime(p_source_code text, p_source_product_key text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_ingestion_receipt_facts",
+      "args": "",
+      "oid": "23333",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_source_snapshot",
+      "args": "",
+      "oid": "24678",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_detail_snapshot_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "oid": "24672",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_with_group_for_swift(p_request jsonb)",
+        "fitmatch_vnext.update_closet_item_with_group_for_swift(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_linked_closet_snapshot_for_swift",
+      "args": "p_request jsonb, p_existing_closet_item_id uuid",
+      "oid": "24680",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_with_group_for_swift(p_request jsonb)",
+        "fitmatch_vnext.update_closet_item_with_group_for_swift(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_upsert_closet_item",
+      "args": "p_request jsonb",
+      "oid": "23393",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_list_closet_items",
+      "args": "",
+      "oid": "23395",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "oid": "23394",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_updated_at",
+      "args": "",
+      "oid": "21786",
+      "callers": [
+        "public.set_updated_at()"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_ownership_and_target",
+      "args": "",
+      "oid": "22414",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "oid": "23388",
+      "callers": [
+        "public.fitmatch_vnext_set_closet_classification_override(p_closet_item_id uuid, p_override jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "normalize_measurement_label",
+      "args": "p_label text",
+      "oid": "22985",
+      "callers": [
+        "fitmatch_vnext.resolve_measurement(p_source_code text, p_parser_code text, p_raw_measurement_code text, p_raw_label text, p_garment_type_code text, p_fitmatch_category_code text, p_raw_value numeric)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison_legacy_20260914",
+      "args": "p_request jsonb",
+      "oid": "23083",
+      "callers": [
+        "fitmatch_vnext.begin_comparison(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_size_availability_observation",
+      "args": "",
+      "oid": "23014",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "oid": "23389",
+      "callers": [
+        "public.fitmatch_vnext_clear_closet_classification_override(p_closet_item_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_fitmatch_measurement_semantics",
+      "args": "",
+      "oid": "22101",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_source_measurement_semantics",
+      "args": "",
+      "oid": "22125",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "legacy_comparison_group",
+      "args": "p_garment_type_code text",
+      "oid": "25200",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_signal_parent",
+      "args": "",
+      "oid": "21899",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_product_signal_source",
+      "args": "",
+      "oid": "22001",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_identifier_owner",
+      "args": "",
+      "oid": "22087",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_closet_comparison_group",
+      "args": "p_closet_item_id uuid, p_requested_group_code text, p_explicit boolean",
+      "oid": "25206",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_with_group_for_swift(p_request jsonb)",
+        "fitmatch_vnext.update_closet_item_with_group_for_swift(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "closet_comparison_group",
+      "args": "p_closet_item_id uuid",
+      "oid": "25207",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.authorize_comparison_with_context_v1(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "public.fitmatch_vnext_list_closet_items()"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item",
+      "args": "p_request jsonb",
+      "oid": "23020",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_for_swift(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "oid": "23085",
+      "callers": [
+        "public.fitmatch_vnext_complete_comparison(p_comparison_id uuid, p_result jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean",
+      "oid": "23039",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_measurement",
+      "args": "p_source_code text, p_parser_code text, p_raw_measurement_code text, p_raw_label text, p_garment_type_code text, p_fitmatch_category_code text, p_raw_value numeric",
+      "oid": "22986",
+      "callers": [
+        "fitmatch_vnext.canonical_measurements_for_size_with_context(p_product_size_id uuid, p_effective_classification jsonb)",
+        "fitmatch_vnext.canonical_measurements_for_size(p_product_size_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "record_size_availability",
+      "args": "p_product_size_id uuid, p_availability_status text, p_evidence_kind text, p_evidence_payload jsonb, p_observed_at timestamp with time zone, p_valid_until timestamp with time zone",
+      "oid": "23016",
+      "callers": [
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_measurement_alias_source",
+      "args": "",
+      "oid": "22167",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_history",
+      "args": "",
+      "oid": "23086",
+      "callers": [
+        "public.fitmatch_vnext_comparison_history()"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_product_hierarchy",
+      "args": "",
+      "oid": "22330",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_mode",
+      "args": "",
+      "oid": "22364",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_product_ingestion_receipt",
+      "args": "",
+      "oid": "23177",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "oid": "23018",
+      "callers": [
+        "fitmatch_vnext.get_product_runtime_for_swift(p_source_code text, p_source_product_key text)",
+        "fitmatch_vnext.ingest_product_observation_v2(p_payload jsonb, p_actor_id uuid)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "oid": "23392",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "oid": "23188",
+      "callers": [
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.begin_comparison(p_request jsonb)",
+        "fitmatch_vnext.begin_comparison_legacy_20260914(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_group_tuple",
+      "args": "p_product_id uuid, p_requested_group_code text",
+      "oid": "25210",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_with_group_for_swift(p_request jsonb)",
+        "fitmatch_vnext.update_closet_item_with_group_for_swift(p_closet_item_id uuid, p_request jsonb)",
+        "fitmatch_vnext.effective_target_classification(p_product_id uuid)",
+        "fitmatch_vnext.comparison_target_context(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "oid": "23396",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "oid": "23397",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "oid": "23398",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_completion_payload",
+      "args": "",
+      "oid": "23335",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "oid": "23380",
+      "callers": []
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_group",
+      "args": "p_product_id uuid",
+      "oid": "25199",
+      "callers": [
+        "public.fitmatch_vnext_find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "public.fitmatch_vnext_eligible_candidate_sizes(p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean)",
+        "fitmatch_vnext.effective_target_classification(p_product_id uuid)",
+        "fitmatch_vnext.comparison_target_context(p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text)",
+        "fitmatch_vnext.find_reference_candidates(p_target_product_id uuid, p_target_variant_id uuid)",
+        "fitmatch_vnext.apply_closet_comparison_group(p_closet_item_id uuid, p_requested_group_code text, p_explicit boolean)",
+        "public.fitmatch_vnext_get_product_runtime(p_source_code text, p_source_product_key text)",
+        "fitmatch_vnext.comparison_group_tuple(p_product_id uuid, p_requested_group_code text)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items",
+      "args": "",
+      "oid": "23022",
+      "callers": [
+        "public.fitmatch_vnext_list_closet_items()"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "soft_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "oid": "23386",
+      "callers": [
+        "public.fitmatch_vnext_delete_closet_item(p_closet_item_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "oid": "23387",
+      "callers": [
+        "public.fitmatch_vnext_unset_closet_reference(p_closet_item_id uuid)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "oid": "23384",
+      "callers": [
+        "fitmatch_vnext.update_closet_item_with_group_for_swift(p_closet_item_id uuid, p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_for_swift",
+      "args": "p_request jsonb",
+      "oid": "23382",
+      "callers": [
+        "fitmatch_vnext.upsert_closet_item_with_group_for_swift(p_request jsonb)"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_begin_comparison",
+      "args": "p_request jsonb",
+      "oid": "23404",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "oid": "23405",
+      "callers": []
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_comparison_history",
+      "args": "",
+      "oid": "23406",
+      "callers": []
+    }
+  ],
+  "tables": [
+    {
+      "name": "fitmatch_vnext.user_product_classification_overrides",
+      "rows": 4
+    },
+    {
+      "name": "fitmatch_vnext.user_classification_feedback_evidence",
+      "rows": 6
+    },
+    {
+      "name": "fitmatch_catalog.source_category_comparison_groups",
+      "rows": 931
+    },
+    {
+      "name": "fitmatch_catalog.comparison_group_policies",
+      "rows": 2
+    },
+    {
+      "name": "fitmatch_vnext.sources",
+      "rows": 3
+    },
+    {
+      "name": "fitmatch_vnext.fitmatch_categories",
+      "rows": 11
+    },
+    {
+      "name": "fitmatch_vnext.garment_types",
+      "rows": 60
+    },
+    {
+      "name": "fitmatch_catalog.product_comparison_group_overrides",
+      "rows": 2
+    },
+    {
+      "name": "fitmatch_vnext.fitmatch_measurements",
+      "rows": 42
+    },
+    {
+      "name": "fitmatch_vnext.source_measurements",
+      "rows": 48
+    },
+    {
+      "name": "public.profiles",
+      "rows": 2
+    },
+    {
+      "name": "fitmatch_vnext.closet_item_measurements",
+      "rows": 177
+    },
+    {
+      "name": "fitmatch_vnext.comparison_metrics",
+      "rows": 647
+    },
+    {
+      "name": "fitmatch_catalog.comparison_groups",
+      "rows": 7
+    },
+    {
+      "name": "fitmatch_vnext.products",
+      "rows": 30
+    },
+    {
+      "name": "fitmatch_catalog.releases",
+      "rows": 15
+    },
+    {
+      "name": "fitmatch_vnext.classification_axis_value_authority",
+      "rows": 12
+    },
+    {
+      "name": "fitmatch_catalog.product_classification_history",
+      "rows": 145
+    },
+    {
+      "name": "fitmatch_catalog.products",
+      "rows": 27
+    },
+    {
+      "name": "fitmatch_vnext.closet_items",
+      "rows": 46
+    },
+    {
+      "name": "fitmatch_vnext.classification_signal_mappings",
+      "rows": 2249
+    },
+    {
+      "name": "fitmatch_vnext.source_measurement_aliases",
+      "rows": 219
+    },
+    {
+      "name": "fitmatch_vnext.source_measurement_mappings",
+      "rows": 45
+    },
+    {
+      "name": "fitmatch_vnext.product_ingestion_receipts",
+      "rows": 104
+    },
+    {
+      "name": "fitmatch_vnext.product_variants",
+      "rows": 61
+    },
+    {
+      "name": "fitmatch_vnext.product_sizes",
+      "rows": 283
+    },
+    {
+      "name": "fitmatch_vnext.comparison_policies",
+      "rows": 44
+    },
+    {
+      "name": "fitmatch_vnext.size_availability_observations",
+      "rows": 672
+    },
+    {
+      "name": "fitmatch_vnext.product_size_measurements",
+      "rows": 1232
+    },
+    {
+      "name": "fitmatch_vnext.source_identifiers",
+      "rows": 190
+    },
+    {
+      "name": "fitmatch_vnext.source_classification_signals",
+      "rows": 2481
+    },
+    {
+      "name": "fitmatch_vnext.comparisons",
+      "rows": 10
+    },
+    {
+      "name": "fitmatch_vnext.product_classification_signals",
+      "rows": 52
+    }
+  ],
+  "candidates": [
+    {
+      "signature": "fitmatch_vnext.authorize_comparison(uuid,uuid,uuid,boolean)",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "prosecdef": true,
+      "dependencies": 0,
+      "tracked_calls": 0,
+      "tracking": "none"
+    },
+    {
+      "signature": "fitmatch_vnext.effective_target_classification_detail_legacy(uuid)",
+      "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "prosecdef": true,
+      "dependencies": 0,
+      "tracked_calls": 0,
+      "tracking": "none"
+    },
+    {
+      "signature": "fitmatch_vnext.legacy_comparison_group(text)",
+      "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "prosecdef": false,
+      "dependencies": 0,
+      "tracked_calls": 0,
+      "tracking": "none"
+    }
+  ],
+  "fks": [
+    {
+      "to": "fitmatch_catalog.products",
+      "from": "fitmatch_catalog.product_classification_history",
+      "definition": "FOREIGN KEY (product_id) REFERENCES fitmatch_catalog.products(id) ON DELETE CASCADE"
+    },
+    {
+      "to": "fitmatch_catalog.releases",
+      "from": "fitmatch_catalog.product_classification_history",
+      "definition": "FOREIGN KEY (mapping_release_id) REFERENCES fitmatch_catalog.releases(id) ON DELETE SET NULL"
+    },
+    {
+      "to": "auth.users",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "to": "fitmatch_vnext.products",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (product_id) REFERENCES fitmatch_vnext.products(id) ON DELETE SET NULL"
+    },
+    {
+      "to": "fitmatch_vnext.product_variants",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (product_variant_id) REFERENCES fitmatch_vnext.product_variants(id) ON DELETE SET NULL"
+    },
+    {
+      "to": "fitmatch_vnext.product_sizes",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (product_size_id) REFERENCES fitmatch_vnext.product_sizes(id) ON DELETE SET NULL"
+    },
+    {
+      "to": "fitmatch_vnext.garment_types",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (garment_type_code) REFERENCES fitmatch_vnext.garment_types(garment_type_code) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "to": "fitmatch_vnext.sources",
+      "from": "fitmatch_vnext.closet_items",
+      "definition": "FOREIGN KEY (source_code_snapshot) REFERENCES fitmatch_vnext.sources(source_code) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "to": "fitmatch_catalog.comparison_group_policies",
+      "from": "fitmatch_catalog.source_category_comparison_groups",
+      "definition": "FOREIGN KEY (policy_version) REFERENCES fitmatch_catalog.comparison_group_policies(policy_version) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "to": "fitmatch_catalog.comparison_group_policies",
+      "from": "fitmatch_catalog.product_comparison_group_overrides",
+      "definition": "FOREIGN KEY (policy_version) REFERENCES fitmatch_catalog.comparison_group_policies(policy_version) ON UPDATE CASCADE ON DELETE RESTRICT"
+    }
+  ],
+  "views": [
+    {
+      "name": "current_product_classifications",
+      "schema": "fitmatch_catalog",
+      "definition": " SELECT p.id AS product_id,\n    p.source,\n    p.external_product_id,\n    p.product_name,\n    p.canonical_url,\n    p.audience,\n    p.source_category_path,\n    p.source_category_codes,\n    p.image_url,\n    p.input_fingerprint,\n    p.lifecycle_status,\n    p.last_seen_at,\n    h.id AS classification_id,\n    h.category_code,\n    h.detail_code,\n    h.comparison_family_code,\n    h.length_code,\n    h.classification_status,\n    h.classification_method,\n    h.confidence,\n    h.requires_user_confirmation,\n    h.taxonomy_policy_version,\n    h.mapping_release_id,\n    h.decision_version,\n    h.evidence\n   FROM (fitmatch_catalog.products p\n     LEFT JOIN fitmatch_catalog.product_classification_history h ON (((h.product_id = p.id) AND h.is_current)));"
+    }
+  ],
+  "history": {
+    "old": 118,
+    "total": 145,
+    "current": 27
+  },
+  "receipts": {
+    "total": 104,
+    "orphan": 0,
+    "null_product": 0
+  },
+  "dependencies": [
+    {
+      "type": "n",
+      "object": "trigger profiles_set_updated_at on table profiles",
+      "depends_on": "function set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger on_auth_user_created on table auth.users",
+      "depends_on": "function handle_new_user()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_classification_sync_body_length on table fitmatch_catalog.product_classification_history",
+      "depends_on": "function fitmatch_catalog.sync_product_body_length()"
+    },
+    {
+      "type": "n",
+      "object": "trigger classification_axis_value_authority_set_updated_at on table fitmatch_vnext.classification_axis_value_authority",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger sources_set_updated_at on table fitmatch_vnext.sources",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger fitmatch_categories_set_updated_at on table fitmatch_vnext.fitmatch_categories",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparison_policies_set_updated_at on table fitmatch_vnext.comparison_policies",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger garment_types_set_updated_at on table fitmatch_vnext.garment_types",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_classification_signals_set_updated_at on table fitmatch_vnext.source_classification_signals",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger classification_signal_mappings_set_updated_at on table fitmatch_vnext.classification_signal_mappings",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger products_set_updated_at on table fitmatch_vnext.products",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_variants_set_updated_at on table fitmatch_vnext.product_variants",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_sizes_set_updated_at on table fitmatch_vnext.product_sizes",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger fitmatch_measurements_set_updated_at on table fitmatch_vnext.fitmatch_measurements",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_measurements_set_updated_at on table fitmatch_vnext.source_measurements",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_measurement_aliases_set_updated_at on table fitmatch_vnext.source_measurement_aliases",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_measurement_mappings_set_updated_at on table fitmatch_vnext.source_measurement_mappings",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_size_measurements_set_updated_at on table fitmatch_vnext.product_size_measurements",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparison_metrics_set_updated_at on table fitmatch_vnext.comparison_metrics",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_items_set_updated_at on table fitmatch_vnext.closet_items",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_item_measurements_set_updated_at on table fitmatch_vnext.closet_item_measurements",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparisons_set_updated_at on table fitmatch_vnext.comparisons",
+      "depends_on": "function fitmatch_vnext.set_updated_at()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_classification_signals_validate_parent on table fitmatch_vnext.source_classification_signals",
+      "depends_on": "function fitmatch_vnext.validate_source_signal_parent()"
+    },
+    {
+      "type": "n",
+      "object": "trigger products_validate_garment_axes on table fitmatch_vnext.products",
+      "depends_on": "function fitmatch_vnext.validate_garment_axis_values()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_items_validate_garment_axes on table fitmatch_vnext.closet_items",
+      "depends_on": "function fitmatch_vnext.validate_garment_axis_values()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_classification_signals_validate_source on table fitmatch_vnext.product_classification_signals",
+      "depends_on": "function fitmatch_vnext.validate_product_signal_source()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_identifiers_validate_owner on table fitmatch_vnext.source_identifiers",
+      "depends_on": "function fitmatch_vnext.validate_source_identifier_owner()"
+    },
+    {
+      "type": "n",
+      "object": "trigger fitmatch_measurements_protect_semantics on table fitmatch_vnext.fitmatch_measurements",
+      "depends_on": "function fitmatch_vnext.protect_fitmatch_measurement_semantics()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_measurements_protect_semantics on table fitmatch_vnext.source_measurements",
+      "depends_on": "function fitmatch_vnext.protect_source_measurement_semantics()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_measurement_aliases_validate_source on table fitmatch_vnext.source_measurement_aliases",
+      "depends_on": "function fitmatch_vnext.validate_source_measurement_alias_source()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_items_validate_product_hierarchy on table fitmatch_vnext.closet_items",
+      "depends_on": "function fitmatch_vnext.validate_closet_product_hierarchy()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_item_measurements_validate_mode on table fitmatch_vnext.closet_item_measurements",
+      "depends_on": "function fitmatch_vnext.validate_closet_measurement_mode()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparisons_validate_ownership_and_target on table fitmatch_vnext.comparisons",
+      "depends_on": "function fitmatch_vnext.validate_comparison_ownership_and_target()"
+    },
+    {
+      "type": "n",
+      "object": "trigger classification_signal_mappings_validate_contract on table fitmatch_vnext.classification_signal_mappings",
+      "depends_on": "function fitmatch_vnext.validate_classification_mapping()"
+    },
+    {
+      "type": "n",
+      "object": "trigger size_availability_observations_validate on table fitmatch_vnext.size_availability_observations",
+      "depends_on": "function fitmatch_vnext.validate_size_availability_observation()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparisons_protect_completed on table fitmatch_vnext.comparisons",
+      "depends_on": "function fitmatch_vnext.protect_completed_comparison()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_ingestion_receipts_protect_evidence on table fitmatch_vnext.product_ingestion_receipts",
+      "depends_on": "function fitmatch_vnext.protect_product_ingestion_receipt()"
+    },
+    {
+      "type": "n",
+      "object": "trigger product_ingestion_receipts_validate_facts on table fitmatch_vnext.product_ingestion_receipts",
+      "depends_on": "function fitmatch_vnext.validate_ingestion_receipt_facts()"
+    },
+    {
+      "type": "n",
+      "object": "trigger comparisons_validate_completion_payload on table fitmatch_vnext.comparisons",
+      "depends_on": "function fitmatch_vnext.validate_comparison_completion_payload()"
+    },
+    {
+      "type": "n",
+      "object": "trigger user_product_classification_override_validate on table fitmatch_vnext.user_product_classification_overrides",
+      "depends_on": "function fitmatch_vnext.validate_user_product_classification_override()"
+    },
+    {
+      "type": "n",
+      "object": "trigger user_classification_feedback_append_only on table fitmatch_vnext.user_classification_feedback_evidence",
+      "depends_on": "function fitmatch_vnext.protect_user_classification_feedback_evidence()"
+    },
+    {
+      "type": "n",
+      "object": "trigger source_classification_signals_uniqlo_generic_leaf_inactive on table fitmatch_vnext.source_classification_signals",
+      "depends_on": "function fitmatch_vnext.enforce_uniqlo_generic_category_leaf_inactive()"
+    },
+    {
+      "type": "n",
+      "object": "trigger closet_item_measurements_validate_source_snapshot on table fitmatch_vnext.closet_item_measurements",
+      "depends_on": "function fitmatch_vnext.validate_closet_measurement_source_snapshot()"
+    }
+  ],
+  "tracking": "none",
+  "limitations": "Text-based callers do not prove absence of dynamic SQL or external clients. No deletion or post-deletion runtime test."
+}

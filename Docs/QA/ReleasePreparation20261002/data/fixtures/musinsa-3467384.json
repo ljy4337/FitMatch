@@ -1,0 +1,177 @@
+{
+  "productID": "3467384",
+  "data": {
+    "typeName": "바지",
+    "typeNumber": 6,
+    "sizes": [
+      {
+        "name": "S",
+        "sequence": 0,
+        "items": [
+          {
+            "name": "총장",
+            "value": 102.5,
+            "recommendSizeRange": 5,
+            "sequence": 1
+          },
+          {
+            "name": "허리단면",
+            "value": 38.0,
+            "recommendSizeRange": 5,
+            "sequence": 2
+          },
+          {
+            "name": "엉덩이단면",
+            "value": 56.0,
+            "recommendSizeRange": 5,
+            "sequence": 3
+          },
+          {
+            "name": "허벅지단면",
+            "value": 34.0,
+            "recommendSizeRange": 5,
+            "sequence": 4
+          },
+          {
+            "name": "밑위",
+            "value": 32.0,
+            "recommendSizeRange": 5,
+            "sequence": 5
+          },
+          {
+            "name": "밑단단면",
+            "value": 27.0,
+            "recommendSizeRange": 5,
+            "sequence": 6
+          }
+        ]
+      },
+      {
+        "name": "M",
+        "sequence": 1,
+        "items": [
+          {
+            "name": "총장",
+            "value": 104.0,
+            "recommendSizeRange": 5,
+            "sequence": 1
+          },
+          {
+            "name": "허리단면",
+            "value": 40.0,
+            "recommendSizeRange": 5,
+            "sequence": 2
+          },
+          {
+            "name": "엉덩이단면",
+            "value": 58.0,
+            "recommendSizeRange": 5,
+            "sequence": 3
+          },
+          {
+            "name": "허벅지단면",
+            "value": 35.0,
+            "recommendSizeRange": 5,
+            "sequence": 4
+          },
+          {
+            "name": "밑위",
+            "value": 33.0,
+            "recommendSizeRange": 5,
+            "sequence": 5
+          },
+          {
+            "name": "밑단단면",
+            "value": 28.0,
+            "recommendSizeRange": 5,
+            "sequence": 6
+          }
+        ]
+      },
+      {
+        "name": "L",
+        "sequence": 2,
+        "items": [
+          {
+            "name": "총장",
+            "value": 105.5,
+            "recommendSizeRange": 5,
+            "sequence": 1
+          },
+          {
+            "name": "허리단면",
+            "value": 42.0,
+            "recommendSizeRange": 5,
+            "sequence": 2
+          },
+          {
+            "name": "엉덩이단면",
+            "value": 59.0,
+            "recommendSizeRange": 5,
+            "sequence": 3
+          },
+          {
+            "name": "허벅지단면",
+            "value": 36.0,
+            "recommendSizeRange": 5,
+            "sequence": 4
+          },
+          {
+            "name": "밑위",
+            "value": 34.0,
+            "recommendSizeRange": 5,
+            "sequence": 5
+          },
+          {
+            "name": "밑단단면",
+            "value": 29.0,
+            "recommendSizeRange": 5,
+            "sequence": 6
+          }
+        ]
+      },
+      {
+        "name": "XL",
+        "sequence": 3,
+        "items": [
+          {
+            "name": "총장",
+            "value": 107.0,
+            "recommendSizeRange": 5,
+            "sequence": 1
+          },
+          {
+            "name": "허리단면",
+            "value": 44.0,
+            "recommendSizeRange": 5,
+            "sequence": 2
+          },
+          {
+            "name": "엉덩이단면",
+            "value": 60.0,
+            "recommendSizeRange": 5,
+            "sequence": 3
+          },
+          {
+            "name": "허벅지단면",
+            "value": 37.0,
+            "recommendSizeRange": 5,
+            "sequence": 4
+          },
+          {
+            "name": "밑위",
+            "value": 35.0,
+            "recommendSizeRange": 5,
+            "sequence": 5
+          },
+          {
+            "name": "밑단단면",
+            "value": 30.0,
+            "recommendSizeRange": 5,
+            "sequence": 6
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,330 @@
+[
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/activeUserExplicitReselectsWithFreshContractAndCurrentRevision()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "MeasurementPolicyConsolidationTests/canonicalNewMerchantSupportsVerifiedSameSourceRawComparisonWithoutEngineChanges()",
+    "failure": "Expectation failed: (result.score → 44) == 92"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderFactsReachTheFullServerAuthorizedComparisonPath()",
+    "failure": "Caught error: Provider comparison load failed: uniqlo"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderLinkRegistrationsPersistOnlyPresentedSizesAndRejectDuplicateSubmit()",
+    "failure": "Expectation failed: (item.classificationAuthorityProvenance → .serverUnavailable) == (FitMatchClassificationAuthorityProvenance.serverConfirmed → .serverConfirmed)"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderParserFailureThenRetryResetsStateForEveryApprovedProvider()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/clearInvalidatesPersonalAuthorityAndLeavesReviewFailClosed()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/cm014ReferenceLifecycleCreatesANewComparisonWithoutRewritingOldHistory()",
+    "failure": "Expectation failed: (old → (history: nil, calls: [\"observation\"])).history → nil → nil"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039()",
+    "failure": "Expectation failed: (run.history → nil) != nil"
+  },
+  {
+    "test": "FitMatchTests/comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()",
+    "failure": "Expectation failed: (uniqloToUniqlo.productValue → 40.0) == (80 → 80.0)"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "ZARAParserPhase1_5Tests/cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow()",
+    "failure": "Expectation failed: resumed"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/cr012MusinsaCapturedFallbackRecoveryPersistsOnlyTheValidatedSelectedSize()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/cr014ApprovedProviderParserFailuresRetryTheExactRetailerPath()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/cr020ReviewRequiredLinkRegistrationRemainsReasonedAndFailClosed()",
+    "failure": "Expectation failed: (preparation.parsedProduct?.classificationAuthorityProvenance → .serverUnavailable) == .serverReviewRequired"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/directClosetRegistrationAndManagementActionsCoverCRAndCMStates()",
+    "failure": "Expectation failed: !((initialReference → FitMatch.UserFit).isRepresentative → true → true)"
+  },
+  {
+    "test": "FitMatchFinalReleaseHeadlessAcceptanceTests/directRegistrationReferenceReplacementPersistsOnlyTheCurrentSameScopeReference()",
+    "failure": "Expectation failed: (incoming → FitMatch.UserFit).isRepresentative → false"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/eachFormerlyDroppedCanonicalRuntimeMetricSurvivesItsOwnRuntime()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseHeadlessAcceptanceTests/effectivePersonalTupleIsConsumedAtomicallyWithoutGlobalFieldCoalescing()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/en001ApprovedDirectURLsAndCustomCompareRouteReachTheirExactTargets()",
+    "failure": "Caught error: Provider comparison load failed: uniqlo"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/historyClosetPreparationRequiresExplicitFreshSizeSelection()",
+    "failure": "Issue recorded: History should open only after fresh server preparation"
+  },
+  {
+    "test": "FitMatchP0RemediationRegressionTests/historyOnlySnapshotsAreExcludedFromActiveClosetAndPickerSurfaces()",
+    "failure": "Expectation failed: (source.contains(\"filter(\\\\.isActiveClosetItem)\")"
+  },
+  {
+    "test": "ZARAParserPhase1_5Tests/invalidDirectPageUsesStructuredWebViewFallbackWithoutChangingVariant()",
+    "failure": "Caught error: ProductURLParserPartialError(productInfo: FitMatch.ParsedProductInfo(sourceURL: https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346, sourceType: FitMatch.ProductSourceType.officialStore, sourceName: \"ZARA 공식몰\", brandName: \"ZARA\", productName: \"테스트 상품\", category: FitMatch.ClothingCategory.top, detailCategory: FitMatch.ClosetDetailCategory.shirt, sizes: [FitMatch.ParsedProductSize(id: 82410286-4C0E-54AF-A02F-030000930300, name: \"S\", measurements: FitMatch.GarmentMeasurements("
+  },
+  {
+    "test": "FitMatchTests/latestProductLoadOwnsViewModelState()",
+    "failure": "Expectation failed: await secondTask.value"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/linkClosetPreparationDefersReviewRequiredMessagingToRegistrationSheet()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == .serverReviewRequired"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/linkClosetPreparationUsesExactServerTupleInsteadOfLocalParserHint()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess()",
+    "failure": "Issue recorded: The exact server L read-back should complete the edit"
+  },
+  {
+    "test": "FitMatchClosetSyncCoordinatorTests/linkedClosetEditRequiresReferenceConfirmationBeforeServerMutation()",
+    "failure": "Issue recorded: The server-visible reference conflict needs explicit consent"
+  },
+  {
+    "test": "FitMatchFinalReleaseHeadlessAcceptanceTests/linkRegistrationActionRunsTheActualParserAuthorityAndPreparationPipeline()",
+    "failure": "Expectation failed: (preparedProduct.classificationAuthorityProvenance → .serverUnavailable) == .userExplicit: // CR-020 boundary: the preparation preserves the server-issued"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/linkRegistrationResultGateDoesNotBranchOnClassificationState()",
+    "failure": "Expectation failed: (LinkClosetRegistrationPreparation.registrationBlockMessage("
+  },
+  {
+    "test": "FitMatchFinalReleaseHeadlessAcceptanceTests/measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery()",
+    "failure": "Expectation failed: (linkSource → \"import SwiftUI"
+  },
+  {
+    "test": "FitMatchTests/migrationVersionSevenConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves()",
+    "failure": "Expectation failed: sizeRecords.dropFirst().dropLast().allSatisfy {"
+  },
+  {
+    "test": "FitMatchTests/migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce()",
+    "failure": "Expectation failed: (waist.value → 70.0) == (35 → 35.0)"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/musinsaCapturedOfficialActualSizeResponseReachesTheLinkRegistrationAction()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == .serverConfirmed"
+  },
+  {
+    "test": "FitMatchTests/musinsaLegacyRaglanAndSetInSleevesStaySeparate()",
+    "failure": "Expectation failed: (raglanSleeve?.measurementCode → .legacyUnknown) == .sleeveRaglanNeckToCuff"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration()",
+    "failure": "Expectation failed: (nonComparablePreparation.serverRegistrationContext.classificationState → .unavailable) == .notApplicable"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/oneGarmentWithTwoSleevesStartsAxisFollowUpAndResets()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchP0ProductionPathTests/p0FailureThenSuccessClearsStaleError()",
+    "failure": "Expectation failed: await retry.value"
+  },
+  {
+    "test": "FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct()",
+    "failure": "Expectation failed: await second.value"
+  },
+  {
+    "test": "FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers()",
+    "failure": "Expectation failed: await retry.value"
+  },
+  {
+    "test": "FitMatchP0ProductionPathTests/p0SequentialAToBToARestoresTheOriginalProductState()",
+    "failure": "Expectation failed: await firstA.value"
+  },
+  {
+    "test": "FitMatchP0ProductionPathTests/p0UniqloCapturedFixturesPreserveOfficialMeasurements()",
+    "failure": "Expectation failed: (size.measurements.value(for: kind) → 68.0) == (value → 34.0): 유니클로 E488202 S 허리단면 원본값 불일치"
+  },
+  {
+    "test": "FitMatchMetricsRecorderTests/productLoadRecordsFiniteParserDimensionsWithoutProductData()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/providerLinkPreparationAndComparedProductSaveCoverCR011ThroughCR022()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == .serverConfirmed"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/recoveryManualCrossAndStaleAuthorityPathsCoverTheRemainingComparisonStates()",
+    "failure": "Expectation failed: await vm.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchComparisonPermitSequencingTests/releaseComparisonCallSitesRequirePermitBeforeScoring()",
+    "failure": "Expectation failed: (releaseResultView → \"import SwiftUI"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationKeepsSoleVNextVariantWhenPreferredSizeHasGone()",
+    "failure": "Issue recorded: A sole variant remains safe even when the old size disappeared"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationLeavesInvalidExactPreferenceUnselected()",
+    "failure": "Issue recorded: The remaining registerable sizes should still be presented"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationRestoresFullRuntimeAndKeepsCurrentExactSize()",
+    "failure": "Issue recorded: Fresh server runtime preparation should succeed"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationRetainsReviewRequiredRawMeasurement()",
+    "failure": "Issue recorded: REVIEW_REQUIRED raw measurement should allow Closet preparation"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueLegacyVariantByExactPreferredSizeID()",
+    "failure": "Issue recorded: Legacy runtime must use the exact preferred ID when variants are multiple"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueVNextVariantByExactPreferredSizeID()",
+    "failure": "Issue recorded: The exact preferred size should select only the blue variant"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/resultClosetPreparationUsesExactIDForDuplicateRuntimeLabels()",
+    "failure": "Issue recorded: Duplicate-label runtime should prepare safely"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/resultPresentationHistoryRecomparisonAndOutboundActionsUseCurrentProductionProofs()",
+    "failure": "Expectation failed: (global → (history: nil, calls: [\"observation\"])).history → nil → nil"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/retryRaceAndSyncCoalescingUseProductionAsyncBoundaries()",
+    "failure": "Caught error: RX-001: ready comparison did not load"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/reviewAndNotComparableServerResultsNeverBecomeEligibleProducts()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == (scenario.provenance → .serverReviewRequired)"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/reviewRecoveryOptionsPresentContractAndNetworkFailuresDifferently()",
+    "failure": "Expectation failed: (contractViewModel.errorMessage → \"서버 상품 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.\") == \"상품 분류 선택지를 현재 처리할 수 없습니다. 잠시 후 다시 시도하거나 앱을 업데이트해 주세요.\""
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/reviewRecoverySaveKeepsTransportFailureDistinctAndRefreshesSelection()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity()",
+    "failure": "Issue recorded: Expected REVIEW_REQUIRED server state"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/reviewRequiredLoadAcceptsV7RecoveryWithoutNetworkFailurePresentation()",
+    "failure": "Expectation failed: (viewModel.errorMessage → \"서버 상품 응답을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.\") == nil"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize()",
+    "failure": "Issue recorded: Expected REVIEW_REQUIRED server state"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/rx004ParserFailureThenRetryRestartsTheSameProductionEntry()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/rx009AuthorityAndReferenceFailuresRetryThroughTheirExactProductionGates()",
+    "failure": "Caught error: RX-009 authority resolve: resolve did not recover load"
+  },
+  {
+    "test": "FitMatchFinalReleaseScenarioExecutionTests/rx010EligibleAndBeginFailuresRetryWithoutUsingStaleCandidates()",
+    "failure": "Caught error: RX-010 eligible: eligible did not load"
+  },
+  {
+    "test": "FitMatchTests/samePlatformAndFormatUsesMatchingSourceFieldsDirectly()",
+    "failure": "Expectation failed: (result.status → .insufficientEvidence) == .confirmed"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/sequentialCapturedProviderLoadsResetCurrentProductStateWithoutProviderLeakage()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/serverReadyRuntimeKeepsAllCanonicalRecordsAndAllowsOneServerMetricProductPath()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/shoppingProductGoldThreePersistExactServerTuples()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/shoppingProductUsesServerConfirmedTupleOverConflictingLocalInference()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/singleCandidateGarmentReturnsExactServerCandidateWithoutSaving()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchSupabaseProductResolverTests/sourceVariantKeyStillWinsForMultiVariantURLLoadWithoutPreference()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/uniqloCapturedOfficialSizeResponseReachesTheLinkRegistrationAction()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == .serverConfirmed"
+  },
+  {
+    "test": "MeasurementPolicyConsolidationTests/unknownSourceDoesNotGainSameSourceRawCompatibility()",
+    "failure": "Expectation failed: (result.status → .confirmed) == .insufficientEvidence"
+  },
+  {
+    "test": "ZARAParserPhase1_5Tests/URLVariantRequestsOfficialSizeGuideBeforeProductPage()",
+    "failure": "Caught error: ProductURLParserPartialError(productInfo: FitMatch.ParsedProductInfo(sourceURL: https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346, sourceType: FitMatch.ProductSourceType.officialStore, sourceName: \"ZARA 공식몰\", brandName: \"ZARA\", productName: \"테스트 상품\", category: FitMatch.ClothingCategory.top, detailCategory: FitMatch.ClosetDetailCategory.shirt, sizes: [FitMatch.ParsedProductSize(id: 82410286-4C0E-54AF-A02F-030000930300, name: \"S\", measurements: FitMatch.GarmentMeasurements("
+  },
+  {
+    "test": "ZARAParserPhase1_5Tests/URLWithoutVariantLoadsProductIdentityBeforeSizeGuide()",
+    "failure": "Caught error: ProductURLParserPartialError(productInfo: FitMatch.ParsedProductInfo(sourceURL: https://www.zara.com/kr/ko/item-p04166166.html, sourceType: FitMatch.ProductSourceType.officialStore, sourceName: \"ZARA 공식몰\", brandName: \"ZARA\", productName: \"테스트 상품\", category: FitMatch.ClothingCategory.top, detailCategory: FitMatch.ClosetDetailCategory.shirt, sizes: [FitMatch.ParsedProductSize(id: 82410286-4C0E-54AF-A02F-030000930300, name: \"S\", measurements: FitMatch.GarmentMeasurements(shoulder: 0.0"
+  },
+  {
+    "test": "FitMatchReviewRequiredRecoveryTests/v7SingleCandidateGarmentDoesNotCreateRedundantAxisQuestionOrMutation()",
+    "failure": "Expectation failed: await viewModel.loadProductInfoFromURL()"
+  },
+  {
+    "test": "ZARAParserPhase1_5Tests/viewModelKeepsUserCategoryWhileResumingZARAImport()",
+    "failure": "Expectation failed: didResume"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/zaraBodyOnlyGuideReachesTheProductionPartialRegistrationRecoveryState()",
+    "failure": "Expectation failed: (preparation.partialProduct?.classificationAuthorityProvenance → .serverUnavailable) == .serverConfirmed"
+  },
+  {
+    "test": "FitMatchFinalReleaseProviderSnapshotTests/zaraCapturedGarmentMeasureGuideReachesTheLinkRegistrationActionAndBodyOnlyGuideFailsClosed()",
+    "failure": "Expectation failed: (product.classificationAuthorityProvenance → .serverUnavailable) == .serverConfirmed"
+  },
+  {
+    "test": "FitMatchTests/zaraParserMapsOnlyVerifiedUpperGarmentBasis()",
+    "failure": "Expectation failed: (info.sizes[0].measurements.shoulder → 0.0) == 42.5"
+  }
+]

@@ -1,0 +1,641 @@
+[
+  {
+    "elapsedSeconds" : 36.170217037200928,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "코튼스판 반팔 티셔츠_MIWHWG509A",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6372903",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 84
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 28
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 13
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          }
+        ],
+        "name" : "S(090)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 88
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 29.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "M(095)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 94
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 30.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 57
+          }
+        ],
+        "name" : "L(100)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6372903"
+  },
+  {
+    "elapsedSeconds" : 41.033350944519043,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "버튼업 반팔 티셔츠",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "6372893",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 76
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 26
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 54
+          }
+        ],
+        "name" : "S(090)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 80
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 28
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 55
+          }
+        ],
+        "name" : "M(095)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_circumference_garment",
+            "label" : "가슴둘레",
+            "unit" : "cm",
+            "value" : 86
+          },
+          {
+            "code" : "unknown",
+            "label" : "팔둘레",
+            "unit" : "cm",
+            "value" : 29
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 16
+          },
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 56
+          }
+        ],
+        "name" : "L(100)"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/6372893"
+  },
+  {
+    "elapsedSeconds" : 0.13838708400726318,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "엑스트라 와이드 투 턱 히든 밴딩 슬랙스 [미디엄 그레이]",
+    "notice" : null,
+    "observationAvailable" : true,
+    "productID" : "5746364",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 109
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 37.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 68
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 41.899999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27
+          }
+        ],
+        "name" : "28"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 109.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 38.75
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 69.25
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 42.549999999999997
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 34.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.25
+          }
+        ],
+        "name" : "29"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 110
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 40
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 70.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 43.200000000000003
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 35
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.5
+          }
+        ],
+        "name" : "30"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 110.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 41.25
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 71.75
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 43.850000000000001
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 35.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 27.75
+          }
+        ],
+        "name" : "31"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 111
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 42.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 73
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 44.5
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 36
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28
+          }
+        ],
+        "name" : "32"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 111.5
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 43.75
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 74.25
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 45.149999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 36.5
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28.25
+          }
+        ],
+        "name" : "33"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 112
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 45
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 75.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 45.799999999999997
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 28.5
+          }
+        ],
+        "name" : "34"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 113
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 47.5
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 78
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 47.100000000000001
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 38
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 29
+          }
+        ],
+        "name" : "36"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "pants_outseam_waist_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 114
+          },
+          {
+            "code" : "waist_width_edge_to_edge",
+            "label" : "허리단면",
+            "unit" : "cm",
+            "value" : 50
+          },
+          {
+            "code" : "hip_width_at_widest",
+            "label" : "엉덩이단면",
+            "unit" : "cm",
+            "value" : 80.5
+          },
+          {
+            "code" : "thigh_width_crotch_to_outer",
+            "label" : "허벅지단면",
+            "unit" : "cm",
+            "value" : 48.399999999999999
+          },
+          {
+            "code" : "rise_crotch_to_waist_front",
+            "label" : "밑위",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "hem_width_edge_to_edge",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 29.5
+          }
+        ],
+        "name" : "38"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "바지 > 슈트 팬츠\/슬랙스",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/5746364"
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "authenticated_authorization_status" : "BLOCKED",
+  "binding_sha256" : "fab2715fcc7a2db77b82169c293610dd52f0d8ba3ba432b02ad4bde405f30f5e",
+  "cases" : [
+    {
+      "authenticated_authorization_status" : "BLOCKED",
+      "closet_provider" : "musinsa",
+      "evidence_scope" : "synthetic_production_owner_probe",
+      "evidence_source" : "synthetic_contract_fixture",
+      "expected_mode" : "RAW_PRESERVED_NO_ZERO_DISPLAY",
+      "failure" : "Latest user zero-hidden expectation failed for musinsa; original raw value must remain preserved",
+      "group_policy_authorization_status" : "BLOCKED",
+      "id" : "musinsa-to-musinsa-A-raw_zero",
+      "identities" : {
+        "comparison_id" : "d0292cf4-baa6-5444-81e0-69b0a0630c30",
+        "reference_closet_item_id" : "bc6abaac-fa18-5739-9f43-8a3107cd90ac",
+        "target_product_id" : "3dd5db09-a00b-518f-a956-4579ada581f5",
+        "target_product_size_id" : "c9d664af-b9e4-534c-b628-f404093b9711",
+        "target_variant_id" : "0657c45a-9967-5382-9da2-eb9685f41891",
+        "unapproved_product_size_id" : "2cf01d71-62b5-559a-aa3e-adede754c31e"
+      },
+      "limitation" : "Latest user instruction supersedes old MUSINSA dash expectation; both provider sides preserve raw zero and hide it.",
+      "pattern" : "raw_zero",
+      "probe" : "raw_zero_hidden_preserved_unscored",
+      "requested_group" : "A",
+      "requested_group_is_metadata_only" : true,
+      "retailer_pair_authorization_status" : "BLOCKED",
+      "source_fixture_binding" : null,
+      "status" : "FAIL",
+      "target_provider" : "musinsa"
+    },
+    {
+      "authenticated_authorization_status" : "BLOCKED",
+      "closet_provider" : "musinsa",
+      "evidence_scope" : "synthetic_production_owner_probe",
+      "evidence_source" : "synthetic_contract_fixture",
+      "expected_mode" : "CANONICAL_ONLY",
+      "failure" : null,
+      "group_policy_authorization_status" : "BLOCKED",
+      "id" : "musinsa-to-uniqlo-A-complete_shared_canonical",
+      "identities" : {
+        "comparison_id" : "28250f8f-3d84-52f7-b8b0-4b78b4fe3ea0",
+        "reference_closet_item_id" : "ce8d3490-34f4-58b6-b81d-b70704741108",
+        "target_product_id" : "3973eb18-fbe7-52c5-80e2-7ac57fdbe276",
+        "target_product_size_id" : "5d467485-7e0e-5d22-9a87-08c3166bf61b",
+        "target_variant_id" : "9e708b99-6794-51e9-a48d-1b148526e556",
+        "unapproved_product_size_id" : "e5eaba94-748c-5fe0-8838-0ce9671e5c96"
+      },
+      "limitation" : "Adapter uses the exact supplied one-metric canonical snapshot; no retailer\/group authorization derived.",
+      "pattern" : "complete_shared_canonical",
+      "probe" : "approved_canonical_probe",
+      "requested_group" : "A",
+      "requested_group_is_metadata_only" : true,
+      "retailer_pair_authorization_status" : "BLOCKED",
+      "source_fixture_binding" : null,
+      "status" : "PASS",
+      "target_provider" : "uniqlo"
+    },
+    {
+      "authenticated_authorization_status" : "BLOCKED",
+      "closet_provider" : "zara",
+      "evidence_scope" : "synthetic_production_owner_probe",
+      "evidence_source" : "synthetic_contract_fixture",
+      "expected_mode" : "NO_COMPARISON",
+      "failure" : "conflictingProof(\"authorized_candidate_product_size_ids\")",
+      "group_policy_authorization_status" : "BLOCKED",
+      "id" : "zara-to-musinsa-G-exact_identity_mismatch",
+      "identities" : {
+        "comparison_id" : "1fbcfc87-ee14-55c9-90e3-b77f4eceb8df",
+        "reference_closet_item_id" : "f72fbd72-985a-5257-a537-4efb81493c43",
+        "target_product_id" : "5ff1e126-99c6-5ad0-b7da-0874682af5ab",
+        "target_product_size_id" : "888f9461-f85b-5307-9f45-eb3b93de6052",
+        "target_variant_id" : "00dbd14a-32b2-56ed-a3e5-2a171a461dbb",
+        "unapproved_product_size_id" : "33ed2f3c-975f-58b3-b848-d3ac948921cf"
+      },
+      "limitation" : "Adapter rejects outer authorized size ID differing from the immutable target candidate set.",
+      "pattern" : "exact_identity_mismatch",
+      "probe" : "candidate_set_mismatch_rejected",
+      "requested_group" : "G",
+      "requested_group_is_metadata_only" : true,
+      "retailer_pair_authorization_status" : "BLOCKED",
+      "source_fixture_binding" : null,
+      "status" : "FAIL",
+      "target_provider" : "musinsa"
+    }
+  ],
+  "corpus_sha256" : "6c1b712d806068cc3e44689149f8dd35421ac22a99c1bd964d690f48e3e114e0",
+  "evidence_scope" : "synthetic_production_owner_probe",
+  "executed_case_count" : 3,
+  "executed_case_ids" : [
+    "musinsa-to-musinsa-A-raw_zero",
+    "musinsa-to-uniqlo-A-complete_shared_canonical",
+    "zara-to-musinsa-G-exact_identity_mismatch"
+  ],
+  "expected_case_count" : 3,
+  "expected_case_ids" : [
+    "musinsa-to-musinsa-A-raw_zero",
+    "musinsa-to-uniqlo-A-complete_shared_canonical",
+    "zara-to-musinsa-G-exact_identity_mismatch"
+  ],
+  "mode" : "smoke",
+  "schema_version" : "fitmatch-release-matrix-result-v1",
+  "status" : "FAIL",
+  "synthetic_fail_count" : 2,
+  "synthetic_pass_count" : 1
+}

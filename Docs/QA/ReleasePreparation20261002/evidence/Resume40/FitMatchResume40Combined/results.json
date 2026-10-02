@@ -1,0 +1,808 @@
+{
+  "run_id": "qa-20261002T102533Z-eb4f848a",
+  "mode": "smoke",
+  "started_at": "2026-10-02T10:25:33.020857+00:00",
+  "results": [
+    {
+      "id": "environment.qa_target",
+      "status": "PASS",
+      "detail": "QA branch required; actual=QA"
+    },
+    {
+      "id": "tool.xcodebuild",
+      "status": "PASS",
+      "detail": "Xcode 26.3\nBuild version 17C529"
+    },
+    {
+      "id": "tool.swift",
+      "status": "PASS",
+      "detail": "Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)\nTarget: x86_64-apple-macosx15.0"
+    },
+    {
+      "id": "tool.python3",
+      "status": "PASS",
+      "detail": "Python 3.9.6"
+    },
+    {
+      "id": "safety.db_target",
+      "status": "PASS",
+      "detail": "QA Run/Test + both QA build configurations + shell overrides checked"
+    },
+    {
+      "id": "data.freeze",
+      "status": "PASS",
+      "detail": "SHA-256 fixed corpus matches"
+    },
+    {
+      "id": "data.urls",
+      "status": "PASS",
+      "detail": "{'musinsa': 30, 'uniqlo': 30, 'zara': 30}; inventory only, not live validation"
+    },
+    {
+      "id": "policy.expectations",
+      "status": "BLOCKED",
+      "detail": "UNRESOLVED: score-formula,rounding,tie-break"
+    },
+    {
+      "id": "environment.disk",
+      "status": "PASS",
+      "detail": "Free bytes=17738432512; 700MiB minimum to attempt reused build, not a guarantee"
+    },
+    {
+      "id": "environment.simulator",
+      "status": "PASS",
+      "detail": "iPhone 17 Pro"
+    },
+    {
+      "id": "tool.selftest",
+      "status": "PASS",
+      "detail": "Includes controlled failure, unsafe target, zero tests, corpus drift"
+    },
+    {
+      "id": "tool.db_selftest",
+      "status": "PASS",
+      "detail": "Dedicated DB safety tests; not live RPC proof"
+    },
+    {
+      "id": "app.build_execution",
+      "status": "PASS",
+      "detail": "exit=0; {'passedTests': 48, 'failedTests': 0, 'skippedTests': 0}"
+    },
+    {
+      "id": "A",
+      "status": "PASS",
+      "detail": "Synthetic remote; real server-first save action and exact authoritative projector; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess"
+    },
+    {
+      "id": "A-duplicate/8",
+      "status": "PASS",
+      "detail": "Two concurrent production action tasks; persistence boundary held; one accepted interaction; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave"
+    },
+    {
+      "id": "B",
+      "status": "PASS",
+      "detail": "Synthetic exact linked read-back; production edit projection; FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess"
+    },
+    {
+      "id": "B-rejection",
+      "status": "PASS",
+      "detail": "Synthetic stale read-back; save cannot publish success; FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues"
+    },
+    {
+      "id": "C",
+      "status": "PASS",
+      "detail": "Production deletion action; requested local identity only; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists"
+    },
+    {
+      "id": "C/6",
+      "status": "PASS",
+      "detail": "Synthetic server hide acknowledgement; original remote evidence retained; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence"
+    },
+    {
+      "id": "D",
+      "status": "PASS",
+      "detail": "Synthetic approved snapshot; independent literal numeric oracle; preview/detail/completion; FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload"
+    },
+    {
+      "id": "D-partial",
+      "status": "PASS",
+      "detail": "Two of four policy metrics; literal score94, reliability2, coverage0.5; FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts"
+    },
+    {
+      "id": "D-tie",
+      "status": "PASS",
+      "detail": "Duplicate source label M; exact UUID tie-break with reversed input; FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder"
+    },
+    {
+      "id": "D-malformed",
+      "status": "PASS",
+      "detail": "Forged signed delta is rejected by production adapter; FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult"
+    },
+    {
+      "id": "E",
+      "status": "PASS",
+      "detail": "Synthetic tombstone; sync plus modeled second session; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession"
+    },
+    {
+      "id": "E-failure",
+      "status": "PASS",
+      "detail": "Synthetic hide transport failure; local cache preserved; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry"
+    },
+    {
+      "id": "F",
+      "status": "PASS",
+      "detail": "Synthetic completed row; exact two approved IDs restored through production recovery; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities"
+    },
+    {
+      "id": "F-stale",
+      "status": "PASS",
+      "detail": "Wrong comparison ID and account-switch late response fail closed; FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse"
+    },
+    {
+      "id": "G",
+      "status": "PASS",
+      "detail": "Production result recompare with synthetic transport; fresh begin/complete; old result intact; FitMatchTests/FitMatchHeadlessUserJourneyTests/resultRecompareRunsANewServerAuthorizedCompletionWithoutMutatingTheOldResultTarget"
+    },
+    {
+      "id": "H",
+      "status": "PASS",
+      "detail": "History-to-Closet production payload boundary; synthetic global/personal snapshots; not server persistence; FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate"
+    },
+    {
+      "id": "H-retry",
+      "status": "PASS",
+      "detail": "Production local persistence side-effect failure/retry; exactly one projected row; FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow"
+    },
+    {
+      "id": "4",
+      "status": "PASS",
+      "detail": "Production edit followed by synthetic current-authority comparison; not authenticated edit/read-back; FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot"
+    },
+    {
+      "id": "5",
+      "status": "PASS",
+      "detail": "Completed snapshot reconstructed in fresh SwiftData container; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing"
+    },
+    {
+      "id": "7",
+      "status": "PASS",
+      "detail": "Production ViewModel A request delayed until B wins; FitMatchTests/FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct"
+    },
+    {
+      "id": "9-accepted-response",
+      "status": "PASS",
+      "detail": "Server accepted response then local failure/retry; same ID no second upsert; not lost-response proof; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure"
+    },
+    {
+      "id": "9-timeout",
+      "status": "PASS",
+      "detail": "URLError timedOut then deterministic replay rejection retains immutable request; no server commit proof; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked"
+    },
+    {
+      "id": "10-empty-closet",
+      "status": "PASS",
+      "detail": "Synthetic empty candidate/Closet receipt; no begin; FitMatchTests/FitMatchHeadlessUserJourneyTests/cp013EmptyClosetHasNoReferenceAndNeverStartsComparison"
+    },
+    {
+      "id": "10-no-common",
+      "status": "PASS",
+      "detail": "Synthetic no eligible evidence; real authority gates block result; FitMatchTests/FitMatchHeadlessUserJourneyTests/cp024RequiredMeasurementAbsenceStatesBlockWithNoCompletedResult"
+    },
+    {
+      "id": "10-no-size",
+      "status": "PASS",
+      "detail": "Synthetic missing size product then retry through actual ViewModel; FitMatchTests/FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers"
+    },
+    {
+      "id": "fault-offline",
+      "status": "PASS",
+      "detail": "Scripted remote transport failure and reconnect; production cache sync; FitMatchTests/FitMatchClosetSyncCoordinatorTests/rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers"
+    },
+    {
+      "id": "fault-cancel",
+      "status": "PASS",
+      "detail": "Cancellation injected during actual read-back boundary; FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationCancellationDuringReadbackDoesNotPublish"
+    },
+    {
+      "id": "fault-delete-ambiguous",
+      "status": "PASS",
+      "detail": "Ambiguous delete response then absent-row retry; production transaction; FitMatchTests/FitMatchClosetDeletionTransactionTests/ambiguousNetworkFailureKeepsIntentAndLocalItemThenRetryConfirmsAbsence"
+    },
+    {
+      "id": "raw.uniqlo",
+      "status": "PASS",
+      "detail": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof; FitMatchTests/FitMatchReleaseRawFixtureTests/uniqloArchivedChartPreserves32RawFacts"
+    },
+    {
+      "id": "raw.musinsa",
+      "status": "PASS",
+      "detail": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof; FitMatchTests/FitMatchReleaseRawFixtureTests/musinsaArchivedChartPreserves24RawFacts"
+    },
+    {
+      "id": "raw.zara",
+      "status": "PASS",
+      "detail": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof; FitMatchTests/FitMatchReleaseRawFixtureTests/zaraArchivedGuidePreserves20RawFactsWithSyntheticPageShell"
+    },
+    {
+      "id": "9-committed-response-lost",
+      "status": "PASS",
+      "detail": "Synthetic transport records commit then throws timedOut; real production submission retries same immutable ID and projects exact receipt once; no deployed DB idempotency proof; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback"
+    },
+    {
+      "id": "fault.http_transport",
+      "status": "PASS",
+      "detail": "Actual Supabase SDK and FitMatch RPC client via intercept-only URLSession; offline/403/429/500/timeout/malformed/cancelled over six mutation endpoints. Delete transaction failure and success control. No DB write.; FitMatchTests/FitMatchReleaseTransportFaultTests"
+    },
+    {
+      "id": "sequence.2",
+      "status": "PASS",
+      "detail": "Same real ViewModel compares two explicitly selected Closet items with fresh authority, then reads each exact alternative-size batch; synthetic RPC, not SwiftUI taps.; FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch"
+    },
+    {
+      "id": "sequence.3",
+      "status": "PASS",
+      "detail": "Real result registration preparation, server-first submission, exact readback projection and fresh comparison using the registered item; synthetic RPC, not live DB.; FitMatchTests/FitMatchReleaseContinuationTests/compareRegisterOwnedSizeThenCompareUsingAuthoritativeRegisteredItem"
+    },
+    {
+      "id": "sequence.1",
+      "status": "PASS",
+      "detail": "Real manual registration, async edit and delete actions with fresh SwiftData reads; synthetic remote, not live DB.; FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity"
+    },
+    {
+      "id": "sequence.4.async",
+      "status": "PASS",
+      "detail": "Current async manual edit and fresh read feed explicit new comparison; prior receipt unchanged. Synthetic remote.; FitMatchTests/FitMatchReleaseLifecycleTests/asyncManualMeasurementEditRereadsBeforeExplicitNewComparison"
+    },
+    {
+      "id": "matrix.smoke",
+      "status": "PASS",
+      "detail": "Three frozen synthetic case bindings through actual Swift owners; does not prove retailer/DB group authorization.; FitMatchTests/FitMatchReleaseMatrixTests/smokeRepresentativeCorpusCases"
+    },
+    {
+      "id": "fault.cancel.link_actual",
+      "status": "PASS",
+      "detail": "Real Task.cancel at controlled link authority wait; stale readiness cannot republish. Synthetic remote, two parameter cases.; FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkDraftPrecedesServerCompletionAndCancellationCannotPublishAuthority(cancel:)"
+    },
+    {
+      "id": "fault.cancel.zara_actual",
+      "status": "PASS",
+      "detail": "Actual parser cancellation; speculative guide receives cancellation before page completion. Event gate, no network.; FitMatchTests/ZARAParserConcurrencyTests/cancellationWhilePageIsPendingCancelsSpeculativeGuideBeforePageCompletes"
+    },
+    {
+      "id": "db.ledger_guards",
+      "status": "PASS",
+      "detail": "Six offline ownership/ledger guards used by real authenticated cleanup. No actual database mutations.; FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests"
+    },
+    {
+      "id": "matrix.synthetic_coverage",
+      "status": "PASS",
+      "detail": "Exact requested case IDs; synthetic Swift-owner probes only, not server group/retailer proof"
+    },
+    {
+      "id": "matrix.synthetic.musinsa-to-musinsa-A-raw_zero",
+      "status": "PASS",
+      "detail": "MUSINSA zero remains a noncanonical dash row; other provider zeros are hidden. Raw zero remains preserved and unscored."
+    },
+    {
+      "id": "matrix.synthetic.musinsa-to-uniqlo-A-complete_shared_canonical",
+      "status": "PASS",
+      "detail": "Adapter uses the exact supplied one-metric canonical snapshot; no retailer/group authorization derived."
+    },
+    {
+      "id": "matrix.synthetic.zara-to-musinsa-G-exact_identity_mismatch",
+      "status": "PASS",
+      "detail": "Adapter rejects outer authorized size ID differing from the immutable target candidate set."
+    },
+    {
+      "id": "app.discovery",
+      "status": "PASS",
+      "detail": "exit=0; parsed errors and requested selector coverage"
+    },
+    {
+      "id": "parser.live_execution",
+      "status": "PASS",
+      "detail": "exit=0; actual ProductURLParserService; no DB writes"
+    },
+    {
+      "id": "parser.live.input_coverage",
+      "status": "PASS",
+      "detail": "Exact requested URL multiset must match returned rows"
+    },
+    {
+      "id": "parser.live.musinsa",
+      "status": "PASS",
+      "detail": "[{'status': 'PARSED_WITH_MEASUREMENTS', 'sizes': 2}]"
+    },
+    {
+      "id": "parser.live.uniqlo",
+      "status": "PASS",
+      "detail": "[{'status': 'PARSED_WITH_MEASUREMENTS', 'sizes': 7}]"
+    },
+    {
+      "id": "parser.live.zara",
+      "status": "PASS",
+      "detail": "[{'status': 'PARSED_WITH_MEASUREMENTS', 'sizes': 4}]"
+    },
+    {
+      "id": "db.contract",
+      "status": "BLOCKED",
+      "detail": "Dedicated authenticated DB preflight exit=2; db-preflight.json"
+    },
+    {
+      "id": "db.swift_manual",
+      "status": "BLOCKED",
+      "detail": "Dedicated authenticated preflight has not passed; no Swift DB request"
+    }
+  ],
+  "head": "086617f49cd19c8c3e2777e75efa820d7f886b5f",
+  "branch": "QA",
+  "worktree": [
+    " M Docs/CodexSessionHandoff.md",
+    " M \"FitMatch Behavior Map.md\"",
+    " M FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift",
+    "?? Docs/ButtonExceptionCopyAudit.md",
+    "?? Docs/CoreFlowLiveAudit-20260915-api.json",
+    "?? Docs/CoreFlowLiveAudit-20260915.md",
+    "?? \"Docs/DataSupport/FitMatch_\\353\\215\\260\\354\\235\\264\\355\\204\\260\\354\\247\\200\\354\\233\\220\\353\\252\\205\\354\\204\\270.md\"",
+    "?? Docs/DataSupport/db-snapshot-20260917.json",
+    "?? \"Docs/DataSupport/\\353\\263\\264\\354\\231\\204\\353\\214\\200\\354\\236\\245.md\"",
+    "?? \"Docs/DataSupport/\\354\\213\\244\\354\\270\\241\\354\\227\\260\\352\\262\\260\\353\\252\\251\\353\\241\\235.md\"",
+    "?? \"Docs/DataSupport/\\354\\233\\220\\353\\263\\270\\354\\213\\244\\354\\270\\241\\353\\223\\261\\353\\241\\235\\353\\252\\251\\353\\241\\235.md\"",
+    "?? \"Docs/DataSupport/\\354\\271\\264\\355\\205\\214\\352\\263\\240\\353\\246\\254\\353\\252\\251\\353\\241\\235.md\"",
+    "?? Docs/QA/20260915/README.md",
+    "?? Docs/QA/20260915/automated-tests.json",
+    "?? Docs/QA/20260915/cleanup-executed-evidence.json",
+    "?? Docs/QA/20260915/cleanup-executed/README.md",
+    "?? Docs/QA/20260915/cleanup-executed/baseline-diff.json",
+    "?? Docs/QA/20260915/cleanup-executed/live-products.json",
+    "?? Docs/QA/20260915/cleanup-executed/removed-files.json",
+    "?? Docs/QA/20260915/cleanup-review-evidence.json",
+    "?? Docs/QA/20260915/cleanup-review.md",
+    "?? Docs/QA/20260915/failed-tests.json",
+    "?? Docs/QA/20260915/live-category-matches.json",
+    "?? Docs/QA/20260915/musinsa-6372903-measurement-check.json",
+    "?? Docs/QA/20260915/product-results.json",
+    "?? Docs/QA/20260915/product-urls.txt",
+    "?? Docs/QA/20260915/repair/README.md",
+    "?? Docs/QA/20260915/repair/axis-regression.sql",
+    "?? Docs/QA/20260915/repair/full-final-summary.json",
+    "?? Docs/QA/20260915/repair/live-repair-strict.json",
+    "?? Docs/QA/20260915/repair/musinsa-final.json",
+    "?? Docs/QA/20260915/repair/old-trigger.sql",
+    "?? Docs/QA/20260915/repair/repair-changed-files.json",
+    "?? Docs/QA/20260915/repair/retired-tests.json",
+    "?? Docs/QA/20260915/repair/slacks-server-applied.md",
+    "?? Docs/QA/20260915/repair/ui-strict-summary.json",
+    "?? Docs/QA/20260915/root-cause-analysis.md",
+    "?? Docs/QA/20260915/screenshots/empty-link.png",
+    "?? Docs/QA/20260915/screenshots/home.png",
+    "?? Docs/QA/20260915/screenshots/invalid-link.png",
+    "?? Docs/QA/20260915/server-readonly.json",
+    "?? Docs/QA/20260915/summary.json",
+    "?? Docs/QA/20260924-Comparison-Performance-Plan.md",
+    "?? Docs/QA/20260924-Comparison-Performance.md",
+    "?? Docs/QA/20260924-FiveRepairsMigrationManifest.md",
+    "?? Docs/QA/20260924-NonE2E-Release-Closure-Plan.md",
+    "?? Docs/QA/20260924-Registration-Performance.md",
+    "?? Docs/QA/20260924-Release-Technical-Score.md",
+    "?? Docs/QA/20260924-RemoteMigrationInventory.json",
+    "?? Docs/QA/ApprovedSafeRepair-20260916.md",
+    "?? Docs/QA/AuthenticatedJourney-20260916.md",
+    "?? Docs/QA/ClothingURLs-20260916/README.md",
+    "?? Docs/QA/ClothingURLs-20260916/products.json",
+    "?? Docs/QA/ClothingURLs-20260916/urls.txt",
+    "?? Docs/QA/DevelopmentDBCleanupAudit-20260930/DumpScopeRecheck.json",
+    "?? Docs/QA/DevelopmentDBCleanupAudit-20260930/FunctionInventory.json",
+    "?? Docs/QA/DevelopmentDBCleanupAudit-20260930/Report.md",
+    "?? Docs/QA/FirstReleaseAudit-20260929.md",
+    "?? Docs/QA/FirstReleaseChecklist-20260929.md",
+    "?? Docs/QA/FirstReleaseFrozenDataLogicAudit-20260930.md",
+    "?? Docs/QA/FirstReleaseRepairPlan-20260929.md",
+    "?? Docs/QA/FitMatchProductionMigrationReview-20260930.md",
+    "?? Docs/QA/HistoryRestoreRepair-20260930.md",
+    "?? Docs/QA/LiveReleaseProof-20260930/Report.md",
+    "?? Docs/QA/LiveReleaseProof-20260930/ZaraFixUIEvidence.json",
+    "?? Docs/QA/MeasurementDictionaryReinforcement-20260916.md",
+    "?? Docs/QA/MeasurementMasterLaunch-20260916/all-545.csv",
+    "?? Docs/QA/MeasurementMasterLaunch-20260916/page-links-198.csv",
+    "?? \"Docs/QA/MeasurementMasterLaunch-20260916/\\352\\262\\200\\355\\206\\240\\353\\263\\264\\352\\263\\240\\354\\204\\234.md\"",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/00-Preflight.sql",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/01-Apply.sql",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/02-Verify.sql",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/03-Rollback.sql",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/README.md",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/Terra-Prompt.md",
+    "?? Docs/QA/MeasurementRepairHandoff-20260921/preparation-snapshot.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/confirmed-aliases.md",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-bad_raw.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-closet.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-context.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-definitions.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-dictionaries.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/current-migrations.json",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Evidence/deployed-functions.sql",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921-Verify.sql",
+    "?? Docs/QA/MeasurementSemanticAudit-20260921.md",
+    "?? Docs/QA/MusinsaActualSize-7122627/parser-input.json",
+    "?? Docs/QA/Phase2RepairVerification-20260929.md",
+    "?? Docs/QA/Phase3ReleasePreparation-20260929.md",
+    "?? Docs/QA/ReleaseAuditV2-20260916.md",
+    "?? Docs/QA/ReleasePreparation20261002/AuthReadiness.md",
+    "?? Docs/QA/ReleasePreparation20261002/AuthenticatedCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/ChangedFiles.txt",
+    "?? Docs/QA/ReleasePreparation20261002/CoreCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/DBPreparation.md",
+    "?? Docs/QA/ReleasePreparation20261002/DataInventory.md",
+    "?? Docs/QA/ReleasePreparation20261002/ExpectationAudit.md",
+    "?? Docs/QA/ReleasePreparation20261002/LifecycleCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/MatrixCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/PendingReport.md",
+    "?? Docs/QA/ReleasePreparation20261002/PendingTests.md",
+    "?? Docs/QA/ReleasePreparation20261002/PreparationChanges.md",
+    "?? Docs/QA/ReleasePreparation20261002/README.md",
+    "?? Docs/QA/ReleasePreparation20261002/Report.md",
+    "?? Docs/QA/ReleasePreparation20261002/ResumeReport.md",
+    "?? Docs/QA/ReleasePreparation20261002/TaskCancellationCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/TestSpecification.md",
+    "?? Docs/QA/ReleasePreparation20261002/TransportFaultCoverage.md",
+    "?? Docs/QA/ReleasePreparation20261002/data/SHA256SUMS",
+    "?? Docs/QA/ReleasePreparation20261002/data/collect-http-smoke.py",
+    "?? Docs/QA/ReleasePreparation20261002/data/comparison-cases.jsonl",
+    "?? Docs/QA/ReleasePreparation20261002/data/comparison-dataset.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixture-index.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-3467384.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-5020093.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-6566713.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-7122627.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/synthetic-zara_malformed_synthetic.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E465185.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E469411.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E474175.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E482522.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E484875.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485329.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485340.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485454.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485616.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487005.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487220.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487394.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487517.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487688.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488298.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488397.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488630.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488739.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488743.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E490470.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E491320.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E492365.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-details.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-size-chart.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545410220.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545431375.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545436534.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545474934.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545485983.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547014734.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547294158.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434327.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434328.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168862.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168863.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168864.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172712.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172713.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172714.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352094.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352095.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031685.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031686.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-555174282.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-572132324.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-576232023.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770476.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770478.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770479.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/historical-parser-observations.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke-plan.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/musinsa.body",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/uniqlo.body",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/zara.body",
+    "?? Docs/QA/ReleasePreparation20261002/data/http-smoke/sandbox-20261002/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/smoke-urls.txt",
+    "?? Docs/QA/ReleasePreparation20261002/data/source-inventory.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/url-manifest.json",
+    "?? Docs/QA/ReleasePreparation20261002/data/validation.json",
+    "?? Docs/QA/ReleasePreparation20261002/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/environment.example",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepFinalPreflight/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepFinalPreflight/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepFinalPreflight/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepFinalPreflight/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/live-parser-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/live-parser-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/live-parser.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/live-parser.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeFinal/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumePreflight/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumePreflight/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumePreflight/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumePreflight/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/diagnostic-tree.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/live-parser-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/live-parser-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/live-parser.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/live-parser.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepResumeSmoke/sequence2-activities.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke1/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke2/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/live-parser-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/live-parser-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/live-parser.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/live-parser.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmoke3/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/live-parser-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/live-parser-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/live-parser.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/live-parser.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/FitMatchPrepSmokeFinal/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingAuthReceiptRed.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingFocused.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingForwardedRed.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingMatrixRecheck/matrix-smoke.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingMatrixRecheck/xcode.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingRunnerGreen.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingRunnerRed.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/live-parser-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/live-parser-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/live-parser.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/live-parser.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/matrix-smoke.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeChecked/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeFinal/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/app-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/app-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/app.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/db-preflight.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/db-preflight.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/db-runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/discovered-tests.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/discovery.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/report.md",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/results.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/FitMatchPendingSmokeVerified/runner-tests.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/commands.txt",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/pre-resume40-plan-SHA256SUMS",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Pending20261002/source-fingerprints.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepDBGuardsResume.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepRunnerGreen.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepRunnerRed.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepSequenceDiagnostic-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepSequenceDiagnostic.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepSequenceValidRuntime-summary.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/FitMatchPrepSequenceValidRuntime.log",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/storage-cleanup.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/resume-source-fingerprints.json",
+    "?? Docs/QA/ReleasePreparation20261002/evidence/source-fingerprints.json",
+    "?? Docs/QA/ReleasePreparation20261002/full-selectors.json",
+    "?? Docs/QA/ReleasePreparation20261002/matrix-binding-v2.json",
+    "?? Docs/QA/ReleasePreparation20261002/matrix-binding.json",
+    "?? Docs/QA/ReleasePreparation20261002/oracle.json",
+    "?? Docs/QA/ReleasePreparation20261002/pending-baseline.json",
+    "?? Docs/QA/ReleasePreparation20261002/plan-SHA256SUMS",
+    "?? Docs/QA/ReleasePreparation20261002/policy-expectations.json",
+    "?? Docs/QA/ReleasePreparation20261002/preparation-resume-baseline.json",
+    "?? Docs/QA/ReleasePreparation20261002/smoke-selectors.json",
+    "?? Docs/QA/ReportedProductRegression-20260917.md",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/README.md",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/api-403-check-10.txt",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/categories.csv",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/category_measurements.csv",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/summary.json",
+    "?? Docs/QA/RetailerCategoryMeasurements-20260917/upsert.sql",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/Report.md",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/current-db.json",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/group-probes.json",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/inspected-functions.sql",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/observed-categories.csv",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/observed-measurements.csv",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/read-only-inventory.sql",
+    "?? Docs/QA/RetailerDictionaryGap-20260921/unmapped-products.csv",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/E486627-details.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/E486627-size-chart.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/Report.md",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/db-aliases.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/db-existing-product-groups.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/db-mappings.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/live-test-summary.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/offline-test-summary.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/results.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/run-live.sh",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/run-offline.sh",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/transport-verification.json",
+    "?? Docs/QA/SuppliedLinksAudit-20260930/urls.txt",
+    "?? Docs/QA/UniqloFrontLengthAirism-20260917.md",
+    "?? Docs/QA/UniqloPathZaraSkirtRepair-20260916.md",
+    "?? Docs/QA/ZaraMappingRegression-20260916.md",
+    "?? Docs/superpowers/plans/2026-09-24-five-confirmed-repairs.md",
+    "?? Docs/superpowers/plans/2026-09-28-uniqlo-kr-catalog-collector.md",
+    "?? Docs/superpowers/specs/2026-09-28-uniqlo-kr-catalog-design.md",
+    "?? FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafety.swift",
+    "?? FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests.swift",
+    "?? FitMatchTests/FitMatchReleaseAuthenticatedSupport.swift",
+    "?? FitMatchTests/FitMatchReleaseAuthenticatedTests.swift",
+    "?? FitMatchTests/FitMatchReleaseContinuationTests.swift",
+    "?? FitMatchTests/FitMatchReleaseLifecycleTests.swift",
+    "?? FitMatchTests/FitMatchReleaseMatrixTests.swift",
+    "?? FitMatchTests/FitMatchReleasePreparationTests.swift",
+    "?? FitMatchTests/FitMatchReleaseRawFixtureTests.swift",
+    "?? FitMatchTests/FitMatchReleaseTransportFaultTests.swift",
+    "?? FitMatchTests/Fixtures/ReleaseAuditPreviouslyCompleted20260930.json",
+    "?? FitMatchTests/Fixtures/ReleaseAuditSessionHistory20260930.json",
+    "?? FitMatchTests/FrozenReleaseHistoryAuditTests.swift",
+    "?? Tools/FitMatchReleaseE2ERunner/main.swift",
+    "?? \"outputs/01a0a364-09f9-7b50-b02d-393c729d457f/FitMatch_\\353\\215\\260\\354\\235\\264\\355\\204\\260\\354\\247\\200\\354\\233\\220\\352\\264\\200\\353\\246\\254_20260917.xlsx\"",
+    "?? \"outputs/01a0a364-09f9-7b50-b02d-393c729d457f/FitMatch_\\353\\215\\260\\354\\235\\264\\355\\204\\260\\354\\247\\200\\354\\233\\220\\352\\264\\200\\353\\246\\254_20260917.xlsx.inspect.ndjson\"",
+    "?? scripts/build-data-support-register.py",
+    "?? scripts/build-retailer-normalization-upsert.py",
+    "?? scripts/collect-musinsa-parser-inputs.py",
+    "?? scripts/collect-uniqlo-parser-inputs.py",
+    "?? scripts/normalize-retailer-category-measurements.py",
+    "?? scripts/prepare-zara-size-replay.py",
+    "?? scripts/release_qa.py",
+    "?? scripts/release_qa_db.py",
+    "?? scripts/test-candidate-envelope.sh",
+    "?? scripts/test_release_qa_db.py",
+    "?? scripts/tests/test-audit-app-store-archive.sh",
+    "?? scripts/tests/test_release_qa.py",
+    "?? supabase/migrations/20260930225621_preserve_nonpositive_retailer_measurements.sql"
+  ],
+  "simulator": {
+    "lastBootedAt": "2026-09-29T15:07:00Z",
+    "dataPath": "/Users/jinyoung/Library/Developer/CoreSimulator/Devices/03BAF093-552E-4E53-ABFB-7DE0653BE676/data",
+    "dataPathSize": 18337116160,
+    "logPath": "/Users/jinyoung/Library/Logs/CoreSimulator/03BAF093-552E-4E53-ABFB-7DE0653BE676",
+    "udid": "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+    "isAvailable": true,
+    "logPathSize": 1478656,
+    "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+    "state": "Booted",
+    "name": "iPhone 17 Pro"
+  },
+  "app_test_summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+          "deviceName": "iPhone 17 Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 61,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790936764.035,
+    "passedTests": 48,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1790936741.022,
+    "statistics": [
+      {
+        "subtitle": "16 test runs",
+        "title": "3 tests ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "100% of duration",
+        "text": "2 longest test runs with outlier durations exceeding 0.57s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 48
+  },
+  "matrix_receipt": {
+    "path": "matrix-smoke.json",
+    "expected_count": 3,
+    "actual_count": 3,
+    "evidence_scope": "synthetic_production_owner_probe"
+  },
+  "overall": "BLOCKED",
+  "finished_at": "2026-10-02T10:26:45.541904+00:00"
+}

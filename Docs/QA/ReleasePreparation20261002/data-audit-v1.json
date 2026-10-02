@@ -1,0 +1,5021 @@
+{
+  "schema_version": "fitmatch-data-preparation-audit-v1",
+  "baseline_commit": "086617f49cd19c8c3e2777e75efa820d7f886b5f",
+  "scope": "Offline frozen-source structure and provenance; no current health, canonical mapping or group authority inferred.",
+  "frozen_checksums_sha256": "8a51b7daa6efd301198a80652a1a067ee7c778c9321b340f55dfca16b570321c",
+  "corpus_sha256": "6c1b712d806068cc3e44689149f8dd35421ac22a99c1bd964d690f48e3e114e0",
+  "providers": {
+    "musinsa": {
+      "url_count": 30,
+      "cohorts": {
+        "normal-candidate": 20,
+        "boundary": 10
+      },
+      "distinct_known_product_ids": 29,
+      "source_category_paths": {
+        "상의 > 반소매 티셔츠": 11,
+        "상의 > 긴소매 티셔츠": 10,
+        "상의 > 니트/스웨터": 5,
+        "바지 > 데님 팬츠": 3,
+        "<absent>": 1
+      },
+      "boundary_reasons": {
+        "historical_parser_seconds_37.6": 1,
+        "circumference_semantics_recovery": 1,
+        "historical_actual_size_data_null": 1,
+        "historical_parser_seconds_42.1": 1,
+        "raw_zero_rows": 5,
+        "single_size": 1,
+        "no_parsed_regular_sleeve_metric": 1,
+        "bottom_total_length_semantics": 1,
+        "bottom_raw_zero_rows": 1,
+        "six_sizes": 1,
+        "mixed_positive_and_zero_unknown_rows": 1,
+        "original_malformed_mixed_retailer_url": 1,
+        "historical_parser_failure": 1,
+        "intended_product_identity_unresolved": 1
+      },
+      "missing_variant_ids": 30,
+      "missing_size_ids": 30,
+      "current_confirmed_groups": 0,
+      "real_fixture_count": 5,
+      "garment_table_fixture_count": 5,
+      "distinct_nonempty_raw_structures": 2,
+      "garment_size_rows": 17,
+      "raw_value_cells": 107,
+      "zero_cells": 15,
+      "absent_raw_unit_cells": 107
+    },
+    "uniqlo": {
+      "url_count": 30,
+      "cohorts": {
+        "normal-candidate": 20,
+        "boundary": 10
+      },
+      "distinct_known_product_ids": 27,
+      "source_category_paths": {
+        "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼": 1,
+        "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn": 1,
+        "이너웨어 > 에어리즘 > 코튼": 1,
+        "팬츠 > 치노 팬츠 > 와이드": 1,
+        "팬츠 > 캐주얼 팬츠 > 이지 팬츠": 1,
+        "팬츠 > 와이드 팬츠 > UNIQLO : C": 1,
+        "팬츠 > 진(청바지) > 와이드": 1,
+        "팬츠 > 와이드 팬츠 > 슬랙스": 1,
+        "팬츠 > 진(청바지) > 배기": 3,
+        "아우터 > 파카 & 블루종 > 포켓터블": 1,
+        "스포츠 유틸리티 웨어 > 아우터 > 포켓터블": 1,
+        "아우터 > 파카 & 블루종 > 재킷 & 블루종": 1,
+        "아우터 > 파카 & 블루종 > Uniqlo U": 1,
+        "아우터 > 재킷 > 캐주얼 재킷": 1,
+        "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔": 1,
+        "셔츠 & 블라우스 & 폴로셔츠 > 폴로셔츠 (카라티) > 긴팔": 1,
+        "니트 & 가디건 > 가디건 > 메리노": 1,
+        "니트 & 가디건 > 가디건 > 스무드 코튼": 1,
+        "니트 & 가디건 > 가디건 > 캐시미어": 1,
+        "니트 & 가디건 > 가디건 > 그 외": 1,
+        "<absent>": 1,
+        "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS": 3,
+        "아우터 > 파카 & 블루종 > 재킷": 2,
+        "남아 & 공용 > 아우터 > 블루종 & 파카": 1,
+        "신생아(0개월~2세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔)": 1
+      },
+      "boundary_reasons": {
+        "historical_missing_size_chart": 1,
+        "historical_partial_recovery": 1,
+        "suffix_identity_equivalence_unverified": 3,
+        "color_specific_vs_generic_chart_identity": 2,
+        "center_back_sleeve_semantics": 2,
+        "historical_stored_product_group_unmapped": 2,
+        "official_child_audience_path": 1,
+        "official_newborn_audience_path": 1
+      },
+      "missing_variant_ids": 30,
+      "missing_size_ids": 30,
+      "current_confirmed_groups": 0,
+      "real_fixture_count": 25,
+      "garment_table_fixture_count": 23,
+      "distinct_nonempty_raw_structures": 5,
+      "garment_size_rows": 161,
+      "raw_value_cells": 1486,
+      "zero_cells": 0,
+      "absent_raw_unit_cells": 0
+    },
+    "zara": {
+      "url_count": 30,
+      "cohorts": {
+        "normal-candidate": 20,
+        "boundary": 10
+      },
+      "distinct_known_product_ids": 30,
+      "source_category_paths": {
+        "ZARA > 남성 > 스포츠 재킷 > B. Cazadora": 1,
+        "ZARA > 남성 > 바지 > B. Pant Denim": 1,
+        "ZARA > 남성 > 티셔츠 > F. Camiseta": 2,
+        "ZARA > 남성 > 티셔츠 > B. Camiseta": 2,
+        "ZARA > 남성 > 티셔츠 > Camiseta M/L": 3,
+        "ZARA > 여성 > 바지 > B.PANTS": 2,
+        "ZARA > 남성 > 스포츠 재킷 > F. Cazadora": 3,
+        "ZARA > 여성 > 브레이저 > B.BLAZER": 1,
+        "ZARA > 여성 > 스포츠 재킷 > B.SHORT-OUTWEAR": 1,
+        "ZARA > 여성 > 바지 > L. PANT. PIJAMA": 1,
+        "ZARA > 여성 > 티셔츠 > C.CTAS FANTASI": 1,
+        "ZARA > 여성 > 스포츠 재킷 > T.SHORT-OUTWEAR": 1,
+        "ZARA > 여성 > 가디건 > KNIT CARDIGAN": 1,
+        "ZARA > 남성 > 셔츠 > F. Camisería": 1,
+        "ZARA > 남성 > 바지 > F. Pant Resto": 1,
+        "MAN > 셔츠 > B. Camisería": 1,
+        "MAN > 브레이저 > Blasier": 1,
+        "MAN > 바지 > F. Pant Resto": 1,
+        "MAN > 스웨터 > B. Jersey M/C": 1,
+        "MAN > 스포츠 재킷 > B. Cazadora": 1,
+        "MAN > 바지 > B. Pant Denim": 1,
+        "MAN > 버뮤다반바지 > F.Bermuda Resto": 1,
+        "MAN > 스웨트 셔츠 > F. Sudadera": 1
+      },
+      "boundary_reasons": {
+        "historical_variant_body_only_guide": 2,
+        "selected_variant_requires_current_resolution": 2,
+        "selected_catentry_differs_from_internal_product_id": 8
+      },
+      "missing_variant_ids": 15,
+      "missing_size_ids": 30,
+      "current_confirmed_groups": 0,
+      "real_fixture_count": 26,
+      "garment_table_fixture_count": 23,
+      "distinct_nonempty_raw_structures": 3,
+      "garment_size_rows": 100,
+      "raw_value_cells": 1000,
+      "zero_cells": 0,
+      "absent_raw_unit_cells": 0
+    }
+  },
+  "raw_structures": [
+    {
+      "fixture_id": "uniqlo-E465185",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E465185.json",
+      "sha256": "fd415aef49816c2757881fbc47c8e99e9e521a6f7165baf80a723b0d775ff99c",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 64,
+      "structural_signature": [
+        [
+          "body-length-back",
+          "cm"
+        ],
+        [
+          "body-length-back",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E469411",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E469411.json",
+      "sha256": "63a687678f8c1c42274f3ff9bba072b911ab4f308ef73082823e93930d9a9051",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "knit-body-length-front",
+          "cm"
+        ],
+        [
+          "knit-body-length-front",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E474175",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E474175.json",
+      "sha256": "f7128cf29c66983af71ea1128aca64c001f1d06cda6c004642e30cd86f280a16",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 42,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/2/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E482522",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E482522.json",
+      "sha256": "72700257c779590649fa3e2d3dd1bf664c2876180da450ba441eaaef3c44dfd5",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 64,
+      "structural_signature": [
+        [
+          "body-length-back",
+          "cm"
+        ],
+        [
+          "body-length-back",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E484875",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E484875.json",
+      "sha256": "a3a3a997abff21fc45cc801d10a0cc52fcfd736b378caabf38c93a998829619b",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 96,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E485329",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485329.json",
+      "sha256": "2727e1d66ec5c164becdb90a0bafc17de4108537ac67794a7f0f9965e1913e5f",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "knit-body-length-front",
+          "cm"
+        ],
+        [
+          "knit-body-length-front",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E485340",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485340.json",
+      "sha256": "c008ed1870302d8f8a3c95b64bbb4fe0f8dd3c80b0e8400d11576225cc990f75",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "knit-body-length-front",
+          "cm"
+        ],
+        [
+          "knit-body-length-front",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E485454",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485454.json",
+      "sha256": "8f30933b84705f9b2906922ad9c22067fc17b4dc2b149781ccde44cf08b36079",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 64,
+      "structural_signature": [
+        [
+          "body-length-back",
+          "cm"
+        ],
+        [
+          "body-length-back",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/7/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E485616",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485616.json",
+      "sha256": "9be58acc0d816515e83953cf39f05f6d882cbb4e7267d4f00ae5259a324d79b5",
+      "size_keys": [
+        {
+          "sizeCode": "CMA080",
+          "displayCode": "080",
+          "name": "80(12-18개월)"
+        },
+        {
+          "sizeCode": "CMA090",
+          "displayCode": "090",
+          "name": "90(18-24개월)"
+        },
+        {
+          "sizeCode": "CMA100",
+          "displayCode": "100",
+          "name": "100(24-36개월)"
+        },
+        {
+          "sizeCode": "CMA110",
+          "displayCode": "110",
+          "name": "110(35개월-5세)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 32,
+      "structural_signature": [
+        [
+          "body-length-back",
+          "cm"
+        ],
+        [
+          "body-length-back",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E487005",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487005.json",
+      "sha256": "840cc5386d0d422c80d96ea43b7d390dc25da48012c2feca9786420e1c542a88",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "knit-body-length-front",
+          "cm"
+        ],
+        [
+          "knit-body-length-front",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E487220",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487220.json",
+      "sha256": "f2d4fd182791632460139c00314888bfef21eb395a04a29c97918fe123dbef08",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 96,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E487394",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487394.json",
+      "sha256": "4e729e02f1bf37fea1aac911c6467059918adb347ab695ef3f3183ac76cc254a",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E487517",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487517.json",
+      "sha256": "fd29f10be1c0621d6d953a4135d82829b134d00fddc2c3d48109f18c9b4487e9",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E487688",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487688.json",
+      "sha256": "41dea69256cf49d17ed69fc83c64aa8dd9b3e051129a249249aa33089230fa46",
+      "size_keys": [
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E488298",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488298.json",
+      "sha256": "b65feff7f1982e905c5c972e3f752d7bad9e96fb9ec46a96823db01fca3e8df6",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-length-back",
+          "cm"
+        ],
+        [
+          "body-length-back",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E488397",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488397.json",
+      "sha256": "f2aa7536ce90bcdc955534f08e25cba8641ec011309522a8d27202c7848151cd",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 96,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E488630",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488630.json",
+      "sha256": "102863caa445f41732a08dc9644a98bc071d81c9e9da432feefffd06ad730029",
+      "size_keys": [
+        {
+          "sizeCode": "SMA002",
+          "displayCode": "002",
+          "name": "XS"
+        },
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 8,
+      "raw_value_cell_count": 96,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E488739",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488739.json",
+      "sha256": "01965f0e91a198758c0e0f1d4aad98d612abfecfaddab9678d1cb62525ec74c8",
+      "size_keys": [
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 48,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E488743",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488743.json",
+      "sha256": "d2c7db48880fcc0859cc14b54c9b67c7558c18bc2e06acdfab274859ca4ce276",
+      "size_keys": [
+        {
+          "sizeCode": "INS028",
+          "displayCode": "028",
+          "name": "28"
+        },
+        {
+          "sizeCode": "INS029",
+          "displayCode": "029",
+          "name": "29"
+        },
+        {
+          "sizeCode": "INS030",
+          "displayCode": "030",
+          "name": "30"
+        },
+        {
+          "sizeCode": "INS031",
+          "displayCode": "031",
+          "name": "31"
+        },
+        {
+          "sizeCode": "INS032",
+          "displayCode": "032",
+          "name": "32"
+        },
+        {
+          "sizeCode": "INS033",
+          "displayCode": "033",
+          "name": "33"
+        },
+        {
+          "sizeCode": "INS034",
+          "displayCode": "034",
+          "name": "34"
+        },
+        {
+          "sizeCode": "INS035",
+          "displayCode": "035",
+          "name": "35"
+        },
+        {
+          "sizeCode": "INS036",
+          "displayCode": "036",
+          "name": "36"
+        },
+        {
+          "sizeCode": "INS038",
+          "displayCode": "038",
+          "name": "38"
+        },
+        {
+          "sizeCode": "INS040",
+          "displayCode": "040",
+          "name": "40"
+        },
+        {
+          "sizeCode": "INS042",
+          "displayCode": "042",
+          "name": "42"
+        }
+      ],
+      "garment_size_count": 12,
+      "raw_value_cell_count": 144,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-E490470",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E490470.json",
+      "sha256": "5cdfcdee5c6bf48369934545f63897a233ba85db1a8bb11826d1663fffcf066d",
+      "size_keys": [
+        {
+          "sizeCode": "CMC130",
+          "displayCode": "130",
+          "name": "130(8-9세)"
+        },
+        {
+          "sizeCode": "CMC140",
+          "displayCode": "140",
+          "name": "140(10-11세)"
+        },
+        {
+          "sizeCode": "CMC150",
+          "displayCode": "150",
+          "name": "150(12-13세)"
+        },
+        {
+          "sizeCode": "CMC160",
+          "displayCode": "160",
+          "name": "160(13세-)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 24,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/2/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/2/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/2/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E491320",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E491320.json",
+      "sha256": "8f369d9585b5062b895d189cd5eada71a598abd70185d0c1c9aa1edf88902833",
+      "size_keys": [
+        {
+          "sizeCode": "CMC130",
+          "displayCode": "130",
+          "name": "130(8-9세)"
+        },
+        {
+          "sizeCode": "CMC140",
+          "displayCode": "140",
+          "name": "140(10-11세)"
+        },
+        {
+          "sizeCode": "CMC150",
+          "displayCode": "150",
+          "name": "150(12-13세)"
+        },
+        {
+          "sizeCode": "CMC160",
+          "displayCode": "160",
+          "name": "160(13세-)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 32,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/size_chart_payload/result/0/sizeChart/3/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "uniqlo-E492365",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E492365.json",
+      "sha256": "2a3be3dbdbe1e0100b6e72fa078a3815aeb0547af8be018dc76bfd361157d099",
+      "size_keys": [
+        {
+          "sizeCode": "INS028",
+          "displayCode": "028",
+          "name": "28"
+        },
+        {
+          "sizeCode": "INS029",
+          "displayCode": "029",
+          "name": "29"
+        },
+        {
+          "sizeCode": "INS030",
+          "displayCode": "030",
+          "name": "30"
+        },
+        {
+          "sizeCode": "INS031",
+          "displayCode": "031",
+          "name": "31"
+        },
+        {
+          "sizeCode": "INS032",
+          "displayCode": "032",
+          "name": "32"
+        },
+        {
+          "sizeCode": "INS033",
+          "displayCode": "033",
+          "name": "33"
+        },
+        {
+          "sizeCode": "INS034",
+          "displayCode": "034",
+          "name": "34"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 84,
+      "structural_signature": [
+        [
+          "bottom-width",
+          "cm"
+        ],
+        [
+          "bottom-width",
+          "inch"
+        ],
+        [
+          "hip-product-size",
+          "cm"
+        ],
+        [
+          "hip-product-size",
+          "inch"
+        ],
+        [
+          "inseam",
+          "cm"
+        ],
+        [
+          "inseam",
+          "inch"
+        ],
+        [
+          "rising-length",
+          "cm"
+        ],
+        [
+          "rising-length",
+          "inch"
+        ],
+        [
+          "thigh",
+          "cm"
+        ],
+        [
+          "thigh",
+          "inch"
+        ],
+        [
+          "waist-product-size",
+          "cm"
+        ],
+        [
+          "waist-product-size",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-missing-E486627-size-chart",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-size-chart.json",
+      "sha256": "9232cb1d8bb38ba0133fc5e84195cb70c7600edb2af9755f13e28b5684b664bc",
+      "size_keys": [],
+      "garment_size_count": 0,
+      "raw_value_cell_count": 0,
+      "structural_signature": [],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-missing-E486627-details",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-details.json",
+      "sha256": "5754ff3807e225c1402425401db2165a0e5688961a8672033432be4c60c51333",
+      "size_keys": [],
+      "garment_size_count": 0,
+      "raw_value_cell_count": 0,
+      "structural_signature": [],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "musinsa-6566713",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-6566713.json",
+      "sha256": "cbd3897e86753c7c1575e3632656ce756bc8d4d906bc79c9002767759c4a4897",
+      "size_keys": [
+        {
+          "name": "0. S",
+          "sequence": 0
+        },
+        {
+          "name": "1. M",
+          "sequence": 1
+        },
+        {
+          "name": "2. L",
+          "sequence": 2
+        },
+        {
+          "name": "3. XL",
+          "sequence": 3
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 24,
+      "structural_signature": [
+        [
+          "1",
+          "총장",
+          "unit_absent"
+        ],
+        [
+          "2",
+          "허리단면",
+          "unit_absent"
+        ],
+        [
+          "3",
+          "엉덩이단면",
+          "unit_absent"
+        ],
+        [
+          "4",
+          "허벅지단면",
+          "unit_absent"
+        ],
+        [
+          "5",
+          "밑위",
+          "unit_absent"
+        ],
+        [
+          "6",
+          "밑단단면",
+          "unit_absent"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [
+        "/data/sizes/0/items/0",
+        "/data/sizes/0/items/1",
+        "/data/sizes/0/items/2",
+        "/data/sizes/0/items/3",
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/1/items/0",
+        "/data/sizes/1/items/1",
+        "/data/sizes/1/items/2",
+        "/data/sizes/1/items/3",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/2/items/0",
+        "/data/sizes/2/items/1",
+        "/data/sizes/2/items/2",
+        "/data/sizes/2/items/3",
+        "/data/sizes/2/items/4",
+        "/data/sizes/2/items/5",
+        "/data/sizes/3/items/0",
+        "/data/sizes/3/items/1",
+        "/data/sizes/3/items/2",
+        "/data/sizes/3/items/3",
+        "/data/sizes/3/items/4",
+        "/data/sizes/3/items/5"
+      ],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "musinsa-5020093",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-5020093.json",
+      "sha256": "2779ff5e2adf2e37017381abe46d941574f0a1f6f76575096e8b6501628b488e",
+      "size_keys": [
+        {
+          "name": "S",
+          "sequence": 0
+        },
+        {
+          "name": "M",
+          "sequence": 1
+        },
+        {
+          "name": "L",
+          "sequence": 2
+        },
+        {
+          "name": "XL",
+          "sequence": 3
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 24,
+      "structural_signature": [
+        [
+          "1",
+          "총장",
+          "unit_absent"
+        ],
+        [
+          "2",
+          "허리단면",
+          "unit_absent"
+        ],
+        [
+          "3",
+          "엉덩이단면",
+          "unit_absent"
+        ],
+        [
+          "4",
+          "허벅지단면",
+          "unit_absent"
+        ],
+        [
+          "5",
+          "밑위",
+          "unit_absent"
+        ],
+        [
+          "6",
+          "밑단단면",
+          "unit_absent"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [
+        "/data/sizes/0/items/0",
+        "/data/sizes/0/items/1",
+        "/data/sizes/0/items/2",
+        "/data/sizes/0/items/3",
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/1/items/0",
+        "/data/sizes/1/items/1",
+        "/data/sizes/1/items/2",
+        "/data/sizes/1/items/3",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/2/items/0",
+        "/data/sizes/2/items/1",
+        "/data/sizes/2/items/2",
+        "/data/sizes/2/items/3",
+        "/data/sizes/2/items/4",
+        "/data/sizes/2/items/5",
+        "/data/sizes/3/items/0",
+        "/data/sizes/3/items/1",
+        "/data/sizes/3/items/2",
+        "/data/sizes/3/items/3",
+        "/data/sizes/3/items/4",
+        "/data/sizes/3/items/5"
+      ],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "musinsa-3467384",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-3467384.json",
+      "sha256": "c286a793ce4f0a913ec88d10df2eceaaa2a117cc58fc427c3cd2f9a939a1a788",
+      "size_keys": [
+        {
+          "name": "S",
+          "sequence": 0
+        },
+        {
+          "name": "M",
+          "sequence": 1
+        },
+        {
+          "name": "L",
+          "sequence": 2
+        },
+        {
+          "name": "XL",
+          "sequence": 3
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 24,
+      "structural_signature": [
+        [
+          "1",
+          "총장",
+          "unit_absent"
+        ],
+        [
+          "2",
+          "허리단면",
+          "unit_absent"
+        ],
+        [
+          "3",
+          "엉덩이단면",
+          "unit_absent"
+        ],
+        [
+          "4",
+          "허벅지단면",
+          "unit_absent"
+        ],
+        [
+          "5",
+          "밑위",
+          "unit_absent"
+        ],
+        [
+          "6",
+          "밑단단면",
+          "unit_absent"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [
+        "/data/sizes/0/items/0",
+        "/data/sizes/0/items/1",
+        "/data/sizes/0/items/2",
+        "/data/sizes/0/items/3",
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/1/items/0",
+        "/data/sizes/1/items/1",
+        "/data/sizes/1/items/2",
+        "/data/sizes/1/items/3",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/2/items/0",
+        "/data/sizes/2/items/1",
+        "/data/sizes/2/items/2",
+        "/data/sizes/2/items/3",
+        "/data/sizes/2/items/4",
+        "/data/sizes/2/items/5",
+        "/data/sizes/3/items/0",
+        "/data/sizes/3/items/1",
+        "/data/sizes/3/items/2",
+        "/data/sizes/3/items/3",
+        "/data/sizes/3/items/4",
+        "/data/sizes/3/items/5"
+      ],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "musinsa-7122627",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-7122627.json",
+      "sha256": "046eca4e7e7c3f39f59f5a46db2006413c7a5b2027b2c1fc70d960a5b9ba8ebe",
+      "size_keys": [
+        {
+          "name": "M",
+          "sequence": 0
+        },
+        {
+          "name": "L",
+          "sequence": 1
+        },
+        {
+          "name": "XL",
+          "sequence": 2
+        }
+      ],
+      "garment_size_count": 3,
+      "raw_value_cell_count": 21,
+      "structural_signature": [
+        [
+          "1",
+          "총장",
+          "unit_absent"
+        ],
+        [
+          "2",
+          "어깨너비",
+          "unit_absent"
+        ],
+        [
+          "3",
+          "가슴단면",
+          "unit_absent"
+        ],
+        [
+          "4",
+          "소매길이",
+          "unit_absent"
+        ],
+        [
+          "5",
+          "밑단단면",
+          "unit_absent"
+        ],
+        [
+          "6",
+          "소매부리단면",
+          "unit_absent"
+        ],
+        [
+          "7",
+          "암홀",
+          "unit_absent"
+        ]
+      ],
+      "zero_pointers": [
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/0/items/6",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/1/items/6",
+        "/data/sizes/2/items/4",
+        "/data/sizes/2/items/5",
+        "/data/sizes/2/items/6"
+      ],
+      "absent_raw_unit_pointers": [
+        "/data/sizes/0/items/0",
+        "/data/sizes/0/items/1",
+        "/data/sizes/0/items/2",
+        "/data/sizes/0/items/3",
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/0/items/6",
+        "/data/sizes/1/items/0",
+        "/data/sizes/1/items/1",
+        "/data/sizes/1/items/2",
+        "/data/sizes/1/items/3",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/1/items/6",
+        "/data/sizes/2/items/0",
+        "/data/sizes/2/items/1",
+        "/data/sizes/2/items/2",
+        "/data/sizes/2/items/3",
+        "/data/sizes/2/items/4",
+        "/data/sizes/2/items/5",
+        "/data/sizes/2/items/6"
+      ],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-545410220",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545410220.json",
+      "sha256": "ec7dff9dc6db310933b181e44083fa354c6b935277eced56d78b9797f5795c8d",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-545431375",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545431375.json",
+      "sha256": "70c2bf247948f4901addbd255234641b064f3b394c3474dfc5c0121e5e8be645",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 44)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-545436534",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545436534.json",
+      "sha256": "8060f8ffa92256892cf51b8d5fbb05f075e921eb8016a072574da89e30d20d6e",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-572132324",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-572132324.json",
+      "sha256": "8dcc839f33c725677b21502a01e212727436514b0a3e7ded97166d38f724e2b0",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 44)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-576232023",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-576232023.json",
+      "sha256": "0a00ec15d5c172c668fb7445c9ec615074f7aa64ecdfb085064c2a4956e3fd47",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 44)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-545474934",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545474934.json",
+      "sha256": "c62b6ebe5cd471935c5a302728e4458fe65bc9f312de283c3f8d39d695836a8d",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 24)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 26)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 28)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 30)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 32)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-waist",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-waist",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-545485983",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545485983.json",
+      "sha256": "f78ed3564fc48e0c973dd618cfe50050a91c109ede78b5c89830343e0478b57a",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        }
+      ],
+      "garment_size_count": 3,
+      "raw_value_cell_count": 30,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-551168862",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168862.json",
+      "sha256": "d32c707f0835cc70e5285d1867e7ea51b73c55b48caf486f88d100dde0f606e3",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-551168863",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168863.json",
+      "sha256": "e70bd5b90619d42d0337db6045ced9dd4ad50527a3c31fcdddd2e7786d73d3c2",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-551168864",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168864.json",
+      "sha256": "e5d966bcb19373d886534ca2e3e6f196c677016a2dd5720af6e74d90225ddd9c",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-547014734",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547014734.json",
+      "sha256": "eaabbfdaf548768304f275a5481901b77a740a172b4615bd3b5584d7a6faf111",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 44)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        },
+        {
+          "id": "6",
+          "name": "XXL (KR 99)"
+        }
+      ],
+      "garment_size_count": 6,
+      "raw_value_cell_count": 60,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-547294158",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547294158.json",
+      "sha256": "cd0deb189647f1f3b454550cc3f166706399c89ecadd8a7841d65f60a0c12c17",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 55)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 66)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 77)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 88)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-582770476",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770476.json",
+      "sha256": "3bec2f276645d0c8abc1bcd3a71f740cedbade8fc4abb6e3c50250a755114f73",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 24)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 26)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 28)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 30)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 32)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-waist",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-waist",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-582770478",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770478.json",
+      "sha256": "ed7cd4414c43bc76388c1e716984f176c90ae6676cfda598035e061aa18835a1",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 24)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 26)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 28)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 30)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 32)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-waist",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-waist",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-582770479",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770479.json",
+      "sha256": "f1b2458d751a6d7aa6f9671f041b54572e8eb12ae44ef9f66caaf2a63c5a1f78",
+      "size_keys": [
+        {
+          "id": "1",
+          "name": "XS (KR 24)"
+        },
+        {
+          "id": "2",
+          "name": "S (KR 26)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 28)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 30)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 32)"
+        }
+      ],
+      "garment_size_count": 5,
+      "raw_value_cell_count": 50,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-waist",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-waist",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-hips",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-front-length-lower",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-front-rise",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-rise",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-550434327",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434327.json",
+      "sha256": "71c0319d7ce43e1df28fd7224b460e3d0d14087c60ccd53b9b0ff64d50093866",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-550434328",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434328.json",
+      "sha256": "89390f1d6f60bf33b46069f046f2c654f7d5279a177a1bb9b999b60247666e8e",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-552172712",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172712.json",
+      "sha256": "4689ab976f2cbb2b3b3e9b4f5b33e83c77e80108f5103c3ddd8841e306d81795",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-552172713",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172713.json",
+      "sha256": "524c0b66db24da5d74ad7f4977dd884561e4c8178c8156fdc3030cd991b0b527",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-552172714",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172714.json",
+      "sha256": "ecc1528a62b1d759adf9e4fe27434d331985a1e5edcd8ba55fcb246e0b252a6a",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-552352094",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352094.json",
+      "sha256": "939ac67619573d2934e64580eb88496a5448eb1496129b24ee23d248a5f3ac46",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-552352095",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352095.json",
+      "sha256": "1a1af70ce42b9502f208da861d9385414eef154499020fbb5a5205ff31eaa6bd",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-back-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-arm-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-553031685",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031685.json",
+      "sha256": "c9f84fdae4c109cea8e6726f7b3a2bbe5427b1836ad6ee630cfcad21e297d44c",
+      "size_keys": [],
+      "garment_size_count": 0,
+      "raw_value_cell_count": 0,
+      "structural_signature": [],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-553031686",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031686.json",
+      "sha256": "cffa54bf2bb71f0fbfc0c67981b9ec6e465c26f5ed096f6a9d2707cddaa5e4c4",
+      "size_keys": [],
+      "garment_size_count": 0,
+      "raw_value_cell_count": 0,
+      "structural_signature": [],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "zara-555174282",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-555174282.json",
+      "sha256": "c96b624cdbbd495974db0ede833564edb95640b0b546762dc5fe3e8c69d14f8c",
+      "size_keys": [],
+      "garment_size_count": 0,
+      "raw_value_cell_count": 0,
+      "structural_signature": [],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "musinsa-http-smoke-20261002",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/musinsa.body",
+      "sha256": "8e837d5e4bfda77e414ea422783dd09f10ebfaae8ebbf4cfe128fa0492aa6745",
+      "size_keys": [
+        {
+          "name": "S",
+          "sequence": 0
+        },
+        {
+          "name": "M",
+          "sequence": 1
+        }
+      ],
+      "garment_size_count": 2,
+      "raw_value_cell_count": 14,
+      "structural_signature": [
+        [
+          "1",
+          "총장",
+          "unit_absent"
+        ],
+        [
+          "2",
+          "어깨너비",
+          "unit_absent"
+        ],
+        [
+          "3",
+          "가슴단면",
+          "unit_absent"
+        ],
+        [
+          "4",
+          "소매길이",
+          "unit_absent"
+        ],
+        [
+          "5",
+          "밑단단면",
+          "unit_absent"
+        ],
+        [
+          "6",
+          "소매부리단면",
+          "unit_absent"
+        ],
+        [
+          "7",
+          "암홀",
+          "unit_absent"
+        ]
+      ],
+      "zero_pointers": [
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/0/items/6",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/1/items/6"
+      ],
+      "absent_raw_unit_pointers": [
+        "/data/sizes/0/items/0",
+        "/data/sizes/0/items/1",
+        "/data/sizes/0/items/2",
+        "/data/sizes/0/items/3",
+        "/data/sizes/0/items/4",
+        "/data/sizes/0/items/5",
+        "/data/sizes/0/items/6",
+        "/data/sizes/1/items/0",
+        "/data/sizes/1/items/1",
+        "/data/sizes/1/items/2",
+        "/data/sizes/1/items/3",
+        "/data/sizes/1/items/4",
+        "/data/sizes/1/items/5",
+        "/data/sizes/1/items/6"
+      ],
+      "center_back_code_pointers": []
+    },
+    {
+      "fixture_id": "uniqlo-http-smoke-20261002",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/uniqlo.body",
+      "sha256": "28d17bc69abb4fc69d4dd0f4950b562ffbd4056cf1d4dbe4be60584fd6c049ac",
+      "size_keys": [
+        {
+          "sizeCode": "SMA003",
+          "displayCode": "003",
+          "name": "S"
+        },
+        {
+          "sizeCode": "SMA004",
+          "displayCode": "004",
+          "name": "M"
+        },
+        {
+          "sizeCode": "SMA005",
+          "displayCode": "005",
+          "name": "L"
+        },
+        {
+          "sizeCode": "SMA006",
+          "displayCode": "006",
+          "name": "XL"
+        },
+        {
+          "sizeCode": "SMA007",
+          "displayCode": "007",
+          "name": "XXL"
+        },
+        {
+          "sizeCode": "SMA008",
+          "displayCode": "008",
+          "name": "3XL"
+        },
+        {
+          "sizeCode": "SMA009",
+          "displayCode": "009",
+          "name": "4XL"
+        }
+      ],
+      "garment_size_count": 7,
+      "raw_value_cell_count": 56,
+      "structural_signature": [
+        [
+          "body-length",
+          "cm"
+        ],
+        [
+          "body-length",
+          "inch"
+        ],
+        [
+          "body-width",
+          "cm"
+        ],
+        [
+          "body-width",
+          "inch"
+        ],
+        [
+          "shoulder-width",
+          "cm"
+        ],
+        [
+          "shoulder-width",
+          "inch"
+        ],
+        [
+          "sleeve-length-cb",
+          "cm"
+        ],
+        [
+          "sleeve-length-cb",
+          "inch"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": [
+        "/result/0/sizeChart/0/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/0/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/1/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/1/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/2/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/2/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/3/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/3/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/4/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/4/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/5/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/5/sizeParts/3/measurements/1",
+        "/result/0/sizeChart/6/sizeParts/3/measurements/0",
+        "/result/0/sizeChart/6/sizeParts/3/measurements/1"
+      ]
+    },
+    {
+      "fixture_id": "zara-http-smoke-20261002",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/zara.body",
+      "sha256": "83e714214aaf9e1c3e8ee63063b26a34645ba7f6bf49c48e751a0436ec290e46",
+      "size_keys": [
+        {
+          "id": "2",
+          "name": "S (KR 90)"
+        },
+        {
+          "id": "3",
+          "name": "M (KR 95-100)"
+        },
+        {
+          "id": "4",
+          "name": "L (KR 100-105)"
+        },
+        {
+          "id": "5",
+          "name": "XL (KR 105-110)"
+        }
+      ],
+      "garment_size_count": 4,
+      "raw_value_cell_count": 40,
+      "structural_signature": [
+        [
+          "A",
+          "zone-name-chest",
+          "cm"
+        ],
+        [
+          "A",
+          "zone-name-chest",
+          "in"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "cm"
+        ],
+        [
+          "B",
+          "zone-name-front-length",
+          "in"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "cm"
+        ],
+        [
+          "C",
+          "zone-name-sleeve-length",
+          "in"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "cm"
+        ],
+        [
+          "D",
+          "zone-name-arm-width",
+          "in"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "cm"
+        ],
+        [
+          "E",
+          "zone-name-back-width",
+          "in"
+        ]
+      ],
+      "zero_pointers": [],
+      "absent_raw_unit_pointers": [],
+      "center_back_code_pointers": []
+    }
+  ],
+  "preparatory_raw_fact_bindings": [
+    {
+      "fixture_id": "uniqlo-E465185",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E469411",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E474175",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E482522",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E485329",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E485340",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E485454",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E485616",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E487005",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E487394",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E487517",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E487688",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E488298",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E490470",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/2/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-E491320",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/size_chart_payload/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-6566713",
+      "fact": "absent_raw_unit_pointers",
+      "json_pointer": "/data/sizes/0/items/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-5020093",
+      "fact": "absent_raw_unit_pointers",
+      "json_pointer": "/data/sizes/0/items/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-3467384",
+      "fact": "absent_raw_unit_pointers",
+      "json_pointer": "/data/sizes/0/items/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-7122627",
+      "fact": "zero_pointers",
+      "json_pointer": "/data/sizes/0/items/4",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-7122627",
+      "fact": "absent_raw_unit_pointers",
+      "json_pointer": "/data/sizes/0/items/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-http-smoke-20261002",
+      "fact": "zero_pointers",
+      "json_pointer": "/data/sizes/0/items/4",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "musinsa-http-smoke-20261002",
+      "fact": "absent_raw_unit_pointers",
+      "json_pointer": "/data/sizes/0/items/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-http-smoke-20261002",
+      "fact": "center_back_code_pointers",
+      "json_pointer": "/result/0/sizeChart/0/sizeParts/3/measurements/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "uniqlo-missing-E486627-size-chart",
+      "fact": "sizeChart_key_absent",
+      "json_pointer": "/result/0",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "zara-553031685",
+      "fact": "measureGuideInfo_null_sizeGuideInfo_present",
+      "json_pointer": "/response",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "zara-553031686",
+      "fact": "measureGuideInfo_null_sizeGuideInfo_present",
+      "json_pointer": "/response",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    },
+    {
+      "fixture_id": "zara-555174282",
+      "fact": "measureGuideInfo_null_sizeGuideInfo_present",
+      "json_pointer": "/response",
+      "evidence_scope": "raw_field_presence_only",
+      "server_authorization_status": "BLOCKED"
+    }
+  ],
+  "real_pair_bindings": [
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "musinsa",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "uniqlo",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "zara",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "musinsa",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "uniqlo",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "zara",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "musinsa",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "uniqlo",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "zara",
+      "status": "BLOCKED",
+      "source_fixture_binding": null,
+      "reason": "No authenticated exact Closet/product/variant/size, group A-G or approved common metric receipt."
+    }
+  ],
+  "authorized_matrix_rows": 0,
+  "planned_matrix_rows": 756,
+  "limitations": [
+    "Structural signatures preserve raw codes/labels/units; equality is not verified semantic/schema equivalence.",
+    "MUSINSA absent raw unit is not evidence the deployed parser or server lacks a verified unit.",
+    "Raw fact bindings do not satisfy the synthetic matrix's canonical, group, conflict or exact-identity assertions.",
+    "Historical captures and duplicate snapshots do not establish current product health or distinct product counts."
+  ]
+}

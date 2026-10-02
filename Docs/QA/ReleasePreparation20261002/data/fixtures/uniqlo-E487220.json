@@ -1,0 +1,990 @@
+{
+  "product_id": "E487220",
+  "product_name": "턱릴랙스와이드팬츠",
+  "canonical_url": "https://www.uniqlo.com/kr/ko/products/E487220-000/00",
+  "observed_ids": [
+    "E487220-000"
+  ],
+  "source_path": "팬츠 > 와이드 팬츠 > 슬랙스",
+  "source_depth_names": [
+    "팬츠",
+    "와이드 팬츠",
+    "슬랙스"
+  ],
+  "source_depth_codes": [
+    "57968",
+    "58046",
+    "58442"
+  ],
+  "audience": "MEN",
+  "gender_name": "men",
+  "gender_category": "MEN",
+  "product_type": "unknown",
+  "product_type_kr": "",
+  "size_chart_payload": {
+    "result": [
+      {
+        "productId": "E487220-000",
+        "sizeChart": [
+          {
+            "sizeCode": "SMA002",
+            "displayCode": "002",
+            "name": "XS",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "72",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "103.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "40 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "33.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "20.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "8",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "69",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "27 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA003",
+            "displayCode": "003",
+            "name": "S",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "109.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "43",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "35.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "30",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "21",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "8 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "71",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA004",
+            "displayCode": "004",
+            "name": "M",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "84",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "115.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "45 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "37.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "31",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "22",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "8 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "73",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA005",
+            "displayCode": "005",
+            "name": "L",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "90",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "35 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "121.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "47 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "39.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "32",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "23",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA006",
+            "displayCode": "006",
+            "name": "XL",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "98",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "38 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "128",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "50 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "41.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "16 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "32.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "23.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA007",
+            "displayCode": "007",
+            "name": "XXL",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "106",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "41 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "132.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "52 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "43",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "33.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "24",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA008",
+            "displayCode": "008",
+            "name": "3XL",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "112",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "44",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "137.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "54 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "44.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "34.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "24.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA009",
+            "displayCode": "009",
+            "name": "4XL",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "118",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "46 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "142",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "56",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "46.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "18 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "35.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "25",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "9 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bodyMeasurements": [
+          {
+            "sizeCode": "SMA002",
+            "displayCode": "002",
+            "name": "XS",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "66-72",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "26-28 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA003",
+            "displayCode": "003",
+            "name": "S",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "68-76",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "26 3/4-30",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA004",
+            "displayCode": "004",
+            "name": "M",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76-84",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30-33",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA005",
+            "displayCode": "005",
+            "name": "L",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "84-92",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33-36 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA006",
+            "displayCode": "006",
+            "name": "XL",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "92-100",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "36 1/4-39 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA007",
+            "displayCode": "007",
+            "name": "XXL",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "100-108",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "39 1/4-42 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA008",
+            "displayCode": "008",
+            "name": "3XL",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "108-116",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "42 1/2-45 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "SMA009",
+            "displayCode": "009",
+            "name": "4XL",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "116-124",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "45 3/4-48 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imageUrl": "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/487220/item/krgoods_38_487220_3x4.jpg",
+        "colorCode": ""
+      }
+    ]
+  },
+  "size_count_official": 8
+}

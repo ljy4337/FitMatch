@@ -1,0 +1,3926 @@
+{
+  "environment": [
+    {
+      "architecture": "x86_64",
+      "deviceId": "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+      "deviceName": "iPhone 17 Pro",
+      "modelName": "iPhone 17 Pro",
+      "osBuildNumber": "23D8133",
+      "osVersion": "26.3.1",
+      "platform": "iOS Simulator"
+    }
+  ],
+  "excludedSuite": "FitMatchHeadlessUserJourneyTests (stale observation stub plus unbounded wait; separately attempted and interrupted)",
+  "tests": [
+    {
+      "id": "CategoryLive300ShadowAuditTests/testCurrentClassifierAuditsLive300WithoutGoldPromotion()",
+      "name": "testCurrentClassifierAuditsLive300WithoutGoldPromotion()",
+      "result": "Passed"
+    },
+    {
+      "id": "CategoryValidation5026AuditTests/testCurrentProductionClassifierReclassifiesAll5026Products()",
+      "name": "testCurrentProductionClassifierReclassifiesAll5026Products()",
+      "result": "Passed"
+    },
+    {
+      "id": "CategoryValidation5026AuditTests/testLiveProductionParserRevalidatesOfflineAmbiguousAndOtherProducts()",
+      "name": "testLiveProductionParserRevalidatesOfflineAmbiguousAndOtherProducts()",
+      "result": "Skipped"
+    },
+    {
+      "id": "BodyShapeRemovalTests/legacyBodyShapeValuesDoNotChangeRecommendation()",
+      "name": "legacyBodyShapeValuesDoNotChangeRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "BodyShapeRemovalTests/categoryBaseWeightsRemainUnchanged()",
+      "name": "categoryBaseWeightsRemainUnchanged()",
+      "result": "Passed"
+    },
+    {
+      "id": "BodyShapeRemovalTests/formerBodyShapeOnlyMeasurementsDoNotEnterTopRecommendation()",
+      "name": "formerBodyShapeOnlyMeasurementsDoNotEnterTopRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "BodyShapeRemovalTests/newSnapshotContainsNoBodyShapeState()",
+      "name": "newSnapshotContainsNoBodyShapeState()",
+      "result": "Passed"
+    },
+    {
+      "id": "BodyShapeRemovalTests/temporarySizeAnalysisUsesSameComparisonEngine()",
+      "name": "temporarySizeAnalysisUsesSameComparisonEngine()",
+      "result": "Passed"
+    },
+    {
+      "id": "CurrentUniqloCatalogAuditTests/testCurrentOfficialCatalogProductionClassificationAndATest()",
+      "name": "testCurrentOfficialCatalogProductionClassificationAndATest()",
+      "result": "Skipped"
+    },
+    {
+      "id": "MixedTopClassificationRegressionTests/mixedProviderBucketsDoNotOverrideExplicitProductType()",
+      "name": "mixedProviderBucketsDoNotOverrideExplicitProductType()",
+      "result": "Passed"
+    },
+    {
+      "id": "MixedTopClassificationRegressionTests/sizeNormalizationPreservesShirtStructure()",
+      "name": "sizeNormalizationPreservesShirtStructure()",
+      "result": "Passed"
+    },
+    {
+      "id": "DBLogicReliabilityAuditTests/testCurrentBatchProductsNotPresentIn5026Corpus()",
+      "name": "testCurrentBatchProductsNotPresentIn5026Corpus()",
+      "result": "Passed"
+    },
+    {
+      "id": "DBLogicReliabilityAuditTests/testDBLogic5049615KeepsProviderFactSeparateFromServerAuthority()",
+      "name": "testDBLogic5049615KeepsProviderFactSeparateFromServerAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "DBLogicReliabilityAuditTests/testLegacyDBLogicParserFactsRemainFrozenWithoutDefiningServerAuthority()",
+      "name": "testLegacyDBLogicParserFactsRemainFrozenWithoutDefiningServerAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "MixedTopLiveRegressionTests/affectedUniqloProductsUseCorrectCurrentClassification()",
+      "name": "affectedUniqloProductsUseCorrectCurrentClassification()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchCollectedFixtureReplayTests/testCollectedRetailerAPIsUseCurrentSwiftParsersAndEncoder()",
+      "name": "testCollectedRetailerAPIsUseCurrentSwiftParsersAndEncoder()",
+      "result": "Skipped"
+    },
+    {
+      "id": "CategoryLiveComparisonAuditTests/auditsEveryDirectedPairAndReferenceSize()",
+      "name": "auditsEveryDirectedPairAndReferenceSize()",
+      "result": "Skipped"
+    },
+    {
+      "id": "CategoryLiveComparisonAuditTests/auditsAllProductsAgainstUniqloReferenceCloset()",
+      "name": "auditsAllProductsAgainstUniqloReferenceCloset()",
+      "result": "Skipped"
+    },
+    {
+      "id": "CategoryLiveComparisonAuditTests/auditsAllProductsAgainstMusinsaReferenceCloset()",
+      "name": "auditsAllProductsAgainstMusinsaReferenceCloset()",
+      "result": "Skipped"
+    },
+    {
+      "id": "CategoryLiveComparisonAuditTests/registersOneOfficialMeasurementReferencePerStoredCategoryWithoutComparing()",
+      "name": "registersOneOfficialMeasurementReferencePerStoredCategoryWithoutComparing()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitPairCorpusXCTests/testMusinsa1037OfficialMeasurementCorpus()",
+      "name": "testMusinsa1037OfficialMeasurementCorpus()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitPairCorpusXCTests/testUniqlo243OfficialMeasurementCorpus()",
+      "name": "testUniqlo243OfficialMeasurementCorpus()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/productionParityConfigurationMatchesEverySupportedExperimentalAxis()",
+      "name": "productionParityConfigurationMatchesEverySupportedExperimentalAxis()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/toleranceBoundaryAndDirectionalPenaltyStayExplicit()",
+      "name": "toleranceBoundaryAndDirectionalPenaltyStayExplicit()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/highSimilarityWithLowCoverageAndFailedEligibilityIsNotRecommendable()",
+      "name": "highSimilarityWithLowCoverageAndFailedEligibilityIsNotRecommendable()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/stretchChangesPenaltyOnlyWithVerifiedEvidence()",
+      "name": "stretchChangesPenaltyOnlyWithVerifiedEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/supportedCategoryFixturesReuseProductionEligibilityAndWeights()",
+      "name": "supportedCategoryFixturesReuseProductionEligibilityAndWeights()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/capturedMusinsaFixtureProducesAuditableOldNewRanking()",
+      "name": "capturedMusinsaFixtureProducesAuditableOldNewRanking()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/capturedUniqloFixtureProducesAuditableOldNewRanking()",
+      "name": "capturedUniqloFixtureProducesAuditableOldNewRanking()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/validatedZARAPantsValuesRemainEligibleInShadowRanking()",
+      "name": "validatedZARAPantsValuesRemainEligibleInShadowRanking()",
+      "result": "Passed"
+    },
+    {
+      "id": "ExperimentalMeasurementScoreV2Tests/observationPayloadPreservesConflictAndUnknownRawEvidence()",
+      "name": "observationPayloadPreservesConflictAndUnknownRawEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "LiveReleaseQA1200Tests/testSelectedTenCaseBatchOnPhysicalDevice()",
+      "name": "testSelectedTenCaseBatchOnPhysicalDevice()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchAudienceMappingRegressionTests/canonicalAudienceContractDoesNotCreateImplicitGeneric()",
+      "name": "canonicalAudienceContractDoesNotCreateImplicitGeneric()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAudienceMappingRegressionTests/explicitUniqloUnisexProductsPreserveOfficialAudienceAnd58395Scope()",
+      "name": "explicitUniqloUnisexProductsPreserveOfficialAudienceAnd58395Scope()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAudienceMappingRegressionTests/same58395MenProductsRemainCanonicalMenRequests()",
+      "name": "same58395MenProductsRemainCanonicalMenRequests()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAudienceMappingRegressionTests/absentAndMixedAudienceFailClosedAsUnknownOrUnisex()",
+      "name": "absentAndMixedAudienceFailClosedAsUnknownOrUnisex()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAudienceMappingRegressionTests/classificationReviewAndNotComparableUseDistinctHeadlines()",
+      "name": "classificationReviewAndNotComparableUseDistinctHeadlines()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testAnorakPantsRetainsBottomTaxonomy()",
+      "name": "testAnorakPantsRetainsBottomTaxonomy()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testComparisonClassificationBoundaryPolicy()",
+      "name": "testComparisonClassificationBoundaryPolicy()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testExplicitCompositeGarmentSetsRequireUserConfirmation()",
+      "name": "testExplicitCompositeGarmentSetsRequireUserConfirmation()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testExplicitSweatshirtCanResolveMissingOfficialMajorCategory()",
+      "name": "testExplicitSweatshirtCanResolveMissingOfficialMajorCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testMusinsaDeepReferenceCandidateProbe()",
+      "name": "testMusinsaDeepReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testMusinsaEligibleReplacementReferenceCandidateProbe()",
+      "name": "testMusinsaEligibleReplacementReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testMusinsaExpandedReferenceCandidateProbe()",
+      "name": "testMusinsaExpandedReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testMusinsaReferenceCandidateProbe()",
+      "name": "testMusinsaReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testMusinsaReferenceCrossPlatformComparison()",
+      "name": "testMusinsaReferenceCrossPlatformComparison()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testOfficialMeasurementReferenceRegistration()",
+      "name": "testOfficialMeasurementReferenceRegistration()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testOfficialTopTaxonomyIsNotOverriddenByOuterwearName()",
+      "name": "testOfficialTopTaxonomyIsNotOverriddenByOuterwearName()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testOuterwearNameCanResolveMissingOfficialMajorCategory()",
+      "name": "testOuterwearNameCanResolveMissingOfficialMajorCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testPlaceholderOtherClassificationIsNotAutoConfirmable()",
+      "name": "testPlaceholderOtherClassificationIsNotAutoConfirmable()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testRemainingLocalOfficialReferenceCandidateProbe()",
+      "name": "testRemainingLocalOfficialReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloExpandedReferenceCandidateProbe()",
+      "name": "testUniqloExpandedReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloLiveDiscoveryReferenceCandidateProbe()",
+      "name": "testUniqloLiveDiscoveryReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloMixedKnitBucketKeepsExplicitCardiganProduct()",
+      "name": "testUniqloMixedKnitBucketKeepsExplicitCardiganProduct()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloMixedKnitBucketKeepsSpecificKnitLeaf()",
+      "name": "testUniqloMixedKnitBucketKeepsSpecificKnitLeaf()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloMixedPantsAndLeggingsBucketKeepsTerminalPants()",
+      "name": "testUniqloMixedPantsAndLeggingsBucketKeepsTerminalPants()",
+      "result": "Passed"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloReferenceCandidateProbe()",
+      "name": "testUniqloReferenceCandidateProbe()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloReferenceCrossPlatformComparison()",
+      "name": "testUniqloReferenceCrossPlatformComparison()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ReferenceClosetSetupXCTests/testUniqloSweatFullZipParkaIsJumperNotPadding()",
+      "name": "testUniqloSweatFullZipParkaIsJumperNotPadding()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/appleNonceHasExpectedLengthAndAllowedCharacters()",
+      "name": "appleNonceHasExpectedLengthAndAllowedCharacters()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/appleNonceHashMatchesKnownSHA256Value()",
+      "name": "appleNonceHashMatchesKnownSHA256Value()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/accountDeletionSignsOutAfterServerSuccess()",
+      "name": "accountDeletionSignsOutAfterServerSuccess()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/accountDeletionKeepsSessionStateAndReportsSafeErrorAfterFailure()",
+      "name": "accountDeletionKeepsSessionStateAndReportsSafeErrorAfterFailure()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/cm016AccountDeletionActionSeparatesServerAndLocalCleanupOutcomes()",
+      "name": "cm016AccountDeletionActionSeparatesServerAndLocalCleanupOutcomes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchAuthSessionStoreTests/appleSessionActionPreservesSuccessFailureLogoutAndReloginTransitions()",
+      "name": "appleSessionActionPreservesSuccessFailureLogoutAndReloginTransitions()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/remoteOnlyAutomaticItemRestoresIdentityButWaitsForActiveV4Authority()",
+      "name": "remoteOnlyAutomaticItemRestoresIdentityButWaitsForActiveV4Authority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/remoteOnlyManualOverrideRetainsExplicitUserAuthority()",
+      "name": "remoteOnlyManualOverrideRetainsExplicitUserAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/ownedReferencePreservesAbsentLengthDespiteSharedProductLength()",
+      "name": "ownedReferencePreservesAbsentLengthDespiteSharedProductLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/remoteOnlyReviewAndNotComparableStatesRemainFailClosed()",
+      "name": "remoteOnlyReviewAndNotComparableStatesRemainFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/manualClosetFormStampsExplicitUserAuthority()",
+      "name": "manualClosetFormStampsExplicitUserAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/manualCompositeSetCannotBecomeComparisonAuthorityOrReference()",
+      "name": "manualCompositeSetCannotBecomeComparisonAuthorityOrReference()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/existingManualSetIsRejectedBeforeServerEvaluator()",
+      "name": "existingManualSetIsRejectedBeforeServerEvaluator()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/localHintNeverCreatesOverrideAndServerConfirmedWins()",
+      "name": "localHintNeverCreatesOverrideAndServerConfirmedWins()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/shoppingPersonalAuthorityNeverPromotesASourcedClosetRow()",
+      "name": "shoppingPersonalAuthorityNeverPromotesASourcedClosetRow()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/onlyExplicitUserClassificationCreatesServerOverride()",
+      "name": "onlyExplicitUserClassificationCreatesServerOverride()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/existingRemoteRowRetainsExactIDsAndUsesAtomicOverrideOnly()",
+      "name": "existingRemoteRowRetainsExactIDsAndUsesAtomicOverrideOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/pendingLinkedSizeEditUsesExactServerSizeAndPreservesLocalChoiceUntilReadBack()",
+      "name": "pendingLinkedSizeEditUsesExactServerSizeAndPreservesLocalChoiceUntilReadBack()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess()",
+      "name": "linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/linkedClosetEditRequiresReferenceConfirmationBeforeServerMutation()",
+      "name": "linkedClosetEditRequiresReferenceConfirmationBeforeServerMutation()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime()",
+      "name": "existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/serverNotComparableClearsReferenceAndNeverUpsertsLocalClassification()",
+      "name": "serverNotComparableClearsReferenceAndNeverUpsertsLocalClassification()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/serverReviewRequiredClearsReferenceAndNeverUpsertsLocalHint()",
+      "name": "serverReviewRequiredClearsReferenceAndNeverUpsertsLocalHint()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/promotionRequiredUsesObservationThenPersistsServerAuthority()",
+      "name": "promotionRequiredUsesObservationThenPersistsServerAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/runtimeFailureIsNotSwallowedAndCannotKeepLocalHintEligible()",
+      "name": "runtimeFailureIsNotSwallowedAndCannotKeepLocalHintEligible()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/finalStaleAutomaticHydrationCannotUndoFailedV4Resolve()",
+      "name": "finalStaleAutomaticHydrationCannotUndoFailedV4Resolve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/sourcedReviewRequiredExplicitClosetEditBecomesUserAuthority()",
+      "name": "sourcedReviewRequiredExplicitClosetEditBecomesUserAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/sourcedTerminalServerFailuresRemainFailClosedAfterPickerEdits()",
+      "name": "sourcedTerminalServerFailuresRemainFailClosedAfterPickerEdits()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/sourcedSetPickerEditRemainsFailClosed()",
+      "name": "sourcedSetPickerEditRemainsFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/manualSetPickerEditRemainsFailClosed()",
+      "name": "manualSetPickerEditRemainsFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/actualImportedPickerEditBecomesUserExplicitButSizeOnlyEditDoesNot()",
+      "name": "actualImportedPickerEditBecomesUserExplicitButSizeOnlyEditDoesNot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/accountDeletionPurgesLocalClosetDataAndResetsSyncState()",
+      "name": "accountDeletionPurgesLocalClosetDataAndResetsSyncState()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/foreignAccountCacheIsPurgedBeforeRemoteSyncCanExposeIt()",
+      "name": "foreignAccountCacheIsPurgedBeforeRemoteSyncCanExposeIt()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/ownerlessLegacyCacheFailsClosedAndPurgesAllUserScopedPresentationState()",
+      "name": "ownerlessLegacyCacheFailsClosedAndPurgesAllUserScopedPresentationState()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/accountSwitchNeverPresentsForeignLocalCacheBeforePreparationCompletes()",
+      "name": "accountSwitchNeverPresentsForeignLocalCacheBeforePreparationCompletes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/overlappingAccountSwitchKeepsNewAccountCacheOwnership()",
+      "name": "overlappingAccountSwitchKeepsNewAccountCacheOwnership()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/overlappingSameAccountSyncHydratesNewestFollowUpSnapshot()",
+      "name": "overlappingSameAccountSyncHydratesNewestFollowUpSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers()",
+      "name": "rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/multiTypeReferenceUnsetSendsOnlyExactChangedDelta()",
+      "name": "multiTypeReferenceUnsetSendsOnlyExactChangedDelta()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/multiTypeReferenceSetSendsOnlyExactChangedDelta()",
+      "name": "multiTypeReferenceSetSendsOnlyExactChangedDelta()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/sameTupleReferenceReplacementUsesAtomicServerSetOnly()",
+      "name": "sameTupleReferenceReplacementUsesAtomicServerSetOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/firstLoginEmptyCacheNeverClearsRemoteReferences()",
+      "name": "firstLoginEmptyCacheNeverClearsRemoteReferences()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetSyncCoordinatorTests/historyOnlyReferenceSnapshotNeverEntersClosetMutationPipeline()",
+      "name": "historyOnlyReferenceSnapshotNeverEntersClosetMutationPipeline()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/manualFactoryRecordsEncodeVerifiedCanonicalCodesForSharedUpsertAndUpdatePayload()",
+      "name": "manualFactoryRecordsEncodeVerifiedCanonicalCodesForSharedUpsertAndUpdatePayload()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/unmappableManualPositiveMeasurementFailsBeforePayloadRPCAndKeepsDraft()",
+      "name": "unmappableManualPositiveMeasurementFailsBeforePayloadRPCAndKeepsDraft()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/listDTOHydrationRetainsAllCanonicalRecordsAndDeterministicLengthProjection()",
+      "name": "listDTOHydrationRetainsAllCanonicalRecordsAndDeterministicLengthProjection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/lengthProjectionDoesNotUseResponseOrderForTotalAndBackLength()",
+      "name": "lengthProjectionDoesNotUseResponseOrderForTotalAndBackLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/storedRetailerReplayDoesNotRewriteCanonicalMeasurementRawIDs()",
+      "name": "storedRetailerReplayDoesNotRewriteCanonicalMeasurementRawIDs()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/classificationAxisPayloadKeepsVerifiedOuterwearAndExistingTopBottomAxes()",
+      "name": "classificationAxisPayloadKeepsVerifiedOuterwearAndExistingTopBottomAxes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchClosetTransportContractTests/historyVisibilityClassifiesOnlyExactServerCodes()",
+      "name": "historyVisibilityClassifiesOnlyExactServerCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonPermitSequencingTests/profileMatcherCannotRunMeasurementScorer()",
+      "name": "profileMatcherCannotRunMeasurementScorer()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonPermitSequencingTests/releaseComparisonCallSitesRequirePermitBeforeScoring()",
+      "name": "releaseComparisonCallSitesRequirePermitBeforeScoring()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchComparisonPermitSequencingTests/persistedServerApprovalGuardsAlternativeSizeScoring()",
+      "name": "persistedServerApprovalGuardsAlternativeSizeScoring()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonPermitSequencingTests/comparisonSyncCannotPromoteLocalHistoryIntoServerAuthority()",
+      "name": "comparisonSyncCannotPromoteLocalHistoryIntoServerAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/pendingServerSnapshotRecoversThenHydratesExactlyOnce()",
+      "name": "pendingServerSnapshotRecoversThenHydratesExactlyOnce()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/legacyLocalHistoryIsReadOnlyAndNeverUploaded()",
+      "name": "legacyLocalHistoryIsReadOnlyAndNeverUploaded()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/orphanedServerApprovedLocalCacheFailsClosed()",
+      "name": "orphanedServerApprovedLocalCacheFailsClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/overlappingAccountSwitchCannotHydrateOutgoingHistoryIntoNewAccount()",
+      "name": "overlappingAccountSwitchCannotHydrateOutgoingHistoryIntoNewAccount()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/overlappingSameAccountHistorySyncUsesNewestFollowUpSnapshot()",
+      "name": "overlappingSameAccountHistorySyncUsesNewestFollowUpSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource()",
+      "name": "deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/schema4HydratedFrozenReferenceResolvesItsOriginalClosetIdentity()",
+      "name": "schema4HydratedFrozenReferenceResolvesItsOriginalClosetIdentity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession()",
+      "name": "completedServerHistoryHideSurvivesSyncAndModeledSecondSession()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence()",
+      "name": "closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists()",
+      "name": "closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/closetDeletionActionKeepsClosetAndHistoryWhenDurableHideFailsThenRetries()",
+      "name": "closetDeletionActionKeepsClosetAndHistoryWhenDurableHideFailsThenRetries()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/historyUnavailableReceiptKeepsLocalHistoryAndClosetWithoutLoginMessage()",
+      "name": "historyUnavailableReceiptKeepsLocalHistoryAndClosetWithoutLoginMessage()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide()",
+      "name": "historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideIsIdempotentAndRejectsUnknownIdentity()",
+      "name": "completedServerHistoryHideIsIdempotentAndRejectsUnknownIdentity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry()",
+      "name": "failedServerHistoryHideLeavesLocalCacheUntouchedForRetry()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchComparisonSyncCoordinatorTests/localOnlyHistoryDoesNotClaimServerVisibilityAuthority()",
+      "name": "localOnlyHistoryDoesNotClaimServerVisibilityAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F01ReceiptMustBeHiddenAndExactlyMatchRequestedClientIDs()",
+      "name": "F01ReceiptMustBeHiddenAndExactlyMatchRequestedClientIDs()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F02InvalidatedSubmissionCannotClearNewerInFlightSubmission()",
+      "name": "F02InvalidatedSubmissionCannotClearNewerInFlightSubmission()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F03SavedFrozenReferenceResolvesBackToItsOriginalClosetID()",
+      "name": "F03SavedFrozenReferenceResolvesBackToItsOriginalClosetID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F04ReadinessIsClosedAndMissingBeginStatusCannotDefaultToPending()",
+      "name": "F04ReadinessIsClosedAndMissingBeginStatusCannotDefaultToPending()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F04AConfirmedLegacyStructureReasonIsMeasurementReadiness()",
+      "name": "F04AConfirmedLegacyStructureReasonIsMeasurementReadiness()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F04BComparisonGroupAcceptsDeployedMappingSourceKey()",
+      "name": "F04BComparisonGroupAcceptsDeployedMappingSourceKey()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchContractClosureRegressionTests/F05EngineRejectsDirectlyConstructedUnsupportedSnapshot()",
+      "name": "F05EngineRejectsDirectlyConstructedUnsupportedSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/frozenFinalCatalogHasEveryStableFeatureIDExactlyOnce()",
+      "name": "frozenFinalCatalogHasEveryStableFeatureIDExactlyOnce()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/shareAttachmentExtractionActionTraversesTheProductionAttachmentContractInOrder()",
+      "name": "shareAttachmentExtractionActionTraversesTheProductionAttachmentContractInOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationConstructsDistinctAdultAndChildState()",
+      "name": "directClosetRegistrationConstructsDistinctAdultAndChildState()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationRequiredAndInvalidValuesFailClosed()",
+      "name": "directClosetRegistrationRequiredAndInvalidValuesFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetSaveFailurePreservesFormAndRetriesThroughTheSameAction()",
+      "name": "directClosetSaveFailurePreservesFormAndRetriesThroughTheSameAction()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/directClosetRegistrationPersistsValidUserOwnedFactsWithoutPromotingCompositeSets()",
+      "name": "directClosetRegistrationPersistsValidUserOwnedFactsWithoutPromotingCompositeSets()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/referenceReplacementAndIndependentCategoriesUseTheProductionMutation()",
+      "name": "referenceReplacementAndIndependentCategoriesUseTheProductionMutation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/directRegistrationReferenceReplacementPersistsOnlyTheCurrentSameScopeReference()",
+      "name": "directRegistrationReferenceReplacementPersistsOnlyTheCurrentSameScopeReference()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/closetPresentationUsesOnlyActiveOwnedRowsAndPreservesFilterSortIdentity()",
+      "name": "closetPresentationUsesOnlyActiveOwnedRowsAndPreservesFilterSortIdentity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/closetDetailEditActionsKeepSourcedAuthoritySeparateFromExplicitPickerIntent()",
+      "name": "closetDetailEditActionsKeepSourcedAuthoritySeparateFromExplicitPickerIntent()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/releasedProviderBoundaryAcceptsThreeAndRejectsCOS()",
+      "name": "releasedProviderBoundaryAcceptsThreeAndRejectsCOS()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/shareRoutingSkipsAnUnsupportedAttachmentAndUsesTheFirstSupportedProductURL()",
+      "name": "shareRoutingSkipsAnUnsupportedAttachmentAndUsesTheFirstSupportedProductURL()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/sharedAttachmentExtractorUsesActualProviderOrderBeforeHandoff()",
+      "name": "sharedAttachmentExtractorUsesActualProviderOrderBeforeHandoff()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/sharedAttachmentRoutingCreatesOneApprovedEphemeralAppHandoff()",
+      "name": "sharedAttachmentRoutingCreatesOneApprovedEphemeralAppHandoff()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/linkRegistrationInputFailsClosedBeforeParserForEmptyMalformedAndUnsupportedURLs()",
+      "name": "linkRegistrationInputFailsClosedBeforeParserForEmptyMalformedAndUnsupportedURLs()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/homeAndCompareDirectEntryShareTheMeaningfulUnsupportedLinkContract()",
+      "name": "homeAndCompareDirectEntryShareTheMeaningfulUnsupportedLinkContract()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/linkRegistrationActionRunsTheActualParserAuthorityAndPreparationPipeline()",
+      "name": "linkRegistrationActionRunsTheActualParserAuthorityAndPreparationPipeline()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/shoppingPersonalClassificationNeedsSeparateClosetIntent()",
+      "name": "shoppingPersonalClassificationNeedsSeparateClosetIntent()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSaveUsesTheProductionBoundaryAndRejectsDuplicateSubmit()",
+      "name": "comparedProductClosetSaveUsesTheProductionBoundaryAndRejectsDuplicateSubmit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave()",
+      "name": "comparedProductClosetSubmissionSerializesConcurrentDuplicateSave()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/stalePendingShareDoesNotReenterAProductFlow()",
+      "name": "stalePendingShareDoesNotReenterAProductFlow()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/sharedHandoffEntryActionDistinguishesNoIntentExpiredAndMalformedPayloads()",
+      "name": "sharedHandoffEntryActionDistinguishesNoIntentExpiredAndMalformedPayloads()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/sameIDBeginReplayRecoversStrictProofOnlyFromItsImmutableSnapshot()",
+      "name": "sameIDBeginReplayRecoversStrictProofOnlyFromItsImmutableSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/deepLinkRoutingConsumesOnlyAnExplicitCompareRoute()",
+      "name": "deepLinkRoutingConsumesOnlyAnExplicitCompareRoute()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/pendingShareTTLAndGenerationCASFailClosedWithoutDroppingNewerShare()",
+      "name": "pendingShareTTLAndGenerationCASFailClosedWithoutDroppingNewerShare()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryHydrationKeepsEachImmutableAuthorityProjection()",
+      "name": "v4PersonalHistoryHydrationKeepsEachImmutableAuthorityProjection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing()",
+      "name": "v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/hydratedHistoryRecompareUsesCanonicalURLOrReturnsMeaningfulUnavailableState()",
+      "name": "hydratedHistoryRecompareUsesCanonicalURLOrReturnsMeaningfulUnavailableState()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/effectivePersonalTupleIsConsumedAtomicallyWithoutGlobalFieldCoalescing()",
+      "name": "effectivePersonalTupleIsConsumedAtomicallyWithoutGlobalFieldCoalescing()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionNeverPersistsBeforeRemoteUpsert()",
+      "name": "serverFirstClosetSubmissionNeverPersistsBeforeRemoteUpsert()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/zeroMeasurementLinkedClosetSubmissionIsRejectedBeforeRemoteMutation()",
+      "name": "zeroMeasurementLinkedClosetSubmissionIsRejectedBeforeRemoteMutation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/canonicalMeasurementServerRejectionUsesFriendlyClosetMessage()",
+      "name": "canonicalMeasurementServerRejectionUsesFriendlyClosetMessage()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/deterministicFirstClosetRejectReturnsToEditableAndUsesNewClientID()",
+      "name": "deterministicFirstClosetRejectReturnsToEditableAndUsesNewClientID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked()",
+      "name": "timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure()",
+      "name": "serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess()",
+      "name": "serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/lateResponseAfterAccountSwitchNeverProjectsIntoAnotherUsersCache()",
+      "name": "lateResponseAfterAccountSwitchNeverProjectsIntoAnotherUsersCache()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstConfirmedRegistrationHydratesServerConfirmedAuthority()",
+      "name": "serverFirstConfirmedRegistrationHydratesServerConfirmedAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeClosetReceiptOverridesPreSubmitMeasurementsAndRetainsUnknownCode()",
+      "name": "authoritativeClosetReceiptOverridesPreSubmitMeasurementsAndRetainsUnknownCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeClosetReceiptDoesNotOverwriteSharedRetailerProductSize()",
+      "name": "authoritativeClosetReceiptDoesNotOverwriteSharedRetailerProductSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/authoritativeReceiptProjectionFailureDoesNotRollbackUnrelatedPendingChanges()",
+      "name": "authoritativeReceiptProjectionFailureDoesNotRollbackUnrelatedPendingChanges()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/referenceRejectionKeepsServerCreatedClosetItemAndLocalReferenceFalse()",
+      "name": "referenceRejectionKeepsServerCreatedClosetItemAndLocalReferenceFalse()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/linkedClosetRegistrationNeverFallsBackToLocalOnlyPersistence()",
+      "name": "linkedClosetRegistrationNeverFallsBackToLocalOnlyPersistence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseHeadlessAcceptanceTests/measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery()",
+      "name": "measurementPresenceGatesPrecedeClosetSheetAndReviewRecovery()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/uniqloCapturedOfficialSizeResponseReachesTheLinkRegistrationAction()",
+      "name": "uniqloCapturedOfficialSizeResponseReachesTheLinkRegistrationAction()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/musinsaCapturedOfficialActualSizeResponseReachesTheLinkRegistrationAction()",
+      "name": "musinsaCapturedOfficialActualSizeResponseReachesTheLinkRegistrationAction()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/zaraCapturedGarmentMeasureGuideReachesTheLinkRegistrationActionAndBodyOnlyGuideFailsClosed()",
+      "name": "zaraCapturedGarmentMeasureGuideReachesTheLinkRegistrationActionAndBodyOnlyGuideFailsClosed()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderFactsReachTheFullServerAuthorizedComparisonPath()",
+      "name": "capturedProviderFactsReachTheFullServerAuthorizedComparisonPath()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/en001ApprovedDirectURLsAndCustomCompareRouteReachTheirExactTargets()",
+      "name": "en001ApprovedDirectURLsAndCustomCompareRouteReachTheirExactTargets()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderLinkRegistrationsPersistOnlyPresentedSizesAndRejectDuplicateSubmit()",
+      "name": "capturedProviderLinkRegistrationsPersistOnlyPresentedSizesAndRejectDuplicateSubmit()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/sequentialCapturedProviderLoadsResetCurrentProductStateWithoutProviderLeakage()",
+      "name": "sequentialCapturedProviderLoadsResetCurrentProductStateWithoutProviderLeakage()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/capturedProviderParserFailureThenRetryResetsStateForEveryApprovedProvider()",
+      "name": "capturedProviderParserFailureThenRetryResetsStateForEveryApprovedProvider()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/zaraBodyOnlyGuideReachesTheProductionPartialRegistrationRecoveryState()",
+      "name": "zaraBodyOnlyGuideReachesTheProductionPartialRegistrationRecoveryState()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/cr012MusinsaCapturedFallbackRecoveryPersistsOnlyTheValidatedSelectedSize()",
+      "name": "cr012MusinsaCapturedFallbackRecoveryPersistsOnlyTheValidatedSelectedSize()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/cr014ApprovedProviderParserFailuresRetryTheExactRetailerPath()",
+      "name": "cr014ApprovedProviderParserFailuresRetryTheExactRetailerPath()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseProviderSnapshotTests/cr016CapturedProviderOwnedSizeSelectionNeverFabricatesASize()",
+      "name": "cr016CapturedProviderOwnedSizeSelectionNeverFabricatesASize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/frozen137ClassificationReconcilesWithoutAddingOrDroppingAScenario()",
+      "name": "frozen137ClassificationReconcilesWithoutAddingOrDroppingAScenario()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/staticContractsCoverOnlyFrozenShellAndGlobalSearchRows()",
+      "name": "staticContractsCoverOnlyFrozenShellAndGlobalSearchRows()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/historyPresentationKeepsSameTargetComparisonIdentitiesSearchableAndDistinct()",
+      "name": "historyPresentationKeepsSameTargetComparisonIdentitiesSearchableAndDistinct()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/en010GlobalSearchUsesExactOwnedVisibleClosetAndHistoryIdentities()",
+      "name": "en010GlobalSearchUsesExactOwnedVisibleClosetAndHistoryIdentities()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/directClosetRegistrationAndManagementActionsCoverCRAndCMStates()",
+      "name": "directClosetRegistrationAndManagementActionsCoverCRAndCMStates()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/providerLinkPreparationAndComparedProductSaveCoverCR011ThroughCR022()",
+      "name": "providerLinkPreparationAndComparedProductSaveCoverCR011ThroughCR022()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039()",
+      "name": "comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/recoveryManualCrossAndStaleAuthorityPathsCoverTheRemainingComparisonStates()",
+      "name": "recoveryManualCrossAndStaleAuthorityPathsCoverTheRemainingComparisonStates()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/closetDeletionAccountOwnershipAndStartupActionsCoverManagementRecoveryStates()",
+      "name": "closetDeletionAccountOwnershipAndStartupActionsCoverManagementRecoveryStates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/historyDeletionHydrationAndCurrentAuthorityCoverHIAndResultFlows()",
+      "name": "historyDeletionHydrationAndCurrentAuthorityCoverHIAndResultFlows()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/v4HistoryHydrationPreservesAudienceAndPersonalRevisionPerComparison()",
+      "name": "v4HistoryHydrationPreservesAudienceAndPersonalRevisionPerComparison()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/hi001FreshGlobalHistoryHydrationPreservesExactCompletedSnapshot()",
+      "name": "hi001FreshGlobalHistoryHydrationPreservesExactCompletedSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate()",
+      "name": "hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/en009LegacyMeasurementMigrationFailureThenRetryKeepsExistingRowsSafe()",
+      "name": "en009LegacyMeasurementMigrationFailureThenRetryKeepsExistingRowsSafe()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/rx004ParserFailureThenRetryRestartsTheSameProductionEntry()",
+      "name": "rx004ParserFailureThenRetryRestartsTheSameProductionEntry()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/historicalRowsRemainImmutableAcrossLaterAuthorityAndReferenceChanges()",
+      "name": "historicalRowsRemainImmutableAcrossLaterAuthorityAndReferenceChanges()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/resultPresentationHistoryRecomparisonAndOutboundActionsUseCurrentProductionProofs()",
+      "name": "resultPresentationHistoryRecomparisonAndOutboundActionsUseCurrentProductionProofs()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/entryAuthAndPendingShareDataContractsCoverENAndBHeadlessParts()",
+      "name": "entryAuthAndPendingShareDataContractsCoverENAndBHeadlessParts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/retryRaceAndSyncCoalescingUseProductionAsyncBoundaries()",
+      "name": "retryRaceAndSyncCoalescingUseProductionAsyncBoundaries()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/rx009AuthorityAndReferenceFailuresRetryThroughTheirExactProductionGates()",
+      "name": "rx009AuthorityAndReferenceFailuresRetryThroughTheirExactProductionGates()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/rx010EligibleAndBeginFailuresRetryWithoutUsingStaleCandidates()",
+      "name": "rx010EligibleAndBeginFailuresRetryWithoutUsingStaleCandidates()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cr003KidsAndBabyDirectRegistrationPersistsAudienceWithoutReferencePromotion()",
+      "name": "cr003KidsAndBabyDirectRegistrationPersistsAudienceWithoutReferencePromotion()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cr007ManualMemoAndFitPreferenceSurviveFreshClosetReconstruction()",
+      "name": "cr007ManualMemoAndFitPreferenceSurviveFreshClosetReconstruction()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cr019SignedOutOnboardingRouteWaitsForTheCurrentUsersCachePreparation()",
+      "name": "cr019SignedOutOnboardingRouteWaitsForTheCurrentUsersCachePreparation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cr020ReviewRequiredLinkRegistrationRemainsReasonedAndFailClosed()",
+      "name": "cr020ReviewRequiredLinkRegistrationRemainsReasonedAndFailClosed()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow()",
+      "name": "cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm005ManualDetailMemoAndPreferencePersistWithoutClassificationDrift()",
+      "name": "cm005ManualDetailMemoAndPreferencePersistWithoutClassificationDrift()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm007IndependentTopAndBottomReferencesDoNotConflict()",
+      "name": "cm007IndependentTopAndBottomReferencesDoNotConflict()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm018ClosetPresentationFiltersAndSortsOnlyTheOwnedActiveIdentitySet()",
+      "name": "cm018ClosetPresentationFiltersAndSortsOnlyTheOwnedActiveIdentitySet()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm011LegacyHistoryDeletionStaysLocalWithoutATombstoneRequest()",
+      "name": "cm011LegacyHistoryDeletionStaysLocalWithoutATombstoneRequest()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm012ImportedEditPersistenceFailureThenRetryKeepsSourcedAuthority()",
+      "name": "cm012ImportedEditPersistenceFailureThenRetryKeepsSourcedAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm002ManualDetailEditPersistsIdentityClassificationAndSelectedSize()",
+      "name": "cm002ManualDetailEditPersistsIdentityClassificationAndSelectedSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot()",
+      "name": "cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm009DeletedReferenceCannotReappearOrAuthorizeAfterReconstruction()",
+      "name": "cm009DeletedReferenceCannotReappearOrAuthorizeAfterReconstruction()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm013DuplicateCreationAndInactiveHistoryOnlyFilteringUseProductionActions()",
+      "name": "cm013DuplicateCreationAndInactiveHistoryOnlyFilteringUseProductionActions()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchFinalReleaseScenarioExecutionTests/cm014ReferenceLifecycleCreatesANewComparisonWithoutRewritingOldHistory()",
+      "name": "cm014ReferenceLifecycleCreatesANewComparisonWithoutRewritingOldHistory()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchMetricsRecorderTests/recorderPersistsOnlyAggregateCounterKeys()",
+      "name": "recorderPersistsOnlyAggregateCounterKeys()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchMetricsRecorderTests/providerResolutionRejectsLookalikeHosts()",
+      "name": "providerResolutionRejectsLookalikeHosts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchMetricsRecorderTests/diagnosticReportExportsOnlySortedAggregateCounters()",
+      "name": "diagnosticReportExportsOnlySortedAggregateCounters()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchMetricsRecorderTests/productLoadRecordsFiniteParserDimensionsWithoutProductData()",
+      "name": "productLoadRecordsFiniteParserDimensionsWithoutProductData()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchMetricsRecorderTests/blockedComparisonRecordsFunnelExit()",
+      "name": "blockedComparisonRecordsFunnelExit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloL2InventoryIsJoinedByColorSizeAndPLD()",
+      "name": "p0UniqloL2InventoryIsJoinedByColorSizeAndPLD()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloAmbiguousPLDInventoryRemainsUnknown()",
+      "name": "p0UniqloAmbiguousPLDInventoryRemainsUnknown()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0ExactProductCategoryChoiceDoesNotSpreadToSiblingProduct()",
+      "name": "p0ExactProductCategoryChoiceDoesNotSpreadToSiblingProduct()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0MusinsaCapturedFixturesPreserveOfficialMeasurements()",
+      "name": "p0MusinsaCapturedFixturesPreserveOfficialMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloCapturedFixturesPreserveOfficialMeasurements()",
+      "name": "p0UniqloCapturedFixturesPreserveOfficialMeasurements()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloGraphicTShirtDoesNotFallIntoOtherTops()",
+      "name": "p0UniqloGraphicTShirtDoesNotFallIntoOtherTops()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p1ExplicitCriticalClassificationContradictionsRequireReview()",
+      "name": "p1ExplicitCriticalClassificationContradictionsRequireReview()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p1CompatibleAndAdjudicatedClassificationEvidenceRemainsSafe()",
+      "name": "p1CompatibleAndAdjudicatedClassificationEvidenceRemainsSafe()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p1SourcedProductConflictCannotBecomeAuthorityLocally()",
+      "name": "p1SourcedProductConflictCannotBecomeAuthorityLocally()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0CanonicalProfileApplyPreservesTrustedAuthorityTuples()",
+      "name": "p0CanonicalProfileApplyPreservesTrustedAuthorityTuples()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0ReferencePlanAndRecommendationPreserveTrustedTShirtTuples()",
+      "name": "p0ReferencePlanAndRecommendationPreserveTrustedTShirtTuples()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0BaseLayerServerFamilyIsNeverRewrittenByLocalComparison()",
+      "name": "p0BaseLayerServerFamilyIsNeverRewrittenByLocalComparison()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p1ClassificationConflictCannotBypassStandardSizeComparison()",
+      "name": "p1ClassificationConflictCannotBypassStandardSizeComparison()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p1IneligibleReferenceCannotBypassStandardSizeComparison()",
+      "name": "p1IneligibleReferenceCannotBypassStandardSizeComparison()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloBottomLegacyLengthDoesNotReuseRise()",
+      "name": "p0UniqloBottomLegacyLengthDoesNotReuseRise()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0UniqloBottomKeepsRiseAndContainsNoUpperBodyMeasurements()",
+      "name": "p0UniqloBottomKeepsRiseAndContainsNoUpperBodyMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0LongCoatAndHalfJacketAreManualOnly()",
+      "name": "p0LongCoatAndHalfJacketAreManualOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0TopAndBottomRemainBlockedEvenWhenUserSelectsManually()",
+      "name": "p0TopAndBottomRemainBlockedEvenWhenUserSelectsManually()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0OuterWithoutChestDoesNotForceARecommendation()",
+      "name": "p0OuterWithoutChestDoesNotForceARecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0SingleCompatibleRepresentativeProducesAutomaticRecommendation()",
+      "name": "p0SingleCompatibleRepresentativeProducesAutomaticRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0ShortAndLongPantsAreManualOnly()",
+      "name": "p0ShortAndLongPantsAreManualOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0RecommendedSizeAndAlternativeAnalysisAgreeForSameSize()",
+      "name": "p0RecommendedSizeAndAlternativeAnalysisAgreeForSameSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0ActualUniqloBottomRecommendationUsesOnlyBottomMeasurements()",
+      "name": "p0ActualUniqloBottomRecommendationUsesOnlyBottomMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0EqualSizeTieAlwaysKeepsFirstDisplayOrder()",
+      "name": "p0EqualSizeTieAlwaysKeepsFirstDisplayOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0MissingSleeveExclusionIsPersistedInSnapshot()",
+      "name": "p0MissingSleeveExclusionIsPersistedInSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0RecommendationSurvivesTemporaryDiskReload()",
+      "name": "p0RecommendationSurvivesTemporaryDiskReload()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0ExistingClosetItemSurvivesStartupBackfillAndDiskReload()",
+      "name": "p0ExistingClosetItemSurvivesStartupBackfillAndDiskReload()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0AmbiguousMusinsaOtherTopRequiresUserConfirmation()",
+      "name": "p0AmbiguousMusinsaOtherTopRequiresUserConfirmation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0SharedURLStoreConsumesOnlyTheExpectedURL()",
+      "name": "p0SharedURLStoreConsumesOnlyTheExpectedURL()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct()",
+      "name": "p0LateFirstRequestCannotOverwriteTheLatestProduct()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0SequentialAToBToARestoresTheOriginalProductState()",
+      "name": "p0SequentialAToBToARestoresTheOriginalProductState()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0FailureThenSuccessClearsStaleError()",
+      "name": "p0FailureThenSuccessClearsStaleError()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers()",
+      "name": "p0PartialProductLoadExplainsMissingSizesAndRetryRecovers()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/completedVNextHistoryPreservesExactServerIdentityAcrossReload()",
+      "name": "completedVNextHistoryPreservesExactServerIdentityAcrossReload()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/completedVNextHistoriesRemainDistinctForDifferentReferences()",
+      "name": "completedVNextHistoriesRemainDistinctForDifferentReferences()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/exactHistoryAndDeletedReferenceLifecycleRemainIndependent()",
+      "name": "exactHistoryAndDeletedReferenceLifecycleRemainIndependent()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/historyOnlySnapshotsAreExcludedFromActiveClosetAndPickerSurfaces()",
+      "name": "historyOnlySnapshotsAreExcludedFromActiveClosetAndPickerSurfaces()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/homeRecentHistoryKeepsDistinctCompletedComparisonsForTheSameProduct()",
+      "name": "homeRecentHistoryKeepsDistinctCompletedComparisonsForTheSameProduct()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchP0RemediationRegressionTests/historySearchFilterSortAndFavoriteUseTheSamePresentationPathAsTheHistoryScreen()",
+      "name": "historySearchFilterSortAndFavoriteUseTheSamePresentationPathAsTheHistoryScreen()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReleaseConfigurationTests/releaseLinksAcceptOnlyPublicHTTPSURLs()",
+      "name": "releaseLinksAcceptOnlyPublicHTTPSURLs()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReleaseConfigurationTests/shareExtensionAcceptsAllReleasedRetailerHosts()",
+      "name": "shareExtensionAcceptsAllReleasedRetailerHosts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReleaseLiveProductAuditTests/suppliedURLsLoadThroughTheFullProductionParser()",
+      "name": "suppliedURLsLoadThroughTheFullProductionParser()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/retailerRecoveryContractsAcceptOneThrough64ButReject65()",
+      "name": "retailerRecoveryContractsAcceptOneThrough64ButReject65()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/retailerRecoveryRequiresCandidateAudienceToMatchFixedFacts()",
+      "name": "retailerRecoveryRequiresCandidateAudienceToMatchFixedFacts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/recoveryContractKeepsKnownFactsAndOnlyBoundedServerCandidates()",
+      "name": "recoveryContractKeepsKnownFactsAndOnlyBoundedServerCandidates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/completeCandidatesProjectToUniqueGarmentFirstGroups()",
+      "name": "completeCandidatesProjectToUniqueGarmentFirstGroups()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/v7RecoveryContractAcceptsWholeCandidateUnknownFieldsButKeepsGarmentFirstPresentation()",
+      "name": "v7RecoveryContractAcceptsWholeCandidateUnknownFieldsButKeepsGarmentFirstPresentation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/v7RecoveryContractTreatsNilAndValueAsDifferentButAllNilAsKnown()",
+      "name": "v7RecoveryContractTreatsNilAndValueAsDifferentButAllNilAsKnown()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/v7RecoveryContractRetainsAxisFollowUpOnlyWithinSelectedGarment()",
+      "name": "v7RecoveryContractRetainsAxisFollowUpOnlyWithinSelectedGarment()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/v7CoordinatorSendsExactServerCandidateAndProvenance()",
+      "name": "v7CoordinatorSendsExactServerCandidateAndProvenance()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/v7SingleCandidateGarmentDoesNotCreateRedundantAxisQuestionOrMutation()",
+      "name": "v7SingleCandidateGarmentDoesNotCreateRedundantAxisQuestionOrMutation()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/reviewRequiredLoadAcceptsV7RecoveryWithoutNetworkFailurePresentation()",
+      "name": "reviewRequiredLoadAcceptsV7RecoveryWithoutNetworkFailurePresentation()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorRejectsUnknownVersionAndInvalidV7UnknownFieldsBeforeMutation()",
+      "name": "coordinatorRejectsUnknownVersionAndInvalidV7UnknownFieldsBeforeMutation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorRejectsV7BoundCountAndFixedFactViolationsBeforeMutation()",
+      "name": "coordinatorRejectsV7BoundCountAndFixedFactViolationsBeforeMutation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/singleCandidateGarmentReturnsExactServerCandidateWithoutSaving()",
+      "name": "singleCandidateGarmentReturnsExactServerCandidateWithoutSaving()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/oneGarmentWithTwoSleevesStartsAxisFollowUpAndResets()",
+      "name": "oneGarmentWithTwoSleevesStartsAxisFollowUpAndResets()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorRejectsDuplicateCandidateFingerprint()",
+      "name": "coordinatorRejectsDuplicateCandidateFingerprint()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorRejectsIncompleteServerCandidate()",
+      "name": "coordinatorRejectsIncompleteServerCandidate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorSendsOnlyOpaqueCandidateAndServerContractProvenance()",
+      "name": "coordinatorSendsOnlyOpaqueCandidateAndServerContractProvenance()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/coordinatorRejectsClientCandidateOutsideServerContractBeforeMutation()",
+      "name": "coordinatorRejectsClientCandidateOutsideServerContractBeforeMutation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/snapshotV4PreservesPersonalProjectionAsImmutableJSONEvidence()",
+      "name": "snapshotV4PreservesPersonalProjectionAsImmutableJSONEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/activeUserExplicitReselectsWithFreshContractAndCurrentRevision()",
+      "name": "activeUserExplicitReselectsWithFreshContractAndCurrentRevision()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/clearInvalidatesPersonalAuthorityAndLeavesReviewFailClosed()",
+      "name": "clearInvalidatesPersonalAuthorityAndLeavesReviewFailClosed()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/reviewRecoveryOptionsPresentContractAndNetworkFailuresDifferently()",
+      "name": "reviewRecoveryOptionsPresentContractAndNetworkFailuresDifferently()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchReviewRequiredRecoveryTests/reviewRecoverySaveKeepsTransportFailureDistinctAndRefreshesSelection()",
+      "name": "reviewRecoverySaveKeepsTransportFailureDistinctAndRefreshesSelection()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/requestedComparisonGroupResponseRetainsServerAuthorityContext()",
+      "name": "requestedComparisonGroupResponseRetainsServerAuthorityContext()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/cancellingProductContextClearsRequestedComparisonGroup()",
+      "name": "cancellingProductContextClearsRequestedComparisonGroup()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/freshRetailerProductPersistsObservationBeforeRuntimeRead()",
+      "name": "freshRetailerProductPersistsObservationBeforeRuntimeRead()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation()",
+      "name": "freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/changedPreviewPromotesThroughObservationAndRequeriesRuntime()",
+      "name": "changedPreviewPromotesThroughObservationAndRequeriesRuntime()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/currentPreviewWithoutPersistedAuthorityPromotesBeforeRuntime()",
+      "name": "currentPreviewWithoutPersistedAuthorityPromotesBeforeRuntime()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/rejectedPromotionFailsClosedWithoutRuntimeFallback()",
+      "name": "rejectedPromotionFailsClosedWithoutRuntimeFallback()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/promotionRequiredRuntimePromotesThenRequeriesPersistedAuthority()",
+      "name": "promotionRequiredRuntimePromotesThenRequeriesPersistedAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/currentMeasurementsRequiredSubmitsAvailableMeasurementsAndRequeries()",
+      "name": "currentMeasurementsRequiredSubmitsAvailableMeasurementsAndRequeries()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/measurementHydrationFailureDoesNotReturnConfirmedAuthority()",
+      "name": "measurementHydrationFailureDoesNotReturnConfirmedAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/currentReviewWithoutImprovedProviderEvidenceRemainsFailClosed()",
+      "name": "currentReviewWithoutImprovedProviderEvidenceRemainsFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/currentReviewSubmitsNewCoherentProviderMeasurementsAndRequeries()",
+      "name": "currentReviewSubmitsNewCoherentProviderMeasurementsAndRequeries()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/currentNotComparableNeverPromotesMeasurementObservation()",
+      "name": "currentNotComparableNeverPromotesMeasurementObservation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/goldProductsUsePersistedServerTuples()",
+      "name": "goldProductsUsePersistedServerTuples()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/serverAutomaticCandidateIsAuthorized()",
+      "name": "serverAutomaticCandidateIsAuthorized()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse()",
+      "name": "referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanKeepsRepresentativeManualOnly()",
+      "name": "referencePlanKeepsRepresentativeManualOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanKeepsBlockedRepresentativeOutOfEverySelectionSet()",
+      "name": "referencePlanKeepsBlockedRepresentativeOutOfEverySelectionSet()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanKeepsMeasurementsRequiredOutsideSelectionSets()",
+      "name": "referencePlanKeepsMeasurementsRequiredOutsideSelectionSets()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanExposesOnlyServerManualCandidatesInServerOrder()",
+      "name": "referencePlanExposesOnlyServerManualCandidatesInServerOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanFailsClosedWhenAutomaticProjectionIsMissing()",
+      "name": "referencePlanFailsClosedWhenAutomaticProjectionIsMissing()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referencePlanPreservesServerAutomaticCandidateOrder()",
+      "name": "referencePlanPreservesServerAutomaticCandidateOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/referenceDiscoveryDoesNotRunUntilConfirmedRuntimeIsReady()",
+      "name": "referenceDiscoveryDoesNotRunUntilConfirmedRuntimeIsReady()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonPreservesPendingDirectPermitIdentities()",
+      "name": "beginAuthorizedComparisonPreservesPendingDirectPermitIdentities()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsServerBlock()",
+      "name": "beginAuthorizedComparisonRejectsServerBlock()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonKeepsExactCandidateReasonCode()",
+      "name": "beginAuthorizedComparisonKeepsExactCandidateReasonCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsMalformedStatusAndCompatibility()",
+      "name": "beginAuthorizedComparisonRejectsMalformedStatusAndCompatibility()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRPCFailureProducesNoPermit()",
+      "name": "beginAuthorizedComparisonRPCFailureProducesNoPermit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/missingServerCandidateRemainsBlocked()",
+      "name": "missingServerCandidateRemainsBlocked()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/locallyEditedReferenceCannotReuseStaleServerAuthorization()",
+      "name": "locallyEditedReferenceCannotReuseStaleServerAuthorization()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/staleSourcedReferenceWithoutRetailerFactsRemainsBlocked()",
+      "name": "staleSourcedReferenceWithoutRetailerFactsRemainsBlocked()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/sourcedReferencePromotionIsRequiredBeforeCandidateAuthorization()",
+      "name": "sourcedReferencePromotionIsRequiredBeforeCandidateAuthorization()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/candidateAggregateStateMismatchFailsClosed()",
+      "name": "candidateAggregateStateMismatchFailsClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/candidateReadinessMismatchFailsClosed()",
+      "name": "candidateReadinessMismatchFailsClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/tshirtToBaseLayerTopServerPolicyBlocks()",
+      "name": "tshirtToBaseLayerTopServerPolicyBlocks()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/sameTypeServerPolicyAllowsAutomaticResponse()",
+      "name": "sameTypeServerPolicyAllowsAutomaticResponse()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/homewearTopToBottomServerPolicyBlocks()",
+      "name": "homewearTopToBottomServerPolicyBlocks()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/targetClassificationRequiredRetriesCandidateLookupOnce()",
+      "name": "targetClassificationRequiredRetriesCandidateLookupOnce()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchServerAuthorityIntegrationTests/resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem()",
+      "name": "resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/retailerPayloadUsesStableProductAndCategoryEvidence()",
+      "name": "retailerPayloadUsesStableProductAndCategoryEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/typedRetailerFactsAreEncodedAtTheResolutionAndObservationPayloadLevel()",
+      "name": "typedRetailerFactsAreEncodedAtTheResolutionAndObservationPayloadLevel()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/retailerAPIRawJSONIsNestedWithoutChangingStringFacts()",
+      "name": "retailerAPIRawJSONIsNestedWithoutChangingStringFacts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/musinsaActualSizeTypeNameIsForwardedWithoutReplacingNumericSizeType()",
+      "name": "musinsaActualSizeTypeNameIsForwardedWithoutReplacingNumericSizeType()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/persistedProductReplayPreservesStructuredFactsExactly()",
+      "name": "persistedProductReplayPreservesStructuredFactsExactly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/numericSizeTypeIsNeverSynthesizedAsStructuredAuthorityOnReplay()",
+      "name": "numericSizeTypeIsNeverSynthesizedAsStructuredAuthorityOnReplay()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/persistedReplayDoesNotCreateObservedStructureFromStoredName()",
+      "name": "persistedReplayDoesNotCreateObservedStructureFromStoredName()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/existingSetSemanticsEmitExplicitRetailerStructureWithoutGarmentInference()",
+      "name": "existingSetSemanticsEmitExplicitRetailerStructureWithoutGarmentInference()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/productObservationPreservesRawSizeChartEvidence()",
+      "name": "productObservationPreservesRawSizeChartEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/parserServiceRecordsTypedProvenanceInObservationPayload()",
+      "name": "parserServiceRecordsTypedProvenanceInObservationPayload()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/zaraObservationKeepsStyleVariantAndInternalProductIDsSeparate()",
+      "name": "zaraObservationKeepsStyleVariantAndInternalProductIDsSeparate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/uniqloBraTopKeepsUnderwearFamilyInLocalSnapshot()",
+      "name": "uniqloBraTopKeepsUnderwearFamilyInLocalSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/shoppingProductUsesServerConfirmedTupleOverConflictingLocalInference()",
+      "name": "shoppingProductUsesServerConfirmedTupleOverConflictingLocalInference()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/reviewAndNotComparableServerResultsNeverBecomeEligibleProducts()",
+      "name": "reviewAndNotComparableServerResultsNeverBecomeEligibleProducts()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/networkAndRejectedPromotionRemainUnavailableWithoutLocalConfirmation()",
+      "name": "networkAndRejectedPromotionRemainUnavailableWithoutLocalConfirmation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/shoppingProductGoldThreePersistExactServerTuples()",
+      "name": "shoppingProductGoldThreePersistExactServerTuples()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/referenceCandidateContractDecodesDatabasePolicyEvidence()",
+      "name": "referenceCandidateContractDecodesDatabasePolicyEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/productRuntimeContractDecodesSizeIDsAndCanonicalMeasurements()",
+      "name": "productRuntimeContractDecodesSizeIDsAndCanonicalMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/beginAndCompleteContractsDecodeTransactionalIdentifiers()",
+      "name": "beginAndCompleteContractsDecodeTransactionalIdentifiers()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/authenticatedClosetContractDecodesCanonicalSnapshotAndMeasurements()",
+      "name": "authenticatedClosetContractDecodesCanonicalSnapshotAndMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkClosetPreparationUsesExactServerTupleInsteadOfLocalParserHint()",
+      "name": "linkClosetPreparationUsesExactServerTupleInsteadOfLocalParserHint()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkClosetPreparationDefersReviewRequiredMessagingToRegistrationSheet()",
+      "name": "linkClosetPreparationDefersReviewRequiredMessagingToRegistrationSheet()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()",
+      "name": "suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity()",
+      "name": "reviewRequiredLinkKeepsParserFactsAndExactRuntimeSizeIdentity()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration()",
+      "name": "nonComparableAndUnavailableLinksKeepFactsVisibleButBlockRegistration()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/vNextClosetMutationUsesExactIdentityAndNestedOverrideOnlyWhenExplicit()",
+      "name": "vNextClosetMutationUsesExactIdentityAndNestedOverrideOnlyWhenExplicit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()",
+      "name": "closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedOuterwearSubmissionPreservesServerSleeveAndBodyAxes()",
+      "name": "linkedOuterwearSubmissionPreservesServerSleeveAndBodyAxes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedRegistrationKeepsDuplicateDisplayLabelsAsDistinctExactSizes()",
+      "name": "linkedRegistrationKeepsDuplicateDisplayLabelsAsDistinctExactSizes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedRegistrationPreselectsOnlyConfirmedDatabaseCategory()",
+      "name": "linkedRegistrationPreselectsOnlyConfirmedDatabaseCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/selectedSizeSummaryKeepsEveryAvailableNumericMeasurement()",
+      "name": "selectedSizeSummaryKeepsEveryAvailableNumericMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedRegistrationKeepsRetailerMeasurementsMissingFromCanonicalRuntime()",
+      "name": "linkedRegistrationKeepsRetailerMeasurementsMissingFromCanonicalRuntime()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedRegistrationUsesTheExactRetailerSnapshotInsteadOfRuntimeReplacement()",
+      "name": "linkedRegistrationUsesTheExactRetailerSnapshotInsteadOfRuntimeReplacement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedRegistrationUsesRuntimeMeasurementsOnlyWithoutAnAPIRow()",
+      "name": "linkedRegistrationUsesRuntimeMeasurementsOnlyWithoutAnAPIRow()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority()",
+      "name": "vNextClosetListKeepsBothPersonalServerSourcesAsManualAuthority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority()",
+      "name": "linkClosetMeasurementRecoveryRequiresServerConfirmedAuthority()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes()",
+      "name": "allZeroRetailerMeasurementsBlockLinkPreparationButKeepRuntimeSizes()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/serverReadyRuntimeKeepsAllCanonicalRecordsAndAllowsOneServerMetricProductPath()",
+      "name": "serverReadyRuntimeKeepsAllCanonicalRecordsAndAllowsOneServerMetricProductPath()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/eachFormerlyDroppedCanonicalRuntimeMetricSurvivesItsOwnRuntime()",
+      "name": "eachFormerlyDroppedCanonicalRuntimeMetricSurvivesItsOwnRuntime()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkRegistrationNextRequiresAtLeastOneRegisterableExactIdentity()",
+      "name": "linkRegistrationNextRequiresAtLeastOneRegisterableExactIdentity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkRegistrationResultGateDoesNotBranchOnClassificationState()",
+      "name": "linkRegistrationResultGateDoesNotBranchOnClassificationState()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize()",
+      "name": "reviewRequiredRawMeasurementMapsToExactRegisterableRuntimeSize()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/linkedClosetPickerFiltersExactRegisterableSizesWithoutMutatingSourceSizes()",
+      "name": "linkedClosetPickerFiltersExactRegisterableSizesWithoutMutatingSourceSizes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof()",
+      "name": "confirmedCanonicalMeasurementCanEstablishPresenceWithoutParserProof()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/unknownParserMeasurementStateNeverBecomesNone()",
+      "name": "unknownParserMeasurementStateNeverBecomesNone()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationRestoresFullRuntimeAndKeepsCurrentExactSize()",
+      "name": "resultClosetPreparationRestoresFullRuntimeAndKeepsCurrentExactSize()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationLeavesInvalidExactPreferenceUnselected()",
+      "name": "resultClosetPreparationLeavesInvalidExactPreferenceUnselected()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/historyClosetPreparationRequiresExplicitFreshSizeSelection()",
+      "name": "historyClosetPreparationRequiresExplicitFreshSizeSelection()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationUsesExactIDForDuplicateRuntimeLabels()",
+      "name": "resultClosetPreparationUsesExactIDForDuplicateRuntimeLabels()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueVNextVariantByExactPreferredSizeID()",
+      "name": "resultClosetPreparationSelectsUniqueVNextVariantByExactPreferredSizeID()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksVNextMultiVariantWhenPreferredSizeIsAbsent()",
+      "name": "resultClosetPreparationBlocksVNextMultiVariantWhenPreferredSizeIsAbsent()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksVNextMultiVariantWithAmbiguousExactSizeID()",
+      "name": "resultClosetPreparationBlocksVNextMultiVariantWithAmbiguousExactSizeID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksExactPreferenceThatConflictsWithObservedVariant()",
+      "name": "resultClosetPreparationBlocksExactPreferenceThatConflictsWithObservedVariant()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationKeepsSoleVNextVariantWhenPreferredSizeHasGone()",
+      "name": "resultClosetPreparationKeepsSoleVNextVariantWhenPreferredSizeHasGone()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/sourceVariantKeyStillWinsForMultiVariantURLLoadWithoutPreference()",
+      "name": "sourceVariantKeyStillWinsForMultiVariantURLLoadWithoutPreference()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationSelectsUniqueLegacyVariantByExactPreferredSizeID()",
+      "name": "resultClosetPreparationSelectsUniqueLegacyVariantByExactPreferredSizeID()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationRetainsReviewRequiredRawMeasurement()",
+      "name": "resultClosetPreparationRetainsReviewRequiredRawMeasurement()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchSupabaseProductResolverTests/resultClosetPreparationBlocksSourcedProductWhenServerUnavailable()",
+      "name": "resultClosetPreparationBlocksSourcedProductWhenServerUnavailable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonLengthDisplayUsesGarmentContext()",
+      "name": "comparisonLengthDisplayUsesGarmentContext()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/productTargetTreatsCombinedAdultProviderCodesAsUnisex()",
+      "name": "productTargetTreatsCombinedAdultProviderCodesAsUnisex()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parserServiceRejectsUnsupportedHostsWithoutCallingProviderParsers()",
+      "name": "parserServiceRejectsUnsupportedHostsWithoutCallingProviderParsers()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parserServiceDoesNotRouteFailedMusinsaRequestToAnotherProvider()",
+      "name": "parserServiceDoesNotRouteFailedMusinsaRequestToAnotherProvider()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/cancelledProductLoadCannotApplyLateParserResult()",
+      "name": "cancelledProductLoadCannotApplyLateParserResult()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/latestProductLoadOwnsViewModelState()",
+      "name": "latestProductLoadOwnsViewModelState()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/musinsaTopBottomSetIsExplicitlyUnsupported()",
+      "name": "musinsaTopBottomSetIsExplicitlyUnsupported()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sizeTableRecoveryRejectsDuplicateSizeNames()",
+      "name": "sizeTableRecoveryRejectsDuplicateSizeNames()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sizeTableRecoveryRejectsEmptyAndMeasurementlessRows()",
+      "name": "sizeTableRecoveryRejectsEmptyAndMeasurementlessRows()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sizeTableRecoveryAcceptsExistingSupportedMeasurements()",
+      "name": "sizeTableRecoveryAcceptsExistingSupportedMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sizeTableRecoveryContextDistinguishesCandidateStates()",
+      "name": "sizeTableRecoveryContextDistinguishesCandidateStates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/taxonomyCodesAndParentsAreValidAndDeterministic()",
+      "name": "taxonomyCodesAndParentsAreValidAndDeterministic()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/requiredAtomicTaxonomyOptionsExist()",
+      "name": "requiredAtomicTaxonomyOptionsExist()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/inactiveTaxonomyOptionsAreHidden()",
+      "name": "inactiveTaxonomyOptionsAreHidden()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/categoryChangeRejectsInvalidDetail()",
+      "name": "categoryChangeRejectsInvalidDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/legacyKoreanTaxonomyAliasesMapWithoutOverwritingSnapshots()",
+      "name": "legacyKoreanTaxonomyAliasesMapWithoutOverwritingSnapshots()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/invalidTaxonomyUsesControlledFallback()",
+      "name": "invalidTaxonomyUsesControlledFallback()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/normalizedProductTypeDoesNotSplitReferenceGarmentScope()",
+      "name": "normalizedProductTypeDoesNotSplitReferenceGarmentScope()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/referenceGarmentScopeKeepsDifferentGenderOrDetail()",
+      "name": "referenceGarmentScopeKeepsDifferentGenderOrDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaActualSizeLengthPreservesKnitFamily()",
+      "name": "musinsaActualSizeLengthPreservesKnitFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortSleeveSourceHistoryDoesNotOverrideDetectedLongSleeve()",
+      "name": "shortSleeveSourceHistoryDoesNotOverrideDetectedLongSleeve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/userCategoryChoiceIsReusedForTheExactProviderProductOnly()",
+      "name": "userCategoryChoiceIsReusedForTheExactProviderProductOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitCurrentClassificationOverridesConflictingStoredProductChoice()",
+      "name": "explicitCurrentClassificationOverridesConflictingStoredProductChoice()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloUnknownOfficialPathDoesNotDefaultToTops()",
+      "name": "uniqloUnknownOfficialPathDoesNotDefaultToTops()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/singleExactRepresentativeForUserResolvedCategoryIsAutomaticallySelected()",
+      "name": "singleExactRepresentativeForUserResolvedCategoryIsAutomaticallySelected()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaSweatshirtNamesDoNotBecomeShirtsBySubstring()",
+      "name": "musinsaSweatshirtNamesDoNotBecomeShirtsBySubstring()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/detectedLongSleeveKnitDoesNotMatchShortKnitWithoutNameKeyword()",
+      "name": "detectedLongSleeveKnitDoesNotMatchShortKnitWithoutNameKeyword()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/detectedLongSleeveKnitMatchesLongSleeveKnit()",
+      "name": "detectedLongSleeveKnitMatchesLongSleeveKnit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortSleeveKnitDoesNotAutoMatchLongSleeveKnit()",
+      "name": "shortSleeveKnitDoesNotAutoMatchLongSleeveKnit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/longSleeveKnitMayAutoMatchLongSleeveKnit()",
+      "name": "longSleeveKnitMayAutoMatchLongSleeveKnit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortSleeveTShirtDoesNotAutoMatchLongSleeveKnit()",
+      "name": "shortSleeveTShirtDoesNotAutoMatchLongSleeveKnit()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortsDoNotAutoMatchLongPants()",
+      "name": "shortsDoNotAutoMatchLongPants()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloChinoLongPantsMatchesStoredUniqloStraightJeans()",
+      "name": "uniqloChinoLongPantsMatchesStoredUniqloStraightJeans()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonProfileCoversEverySupportedClosetDetailFamily()",
+      "name": "comparisonProfileCoversEverySupportedClosetDetailFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/typedBlouseDetailOverridesBroadTShirtSourceFamily()",
+      "name": "typedBlouseDetailOverridesBroadTShirtSourceFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/intermediateSleeveAndPantsLengthsDoNotCrossMatch()",
+      "name": "intermediateSleeveAndPantsLengthsDoNotCrossMatch()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/lengthAwareAndLengthIndependentCategoriesUseTheirOwnRules()",
+      "name": "lengthAwareAndLengthIndependentCategoriesUseTheirOwnRules()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/canonicalTaxonomyBundleDecodesAndResolvesMusinsaID()",
+      "name": "canonicalTaxonomyBundleDecodesAndResolvesMusinsaID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/canonicalTaxonomyRejectsMusinsaBriefcasesAsBags()",
+      "name": "canonicalTaxonomyRejectsMusinsaBriefcasesAsBags()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/adultCrossGenderBottomsCanUseDirectMeasurements()",
+      "name": "adultCrossGenderBottomsCanUseDirectMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/adultCrossGenderUnderwearRemainsIncompatible()",
+      "name": "adultCrossGenderUnderwearRemainsIncompatible()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/automaticMatcherDoesNotTreatAdultUnisexAsKidsCompatible()",
+      "name": "automaticMatcherDoesNotTreatAdultUnisexAsKidsCompatible()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/automaticMatcherDoesNotCrossMajorCategoriesForSamePantsFamily()",
+      "name": "automaticMatcherDoesNotCrossMajorCategoriesForSamePantsFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily()",
+      "name": "refinedCanonicalTaxonomyKeepsLeatherJacketsInTheirOwnFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/canonicalTaxonomyBundleResolvesUniqloTargetPathAndRejectsUnsupportedUse()",
+      "name": "canonicalTaxonomyBundleResolvesUniqloTargetPathAndRejectsUnsupportedUse()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/canonicalProfileSnapshotRoundTripsWithoutLosingPolicyIdentity()",
+      "name": "canonicalProfileSnapshotRoundTripsWithoutLosingPolicyIdentity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/unspecifiedSleeveLengthUsesMeasuredFallbackInsteadOfConfirmation()",
+      "name": "unspecifiedSleeveLengthUsesMeasuredFallbackInsteadOfConfirmation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/previousManualSelectionDoesNotAffectNewProduct()",
+      "name": "previousManualSelectionDoesNotAffectNewProduct()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualTopSleeveLengthMismatchAllowsBodyOnlyComparison()",
+      "name": "manualTopSleeveLengthMismatchAllowsBodyOnlyComparison()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualCrossDetailOuterwearRemainsReferenceOnly()",
+      "name": "manualCrossDetailOuterwearRemainsReferenceOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/example()",
+      "name": "example()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeNormalizerRemovesSameNameAndSameMeasurements()",
+      "name": "parsedSizeNormalizerRemovesSameNameAndSameMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeNormalizerRemovesWhitespaceOnlyNameDuplicates()",
+      "name": "parsedSizeNormalizerRemovesWhitespaceOnlyNameDuplicates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeNormalizerKeepsFirstSMLInOriginalOrder()",
+      "name": "parsedSizeNormalizerKeepsFirstSMLInOriginalOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeNormalizerKeepsDifferentSizes()",
+      "name": "parsedSizeNormalizerKeepsDifferentSizes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/productSizeCreationRemovesDuplicatesAndResetsDisplayOrder()",
+      "name": "productSizeCreationRemovesDuplicatesAndResetsDisplayOrder()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedProductSizeStableIDUsesProductAndSizeName()",
+      "name": "parsedProductSizeStableIDUsesProductAndSizeName()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/productSizeNormalizerKeepsSelectionIdentityByProductSizeID()",
+      "name": "productSizeNormalizerKeepsSelectionIdentityByProductSizeID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaDeepLinkCandidates()",
+      "name": "musinsaDeepLinkCandidates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloURLResolverExtractsProductAndTwoDigitColor()",
+      "name": "uniqloURLResolverExtractsProductAndTwoDigitColor()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaURLResolverUsesCanonicalProductURLWithoutRedirectRequest()",
+      "name": "musinsaURLResolverUsesCanonicalProductURLWithoutRedirectRequest()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloURLResolverPreservesLeadingZeroColor()",
+      "name": "uniqloURLResolverPreservesLeadingZeroColor()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloURLResolverPrefersSharedQueryColorOverGenericPathColor()",
+      "name": "uniqloURLResolverPrefersSharedQueryColorOverGenericPathColor()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloSelectedColorThumbnailIsNotReplacedByGenericSizeChartImage()",
+      "name": "uniqloSelectedColorThumbnailIsNotReplacedByGenericSizeChartImage()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloGenericColorUsesOfficialSizeAPIRepresentativeImage()",
+      "name": "uniqloGenericColorUsesOfficialSizeAPIRepresentativeImage()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloThumbnailCandidatesRetainSelectedColorThenDefaultColor()",
+      "name": "uniqloThumbnailCandidatesRetainSelectedColorThenDefaultColor()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/legacyUniqloProductWithoutImageDerivesDefaultThumbnail()",
+      "name": "legacyUniqloProductWithoutImageDerivesDefaultThumbnail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/nonUniqloSixDigitProductDoesNotDeriveUniqloThumbnail()",
+      "name": "nonUniqloSixDigitProductDoesNotDeriveUniqloThumbnail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaURLResolverPrefersExplicitVariantProductID()",
+      "name": "musinsaURLResolverPrefersExplicitVariantProductID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloEmptyColorSpecificSizeChartRetriesGenericProductID()",
+      "name": "uniqloEmptyColorSpecificSizeChartRetriesGenericProductID()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloSizeAPIParserUsesSizeChartAndRemovesDuplicateSizeNames()",
+      "name": "uniqloSizeAPIParserUsesSizeChartAndRemovesDuplicateSizeNames()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaActualSizePreservesRawFieldsAndRaglanMeaning()",
+      "name": "musinsaActualSizePreservesRawFieldsAndRaglanMeaning()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaActualSizeAcceptsLetterSizesWithProductDescriptors()",
+      "name": "musinsaActualSizeAcceptsLetterSizesWithProductDescriptors()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloBottomCircumferencesRemainCircumferencesAndPreserveRawValues()",
+      "name": "uniqloBottomCircumferencesRemainCircumferencesAndPreserveRawValues()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonRepairsLegacyUniqloRiseStoredAsTotalLength()",
+      "name": "comparisonRepairsLegacyUniqloRiseStoredAsTotalLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaBottomWidthsAndExplicitLengthsUseCommonCodes()",
+      "name": "musinsaBottomWidthsAndExplicitLengthsUseCommonCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaTypeFiveMapsOfficialDiagramChestWidth()",
+      "name": "musinsaTypeFiveMapsOfficialDiagramChestWidth()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sourceMeasurementMappingPolicyMapsSourceSpecificUpperMeasurements()",
+      "name": "sourceMeasurementMappingPolicyMapsSourceSpecificUpperMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaOfficialUpperTypesMapExactTotalLengthLabel()",
+      "name": "musinsaOfficialUpperTypesMapExactTotalLengthLabel()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaOfficialTypeTableMapsOnlyAuditedLabels()",
+      "name": "musinsaOfficialTypeTableMapsOnlyAuditedLabels()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloAuditedCodesPreserveDifferentDefinitions()",
+      "name": "uniqloAuditedCodesPreserveDifferentDefinitions()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements()",
+      "name": "comparisonUsesMatchedRecordValuesInsteadOfScalarMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/samePlatformAndFormatUsesMatchingSourceFieldsDirectly()",
+      "name": "samePlatformAndFormatUsesMatchingSourceFieldsDirectly()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()",
+      "name": "comparisonSelectsOfficialCircumferenceOrFitMatchWidthBySourceFormat()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty()",
+      "name": "uniqloOfficialTopComparisonKeepsSleeveAndHasNoManualPenalty()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloPoloInfersShortSleeveFromOfficialSizeChart()",
+      "name": "uniqloPoloInfersShortSleeveFromOfficialSizeChart()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/unspecifiedTopSleeveTypeUsesMeasurementMethodSpecificLengthRules()",
+      "name": "unspecifiedTopSleeveTypeUsesMeasurementMethodSpecificLengthRules()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/learnedPlatformLengthBoundariesClassifyUnspecifiedGarments()",
+      "name": "learnedPlatformLengthBoundariesClassifyUnspecifiedGarments()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/normalizedParsedProductReplacesOtherWithMeasuredLengthCategory()",
+      "name": "normalizedParsedProductReplacesOtherWithMeasuredLengthCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/differentPlatformFormatsRequireCanonicalMeasurementCodes()",
+      "name": "differentPlatformFormatsRequireCanonicalMeasurementCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/alternativeSizeSummariesUseCategorySpecificMeasurements()",
+      "name": "alternativeSizeSummariesUseCategorySpecificMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonDifferenceTextUsesClosetItemAsReference()",
+      "name": "comparisonDifferenceTextUsesClosetItemAsReference()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloGenericSleeveDoesNotPairWithCenterBackSleeve()",
+      "name": "uniqloGenericSleeveDoesNotPairWithCenterBackSleeve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaTypeFiveAndTwentyOneCompareCommonTotalLength()",
+      "name": "musinsaTypeFiveAndTwentyOneCompareCommonTotalLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedMeasurementsBecomeOwnedProductSizeRecords()",
+      "name": "parsedMeasurementsBecomeOwnedProductSizeRecords()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/userFitCopiesMeasurementRecordsAsIndependentSnapshot()",
+      "name": "userFitCopiesMeasurementRecordsAsIndependentSnapshot()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/measurementComparisonUsesOnlyIdenticalVerifiedCodes()",
+      "name": "measurementComparisonUsesOnlyIdenticalVerifiedCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/measurementComparisonExcludesDifferentSleeveDefinitions()",
+      "name": "measurementComparisonExcludesDifferentSleeveDefinitions()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/bottomComparisonRequiresTwoCoreWidthMeasurements()",
+      "name": "bottomComparisonRequiresTwoCoreWidthMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/bottomWidthAndLengthAloneDoNotConfirmRecommendation()",
+      "name": "bottomWidthAndLengthAloneDoNotConfirmRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/outerComparisonRequiresChestAndOneAdditionalMeasurement()",
+      "name": "outerComparisonRequiresChestAndOneAdditionalMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/outerShoulderAndSleeveWithoutChestAreInsufficient()",
+      "name": "outerShoulderAndSleeveWithoutChestAreInsufficient()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient()",
+      "name": "recommendationIsBlockedWhenCompatibleEvidenceIsInsufficient()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/insufficientRecommendationReturnsUnsavedReferenceEvidence()",
+      "name": "insufficientRecommendationReturnsUnsavedReferenceEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/resultReferenceSelectionReplacesResultWhenEvidenceIsCompatible()",
+      "name": "resultReferenceSelectionReplacesResultWhenEvidenceIsCompatible()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/resultReferenceSelectionKeepsPickerForInsufficientEvidence()",
+      "name": "resultReferenceSelectionKeepsPickerForInsufficientEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen()",
+      "name": "automaticFlowKeepsProfileCompatibleItemForInsufficientEvidenceScreen()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/recommendationStoresUsedCodesAndExclusionReasons()",
+      "name": "recommendationStoresUsedCodesAndExclusionReasons()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/automaticMatchRejectsKnownConstructionConflict()",
+      "name": "automaticMatchRejectsKnownConstructionConflict()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compatibleRepresentativeOutranksRicherMeasurementEvidence()",
+      "name": "compatibleRepresentativeOutranksRicherMeasurementEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compatibleRepresentativeOutranksHigherSimilarity()",
+      "name": "compatibleRepresentativeOutranksHigherSimilarity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compatibleRepresentativeOutranksSameBrandCandidate()",
+      "name": "compatibleRepresentativeOutranksSameBrandCandidate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/multipleCompatibleRepresentativesSelectDeterministically()",
+      "name": "multipleCompatibleRepresentativesSelectDeterministically()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/insufficientRepresentativeEvidenceBlocksAutomaticSelection()",
+      "name": "insufficientRepresentativeEvidenceBlocksAutomaticSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/incompatibleRepresentativeBlocksGeneralAutomaticSelection()",
+      "name": "incompatibleRepresentativeBlocksGeneralAutomaticSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/representativeFromDifferentDetailHasNoSelectionPriority()",
+      "name": "representativeFromDifferentDetailHasNoSelectionPriority()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualSelectionRecommendationIsUnaffectedByRepresentativePolicy()",
+      "name": "manualSelectionRecommendationIsUnaffectedByRepresentativePolicy()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/poloUsesTshirtFamilyAndAutomaticallyMatchesSameLengthTshirt()",
+      "name": "poloUsesTshirtFamilyAndAutomaticallyMatchesSameLengthTshirt()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/singleCompatibleNonReferenceStillRequiresUserSelection()",
+      "name": "singleCompatibleNonReferenceStillRequiresUserSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/poloDoesNotAutomaticallyCompareWithWovenShirt()",
+      "name": "poloDoesNotAutomaticallyCompareWithWovenShirt()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/similarReferenceCandidatesRequireUserSelection()",
+      "name": "similarReferenceCandidatesRequireUserSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/richerMeasurementEvidenceRanksFirstWithoutBypassingUserSelection()",
+      "name": "richerMeasurementEvidenceRanksFirstWithoutBypassingUserSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/differentShortTopStructureShowsManualExpansionNotice()",
+      "name": "differentShortTopStructureShowsManualExpansionNotice()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/representativeOutranksSimilarityWhenEvidenceIsEqual()",
+      "name": "representativeOutranksSimilarityWhenEvidenceIsEqual()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sameBrandIsOnlyATieBreakerAfterSimilarity()",
+      "name": "sameBrandIsOnlyATieBreakerAfterSimilarity()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve()",
+      "name": "musinsaAndUniqloCompareCommonUpperMeasurementsButExcludeSleeve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/identicalSetInSleeveCodesRemainComparable()",
+      "name": "identicalSetInSleeveCodesRemainComparable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate()",
+      "name": "crossPlatformBottomWidthsCompareWhileOutseamAndInseamStaySeparate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compatibleOtherBrandOutranksSameBrandWithLessMeasurementEvidence()",
+      "name": "compatibleOtherBrandOutranksSameBrandWithLessMeasurementEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparisonProfileStoresGarmentSleeveAndConstructionAttributes()",
+      "name": "comparisonProfileStoresGarmentSleeveAndConstructionAttributes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/matchingComparisonAttributesCannotCrossClosetCategories()",
+      "name": "matchingComparisonAttributesCannotCrossClosetCategories()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sameClosetCategoryDoesNotOverrideDifferentGarmentType()",
+      "name": "sameClosetCategoryDoesNotOverrideDifferentGarmentType()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/exactDetailCategoryOutranksRepresentativeFromAnotherOuterwearDetail()",
+      "name": "exactDetailCategoryOutranksRepresentativeFromAnotherOuterwearDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/automaticMatcherRequiresCompatibleDetailCategoryWithinOuterwearFamily()",
+      "name": "automaticMatcherRequiresCompatibleDetailCategoryWithinOuterwearFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/closetCategoryChangeInvalidatesStoredComparisonAttributes()",
+      "name": "closetCategoryChangeInvalidatesStoredComparisonAttributes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/fitMatchCandidateRecommendationsAreLimitedToThree()",
+      "name": "fitMatchCandidateRecommendationsAreLimitedToThree()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/identicalChestDefinitionIsUsedForConfirmedRecommendation()",
+      "name": "identicalChestDefinitionIsUsedForConfirmedRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compatibleOtherBrandOutranksSameBrandWithDifferentMeasurementMethod()",
+      "name": "compatibleOtherBrandOutranksSameBrandWithDifferentMeasurementMethod()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/changingReferenceItemRecalculatesRecommendedSize()",
+      "name": "changingReferenceItemRecalculatesRecommendedSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sharedURLStoreConsumesPendingURLOnlyOnce()",
+      "name": "sharedURLStoreConsumesPendingURLOnlyOnce()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sharedURLStoreClearsOnlyThePresentedURL()",
+      "name": "sharedURLStoreClearsOnlyThePresentedURL()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/productURLSupportAcceptsOfficialHostsAndRejectsLookalikes()",
+      "name": "productURLSupportAcceptsOfficialHostsAndRejectsLookalikes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/officialProductURLParserRejectsCOSBeforeAnyProviderParserRuns()",
+      "name": "officialProductURLParserRejectsCOSBeforeAnyProviderParserRuns()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/zaraParserMapsOnlyVerifiedUpperGarmentBasis()",
+      "name": "zaraParserMapsOnlyVerifiedUpperGarmentBasis()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/zaraParserFailsClosedWhenOnlyBodySizeGuideExists()",
+      "name": "zaraParserFailsClosedWhenOnlyBodySizeGuideExists()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/cosParserPreservesOfficialMetadataButFailsClosedWithoutSizeChart()",
+      "name": "cosParserPreservesOfficialMetadataButFailsClosedWithoutSizeChart()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/cosParserUsesOfficialSizeGuideForGarmentMeasurements()",
+      "name": "cosParserUsesOfficialSizeGuideForGarmentMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualClosetItemAndMeasurementRecordsPersistTogether()",
+      "name": "manualClosetItemAndMeasurementRecordsPersistTogether()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/recommendationHistorySaveReplacesSameProductHistory()",
+      "name": "recommendationHistorySaveReplacesSameProductHistory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/recommendationHistoryRecompareReusesPersistedDeterministicSize()",
+      "name": "recommendationHistoryRecompareReusesPersistedDeterministicSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaRecompareReusesPersistedSizeByName()",
+      "name": "musinsaRecompareReusesPersistedSizeByName()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloRecompareWithDifferentReferenceKeepsSingleProductGraph()",
+      "name": "uniqloRecompareWithDifferentReferenceKeepsSingleProductGraph()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/resultReferenceChangePersistsLatestSelectionWithoutDuplicatingProductGraph()",
+      "name": "resultReferenceChangePersistsLatestSelectionWithoutDuplicatingProductGraph()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/insufficientResultReferenceChangeKeepsPersistedHistory()",
+      "name": "insufficientResultReferenceChangeKeepsPersistedHistory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/comparingDifferentProductsKeepsSeparateHistoriesAndGraphs()",
+      "name": "comparingDifferentProductsKeepsSeparateHistoriesAndGraphs()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualClosetEntryRequiresMeasurementSource()",
+      "name": "manualClosetEntryRequiresMeasurementSource()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloClosetSourceOffersOnlyUniqloChartAndDirectMeasurement()",
+      "name": "uniqloClosetSourceOffersOnlyUniqloChartAndDirectMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaClosetSourceOffersOnlyMusinsaChartAndDirectMeasurement()",
+      "name": "musinsaClosetSourceOffersOnlyMusinsaChartAndDirectMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/linkedMusinsaClosetEntryKeepsSourceAndRequiresUnknownGenderSelection()",
+      "name": "linkedMusinsaClosetEntryKeepsSourceAndRequiresUnknownGenderSelection()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualComparisonEntryPreservesChestCircumferenceMeaning()",
+      "name": "manualComparisonEntryPreservesChestCircumferenceMeaning()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualComparisonEntryPreservesWaistCircumferenceMeaning()",
+      "name": "manualComparisonEntryPreservesWaistCircumferenceMeaning()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualClosetSourceAutomaticallyUsesFitMatchMeasurement()",
+      "name": "manualClosetSourceAutomaticallyUsesFitMatchMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/zaraClosetSourcePreservesRetailerIdentityWithoutClaimingAnUnverifiedChart()",
+      "name": "zaraClosetSourcePreservesRetailerIdentityWithoutClaimingAnUnverifiedChart()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/manualClosetSourceStoresFitMatchStandardVersion()",
+      "name": "manualClosetSourceStoresFitMatchStandardVersion()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/editingLegacyOtherSizeChartPreservesMeasurementSource()",
+      "name": "editingLegacyOtherSizeChartPreservesMeasurementSource()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/fitmatchMeasuredEntryCreatesComparableStandardRecords()",
+      "name": "fitmatchMeasuredEntryCreatesComparableStandardRecords()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/directMeasurementStandardDefinesEveryMeasurementKind()",
+      "name": "directMeasurementStandardDefinesEveryMeasurementKind()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/directMeasuredBottomUsesBottomSpecificCodes()",
+      "name": "directMeasuredBottomUsesBottomSpecificCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/bottomLengthGuideUsesOutseamDefinition()",
+      "name": "bottomLengthGuideUsesOutseamDefinition()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/directMeasuredOuterIncludesHemWidth()",
+      "name": "directMeasuredOuterIncludesHemWidth()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/outerHemGuideUsesUnstretchedGarmentDefinition()",
+      "name": "outerHemGuideUsesUnstretchedGarmentDefinition()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/directMeasurementRejectsValuesOutsideSafetyRange()",
+      "name": "directMeasurementRejectsValuesOutsideSafetyRange()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/sizeChartValuesDoNotUseDirectMeasurementSafetyRange()",
+      "name": "sizeChartValuesDoNotUseDirectMeasurementSafetyRange()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloTranscribedEntryUsesCommonChestAndCenterBackSleeve()",
+      "name": "uniqloTranscribedEntryUsesCommonChestAndCenterBackSleeve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping()",
+      "name": "musinsaTranscribedEntryRequiresExplicitSleeveMethodForMapping()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/otherSizeChartPreservesValuesWithoutClaimingCompatibility()",
+      "name": "otherSizeChartPreservesValuesWithoutClaimingCompatibility()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloSizeAPIParserReturnsNormalizedImageURL()",
+      "name": "uniqloSizeAPIParserReturnsNormalizedImageURL()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloJSONLDParserHandlesSingleProductObject()",
+      "name": "uniqloJSONLDParserHandlesSingleProductObject()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloJSONLDParserHandlesArrayAndBreadcrumb()",
+      "name": "uniqloJSONLDParserHandlesArrayAndBreadcrumb()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloEmbeddedBreadcrumbRestoresOfficialLeafAndCategoryCodes()",
+      "name": "uniqloEmbeddedBreadcrumbRestoresOfficialLeafAndCategoryCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloHydrationProductTypeKrIsForwardedVerbatimAsStructuredFact()",
+      "name": "uniqloHydrationProductTypeKrIsForwardedVerbatimAsStructuredFact()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloHydrationProductTypeKrOmitsMissingOrAmbiguousEvidence()",
+      "name": "uniqloHydrationProductTypeKrOmitsMissingOrAmbiguousEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater()",
+      "name": "persistedProductReceivesNewRetailerThumbnailWithoutLosingItLater()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/closetSaveMatchesStoredProductBeforeMatchingSize()",
+      "name": "closetSaveMatchesStoredProductBeforeMatchingSize()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget()",
+      "name": "uniqloExplicitUnisexAudienceOverridesFemaleCategoryTarget()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloSizeGenderAloneDoesNotOverrideFemaleAudience()",
+      "name": "uniqloSizeGenderAloneDoesNotOverrideFemaleAudience()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaLegacyTypeFiveRestoresVerifiedShoulderChestAndSleeve()",
+      "name": "musinsaLegacyTypeFiveRestoresVerifiedShoulderChestAndSleeve()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes()",
+      "name": "uniqloLegacyMeasurementsRemainUnknownWithoutRawCodes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/mappingUpgradePreservesCanonicalRecordsAndRemovesLegacyDuplicates()",
+      "name": "mappingUpgradePreservesCanonicalRecordsAndRemovesLegacyDuplicates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/migrationVersionSevenConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves()",
+      "name": "migrationVersionSevenConvertsLegacyPlatformChestAndLengthsWithoutChangingSleeves()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/migrationVersionSevenRecoversOnlyVerifiedMusinsaTopUnknownTotalLength()",
+      "name": "migrationVersionSevenRecoversOnlyVerifiedMusinsaTopUnknownTotalLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce()",
+      "name": "migrationVersionSevenHalvesUniqloCircumferencesExactlyOnce()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/musinsaLegacyRaglanAndSetInSleevesStaySeparate()",
+      "name": "musinsaLegacyRaglanAndSetInSleevesStaySeparate()",
+      "result": "Failed"
+    },
+    {
+      "id": "FitMatchTests/userFitOnlyInheritsUnmodifiedVerifiedLegacyValues()",
+      "name": "userFitOnlyInheritsUnmodifiedVerifiedLegacyValues()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortKnitCanUseShortTshirtAndSleevelessAsManualExpansionCandidates()",
+      "name": "shortKnitCanUseShortTshirtAndSleevelessAsManualExpansionCandidates()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortTopManualExpansionPolicyMatrix()",
+      "name": "shortTopManualExpansionPolicyMatrix()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/shortTopExpansionRequiresTwoCommonCoreMeasurements()",
+      "name": "shortTopExpansionRequiresTwoCommonCoreMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/longTopStructureGroupsRemainSeparated()",
+      "name": "longTopStructureGroupsRemainSeparated()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/legacyShortTopWithoutStoredProfileStillBecomesExpansionCandidate()",
+      "name": "legacyShortTopWithoutStoredProfileStillBecomesExpansionCandidate()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaStandardSizeAvailabilityUsesFlagsAndActualData()",
+      "name": "musinsaStandardSizeAvailabilityUsesFlagsAndActualData()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaStandardSizeFallbackIsLimitedToBodyChestCategories()",
+      "name": "musinsaStandardSizeFallbackIsLimitedToBodyChestCategories()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesValidUpperHTMLTable()",
+      "name": "musinsaFallbackParsesValidUpperHTMLTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaSizeTokenNormalizerSupportsSharedHTMLAndOCRFormats()",
+      "name": "musinsaSizeTokenNormalizerSupportsSharedHTMLAndOCRFormats()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaPipelineFixturesParseDeterministically()",
+      "name": "musinsaPipelineFixturesParseDeterministically()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaSingleFreeSizeRequiresAValidMeasurementStructure()",
+      "name": "musinsaSingleFreeSizeRequiresAValidMeasurementStructure()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesSlashCompositeSizesFrom6045676HTML()",
+      "name": "musinsaFallbackParsesSlashCompositeSizesFrom6045676HTML()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackRejectsNonSizeSlashLabels()",
+      "name": "musinsaFallbackRejectsNonSizeSlashLabels()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesMeasurementItemTransposedCompositeSizes()",
+      "name": "musinsaFallbackParsesMeasurementItemTransposedCompositeSizes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackPreservesSeparateFrontAndBackLengths()",
+      "name": "musinsaFallbackPreservesSeparateFrontAndBackLengths()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesCellUnitsAndLowerCircumferenceAliases()",
+      "name": "musinsaFallbackParsesCellUnitsAndLowerCircumferenceAliases()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesLetterFirstCompositeSizesForExplicitSpecTables()",
+      "name": "musinsaFallbackParsesLetterFirstCompositeSizesForExplicitSpecTables()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/importedChestCircumferenceReachesSizeFormWithoutWidthConversion()",
+      "name": "importedChestCircumferenceReachesSizeFormWithoutWidthConversion()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/measurementResolverUsesCanonicalRecordBeforeZeroLegacyScalar()",
+      "name": "measurementResolverUsesCanonicalRecordBeforeZeroLegacyScalar()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/measurementResolverRejectsUnknownAndAmbiguousRecords()",
+      "name": "measurementResolverRejectsUnknownAndAmbiguousRecords()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/measurementResolverDisplaysCircumferenceRecordsWithTheirMeaning()",
+      "name": "measurementResolverDisplaysCircumferenceRecordsWithTheirMeaning()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackKeepsStrictTableRejections()",
+      "name": "musinsaFallbackKeepsStrictTableRejections()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackDefaultsMissingUnitToCentimetersAndRejectsSingleSizeRows()",
+      "name": "musinsaFallbackDefaultsMissingUnitToCentimetersAndRejectsSingleSizeRows()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackConvertsLowerCircumferencesToComparableWidths()",
+      "name": "musinsaFallbackConvertsLowerCircumferencesToComparableWidths()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesUnitCellTransposedGiordanoTable()",
+      "name": "musinsaFallbackParsesUnitCellTransposedGiordanoTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackRetriesAndParsesSmallNoisyGiordanoTable()",
+      "name": "musinsaFallbackRetriesAndParsesSmallNoisyGiordanoTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesProduct4351517WidthsAndFiveSizes()",
+      "name": "musinsaFallbackParsesProduct4351517WidthsAndFiveSizes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesProduct4351517HTMLTable()",
+      "name": "musinsaFallbackParsesProduct4351517HTMLTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesReebokUpperImageTables()",
+      "name": "musinsaFallbackParsesReebokUpperImageTables()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackRecoversReebokBrokenSizeHeaderSafely()",
+      "name": "musinsaFallbackRecoversReebokBrokenSizeHeaderSafely()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackKeepsRowWithOneMissingOptionalMeasurement()",
+      "name": "musinsaFallbackKeepsRowWithOneMissingOptionalMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackJoinsAdjacentAndOverlappingTableFragments()",
+      "name": "musinsaFallbackJoinsAdjacentAndOverlappingTableFragments()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackCombinesSplitOCRGridsAndDeduplicatesRows()",
+      "name": "musinsaFallbackCombinesSplitOCRGridsAndDeduplicatesRows()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackDoesNotInventSizesFromNumericFragment()",
+      "name": "musinsaFallbackDoesNotInventSizesFromNumericFragment()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage()",
+      "name": "musinsaFallbackDetectsAndParsesUpperTableAtTopOfLongImage()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackDetectsSmallTableInsideVeryLongImage()",
+      "name": "musinsaFallbackDetectsSmallTableInsideVeryLongImage()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesGiordanoUpperLongImageTableGrid()",
+      "name": "musinsaFallbackParsesGiordanoUpperLongImageTableGrid()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackSeparatesShoesFromApparelFootRanges()",
+      "name": "musinsaFallbackSeparatesShoesFromApparelFootRanges()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesLooseHeaderAndScopesUnitsToCurrentTable()",
+      "name": "musinsaFallbackParsesLooseHeaderAndScopesUnitsToCurrentTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackCanonicalizesKoreanAliasesWithoutMergingDifferentMethods()",
+      "name": "musinsaFallbackCanonicalizesKoreanAliasesWithoutMergingDifferentMethods()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackParsesKoreanShoeConversionRowAndRejectsSingleReference()",
+      "name": "musinsaFallbackParsesKoreanShoeConversionRowAndRejectsSingleReference()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaFallbackRejectsDescriptionNumbersWithoutTableStructure()",
+      "name": "musinsaFallbackRejectsDescriptionNumbersWithoutTableStructure()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/standardBodySizeChartNormalizesSupportedOptionsOnly()",
+      "name": "standardBodySizeChartNormalizesSupportedOptionsOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/standardSizeFallbackComparesCircumferencesWithoutStoringActualChest()",
+      "name": "standardSizeFallbackComparesCircumferencesWithoutStoringActualChest()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/mixedActualAndStandardComparisonConvertsBothOptionNames()",
+      "name": "mixedActualAndStandardComparisonConvertsBothOptionNames()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/unsupportedStandardSizeDoesNotCreateZeroPercentRecommendation()",
+      "name": "unsupportedStandardSizeDoesNotCreateZeroPercentRecommendation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedCanonicalClassificationFallsBackToActiveTaxonomyDetail()",
+      "name": "parsedCanonicalClassificationFallsBackToActiveTaxonomyDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedCanonicalClassificationPreservesRefinedUniqloDetail()",
+      "name": "parsedCanonicalClassificationPreservesRefinedUniqloDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloKoreanUnderwearPathOverridesIncorrectTopCategory()",
+      "name": "uniqloKoreanUnderwearPathOverridesIncorrectTopCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloAirismCottonCrewNeckTUsesTShirtStructureDespiteInnerwearPath()",
+      "name": "uniqloAirismCottonCrewNeckTUsesTShirtStructureDespiteInnerwearPath()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloAirismLineUsesGarmentCategoryInsteadOfAirismToken()",
+      "name": "uniqloAirismLineUsesGarmentCategoryInsteadOfAirismToken()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloNestedKnitStructureSurvivesGenericLeafCategories()",
+      "name": "uniqloNestedKnitStructureSurvivesGenericLeafCategories()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloGenericInnerwearTMeasurementsSurviveProductCreation()",
+      "name": "uniqloGenericInnerwearTMeasurementsSurviveProductCreation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloAirismInnerShortsRemainUnderwearDespitePantsToken()",
+      "name": "uniqloAirismInnerShortsRemainUnderwearDespitePantsToken()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloGraphicTeeUsesSourceCategoryAndOfficialSleeveMeasurement()",
+      "name": "uniqloGraphicTeeUsesSourceCategoryAndOfficialSleeveMeasurement()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedCanonicalClassificationUsesDeepestPaddingCategory()",
+      "name": "parsedCanonicalClassificationUsesDeepestPaddingCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedCanonicalClassificationResolvesRequiredSourceFixtures()",
+      "name": "parsedCanonicalClassificationResolvesRequiredSourceFixtures()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/genericMusinsaPathsUseProductNameForSpecificComparisonCategory()",
+      "name": "genericMusinsaPathsUseProductNameForSpecificComparisonCategory()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/genericBottomPathDoesNotTreatJumpsuitAsLongPants()",
+      "name": "genericBottomPathDoesNotTreatJumpsuitAsLongPants()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/genericBottomAndLeggingsPathsUseExplicitProductLength()",
+      "name": "genericBottomAndLeggingsPathsUseExplicitProductLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitOuterwearNameRefinesOnlyCompatibleProviderMajor()",
+      "name": "explicitOuterwearNameRefinesOnlyCompatibleProviderMajor()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/productNameRefinesOuterwearWithoutTurningFleeceTopsIntoOuterwear()",
+      "name": "productNameRefinesOuterwearWithoutTurningFleeceTopsIntoOuterwear()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/ambiguousUniqloTShirtPathUsesStrongProductFamily()",
+      "name": "ambiguousUniqloTShirtPathUsesStrongProductFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitProviderPoloFamilyWinsOverConflictingKnitName()",
+      "name": "explicitProviderPoloFamilyWinsOverConflictingKnitName()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloSweatFullZipParkaUsesOuterwearJumper()",
+      "name": "uniqloSweatFullZipParkaUsesOuterwearJumper()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitCardiganNameUsesCardiganStructureAcrossProviderBuckets()",
+      "name": "explicitCardiganNameUsesCardiganStructureAcrossProviderBuckets()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitHalfSleeveUsesShortSleeveDetail()",
+      "name": "explicitHalfSleeveUsesShortSleeveDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaSourcePriorityAndGenericTopFallbackAreDeterministic()",
+      "name": "musinsaSourcePriorityAndGenericTopFallbackAreDeterministic()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitThreeQuarterFractionUsesThreeQuarterSleeveDetail()",
+      "name": "explicitThreeQuarterFractionUsesThreeQuarterSleeveDetail()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitLengthOverridesConflictingCanonicalSourcePathLength()",
+      "name": "explicitLengthOverridesConflictingCanonicalSourcePathLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/skirtAndDressLengthConflictsDoNotAutoMatch()",
+      "name": "skirtAndDressLengthConflictsDoNotAutoMatch()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/outerwearBodyLengthPreventsLongAndShortGarmentPairing()",
+      "name": "outerwearBodyLengthPreventsLongAndShortGarmentPairing()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/brownBottomNamesDoNotBecomeBras()",
+      "name": "brownBottomNamesDoNotBecomeBras()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/briefLinedRunningBottomsDoNotBecomeUnderwear()",
+      "name": "briefLinedRunningBottomsDoNotBecomeUnderwear()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitShirtAndBlouseStructureWinsOverSleeveLength()",
+      "name": "explicitShirtAndBlouseStructureWinsOverSleeveLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/compositeAndOptionDependentGarmentsRequireConfirmation()",
+      "name": "compositeAndOptionDependentGarmentsRequireConfirmation()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/hyphenatedSleeveNamesResolveLength()",
+      "name": "hyphenatedSleeveNamesResolveLength()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitLeggingsAndCoachJacketOverrideWrongProviderBuckets()",
+      "name": "explicitLeggingsAndCoachJacketOverrideWrongProviderBuckets()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/skortsResolveAsSkirts()",
+      "name": "skortsResolveAsSkirts()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/explicitManualComparisonOpensForMaxiCoatAndHalfOuterwear()",
+      "name": "explicitManualComparisonOpensForMaxiCoatAndHalfOuterwear()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloGenericPathsUseProductNameForHoodiesAndShortPants()",
+      "name": "uniqloGenericPathsUseProductNameForHoodiesAndShortPants()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloThirdCorpusUsesOfficialCutAndSewnAndLoungewearFamilies()",
+      "name": "uniqloThirdCorpusUsesOfficialCutAndSewnAndLoungewearFamilies()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/storedMusinsaFourthCorpusActualSizesPassProductionParser()",
+      "name": "storedMusinsaFourthCorpusActualSizesPassProductionParser()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/storedLargeCorpusExportsProductionClassification()",
+      "name": "storedLargeCorpusExportsProductionClassification()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/storedMusinsaCorpusBuildsActualMeasurementFitPairs()",
+      "name": "storedMusinsaCorpusBuildsActualMeasurementFitPairs()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchTests/storedMusinsaCorpusExportsActualSizeAttritionDiagnostics()",
+      "name": "storedMusinsaCorpusExportsActualSizeAttritionDiagnostics()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/storedUniqloCorpusBuildsActualMeasurementFitPairs()",
+      "name": "storedUniqloCorpusBuildsActualMeasurementFitPairs()",
+      "result": "Skipped"
+    },
+    {
+      "id": "FitMatchTests/musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms()",
+      "name": "musinsaSourceDepthPriorityKeepsUmbrellaFamiliesOutOfGenericBottoms()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaOfficialOuterwearLeavesResolveBeforeMaterialKeywords()",
+      "name": "musinsaOfficialOuterwearLeavesResolveBeforeMaterialKeywords()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaDenimPantsMapToLongPantsWhilePreservingDenimFamily()",
+      "name": "musinsaDenimPantsMapToLongPantsWhilePreservingDenimFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloStraightJeansMapToLongPantsWhilePreservingDenimFamily()",
+      "name": "uniqloStraightJeansMapToLongPantsWhilePreservingDenimFamily()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloWideChinoPantsMapToLongPants()",
+      "name": "uniqloWideChinoPantsMapToLongPants()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/uniqloShortPantsRemainShortsBeforeGenericPantsRule()",
+      "name": "uniqloShortPantsRemainShortsBeforeGenericPantsRule()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/musinsaTopAndOuterExactTotalLengthUseCommonCode()",
+      "name": "musinsaTopAndOuterExactTotalLengthUseCommonCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeValidatorRejectsUnknownOnlyActualSizeAndKeepsMappedFallback()",
+      "name": "parsedSizeValidatorRejectsUnknownOnlyActualSizeAndKeepsMappedFallback()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeValidatorRejectsSingleShoeReference()",
+      "name": "parsedSizeValidatorRejectsSingleShoeReference()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchTests/parsedSizeValidatorAllowsNonstandardNamesOnlyForTrustedProviderMeasurements()",
+      "name": "parsedSizeValidatorAllowsNonstandardNamesOnlyForTrustedProviderMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/runtimeDTOSeparatesGarmentAndAllLengthAxes()",
+      "name": "runtimeDTOSeparatesGarmentAndAllLengthAxes()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/observationSizePreservesRetailerAvailabilityEvidence()",
+      "name": "observationSizePreservesRetailerAvailabilityEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()",
+      "name": "engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineUsesOneServerAuthorizedCanonicalMetricWithoutChangingReliabilityRules()",
+      "name": "engineUsesOneServerAuthorizedCanonicalMetricWithoutChangingReliabilityRules()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()",
+      "name": "availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()",
+      "name": "engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/eligibleCandidateDTOKeepsStableBlockedReasonCode()",
+      "name": "eligibleCandidateDTOKeepsStableBlockedReasonCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineAcceptsEveryActiveServerCanonicalMetricCode()",
+      "name": "engineAcceptsEveryActiveServerCanonicalMetricCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineRejectsSnapshotCandidateSetMismatchBeforeScoring()",
+      "name": "engineRejectsSnapshotCandidateSetMismatchBeforeScoring()",
+      "result": "Passed"
+    },
+    {
+      "id": "FitMatchVNextContractTests/engineRejectsBlockedAuthorizationBeforeScoring()",
+      "name": "engineRejectsBlockedAuthorizationBeforeScoring()",
+      "result": "Passed"
+    },
+    {
+      "id": "LiveProductGroupURLAuditTests/parsesEveryUniqueURLIntoServerCategoryEvidence()",
+      "name": "parsesEveryUniqueURLIntoServerCategoryEvidence()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveUniqloValidationTests/legacyPocketableParkaUsesGenericOfficialSizeChart()",
+      "name": "legacyPocketableParkaUsesGenericOfficialSizeChart()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveUniqloValidationTests/koreanUnderwearProductsUseUnderwearBriefsClassification()",
+      "name": "koreanUnderwearProductsUseUnderwearBriefsClassification()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveUniqloValidationTests/graphicTeesUseOfficialCategoryAndMeasurementsForShortSleeve()",
+      "name": "graphicTeesUseOfficialCategoryAndMeasurementsForShortSleeve()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveManualProductClassificationTests/reclassifiesStoredUnknownsThroughLiveProductionAPI()",
+      "name": "reclassifiesStoredUnknownsThroughLiveProductionAPI()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveManualProductClassificationTests/classifiesManualConfirmationProductsThroughProductionPipeline()",
+      "name": "classifiesManualConfirmationProductsThroughProductionPipeline()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveMusinsaValidationTests/sharedSlacksLinksProduceServerObservations()",
+      "name": "sharedSlacksLinksProduceServerObservations()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveMusinsaValidationTests/circumferencePipelineSamplesPreserveParsedValues()",
+      "name": "circumferencePipelineSamplesPreserveParsedValues()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveMusinsaValidationTests/imageRejectionSamplesNeverProduceInvalidSizes()",
+      "name": "imageRejectionSamplesNeverProduceInvalidSizes()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveProductCorpusValidationTests/replays320StoredProductsThroughProductionClassification()",
+      "name": "replays320StoredProductsThroughProductionClassification()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveProductCorpusValidationTests/validatesAtLeast320LiveProductsThroughFitMatchParser()",
+      "name": "validatesAtLeast320LiveProductsThroughFitMatchParser()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/musinsaOptionOrderPrefixIsRemovedOnlyFromValidSizeTokens()",
+      "name": "musinsaOptionOrderPrefixIsRemovedOnlyFromValidSizeTokens()",
+      "result": "Passed"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/resolvedLongPantsWithEnoughMeasurementsRecoverProductFallbackEligibility()",
+      "name": "resolvedLongPantsWithEnoughMeasurementsRecoverProductFallbackEligibility()",
+      "result": "Passed"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/unresolvedFallbackWithoutEnoughMeasurementsStaysBlocked()",
+      "name": "unresolvedFallbackWithoutEnoughMeasurementsStaysBlocked()",
+      "result": "Passed"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/fallbackRecoveryRejectsSetsShortLengthsAndNonFallbackPolicies()",
+      "name": "fallbackRecoveryRejectsSetsShortLengthsAndNonFallbackPolicies()",
+      "result": "Passed"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/storedActualSizeFixturesPreserveSixMeasurementsAndChooseHighestScore()",
+      "name": "storedActualSizeFixturesPreserveSixMeasurementsAndChooseHighestScore()",
+      "result": "Passed"
+    },
+    {
+      "id": "ProductLevelFallbackRegressionTests/legacyStoredPrefixedSizeAndFallbackEligibilityRecoverAfterDiskReload()",
+      "name": "legacyStoredPrefixedSizeAndFallbackEligibilityRecoverAfterDiskReload()",
+      "result": "Passed"
+    },
+    {
+      "id": "LiveThreeProductComparisonTests/uniqloOxfordShirtLReferenceAutomaticallyComparesNonIronShirt()",
+      "name": "uniqloOxfordShirtLReferenceAutomaticallyComparesNonIronShirt()",
+      "result": "Skipped"
+    },
+    {
+      "id": "LiveThreeProductComparisonTests/comparesEverySizeAcrossAllDirectedProductPairs()",
+      "name": "comparesEverySizeAcrossAllDirectedProductPairs()",
+      "result": "Skipped"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/sourceIdentityPrefersCanonicalProductMetadata()",
+      "name": "sourceIdentityPrefersCanonicalProductMetadata()",
+      "result": "Passed"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/legacyMethodSourceFallbackIsMerchantAgnosticAndUnknownChannelsFailClosed()",
+      "name": "legacyMethodSourceFallbackIsMerchantAgnosticAndUnknownChannelsFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/canonicalNewMerchantSupportsVerifiedSameSourceRawComparisonWithoutEngineChanges()",
+      "name": "canonicalNewMerchantSupportsVerifiedSameSourceRawComparisonWithoutEngineChanges()",
+      "result": "Failed"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/unknownSourceDoesNotGainSameSourceRawCompatibility()",
+      "name": "unknownSourceDoesNotGainSameSourceRawCompatibility()",
+      "result": "Failed"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/verifiedZARAUpperCodesCompareCrossSourceWithoutMerchantSpecificEngineLogic()",
+      "name": "verifiedZARAUpperCodesCompareCrossSourceWithoutMerchantSpecificEngineLogic()",
+      "result": "Passed"
+    },
+    {
+      "id": "MeasurementPolicyConsolidationTests/embeddedFallbackPolicyKeepsProductionWeightsAndExposesVersion()",
+      "name": "embeddedFallbackPolicyKeepsProductionWeightsAndExposesVersion()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/uniqloExplicitProviderStructureIsForwardedWithoutLocalClassification()",
+      "name": "uniqloExplicitProviderStructureIsForwardedWithoutLocalClassification()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/uniqloPDPIdentityOnlyDoesNotSynthesizeSingle()",
+      "name": "uniqloPDPIdentityOnlyDoesNotSynthesizeSingle()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/musinsaGenericGoodsMetadataDoesNotSynthesizeSingle()",
+      "name": "musinsaGenericGoodsMetadataDoesNotSynthesizeSingle()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/explicitRetailerMultipackWordingIsMultipack(text:)",
+      "name": "explicitRetailerMultipackWordingIsMultipack(text:)",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/explicitMixedGarmentSetWinsOverPackCount()",
+      "name": "explicitMixedGarmentSetWinsOverPackCount()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/explicitProviderComponentCompositionIsMixedSetButSetNameAloneIsNot()",
+      "name": "explicitProviderComponentCompositionIsMixedSetButSetNameAloneIsNot()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/insufficientRetailerStructureEvidenceStaysAbsent()",
+      "name": "insufficientRetailerStructureEvidenceStaysAbsent()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/uniqloE485393IsMultipackWithoutProductSpecificCode()",
+      "name": "uniqloE485393IsMultipackWithoutProductSpecificCode()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/oneRetailerSizeTableProducesOneCoherentContract()",
+      "name": "oneRetailerSizeTableProducesOneCoherentContract()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/optionalColumnsStayInOneCoherentGarmentTable()",
+      "name": "optionalColumnsStayInOneCoherentGarmentTable()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/homogeneousMultipackKeepsItsStructureAndGetsOneCoherentContract()",
+      "name": "homogeneousMultipackKeepsItsStructureAndGetsOneCoherentContract()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/mixedSetAndMultipleComponentSchemaAreNotCoherent()",
+      "name": "mixedSetAndMultipleComponentSchemaAreNotCoherent()",
+      "result": "Passed"
+    },
+    {
+      "id": "RetailerProductStructureContractTests/missingMeasurementsAreNotAComparisonContract()",
+      "name": "missingMeasurementsAreNotAComparisonContract()",
+      "result": "Passed"
+    },
+    {
+      "id": "SwiftDataSchemaMigrationTests/legacyStorePreservesDataAndRelationshipsWhenOpenedWithV1()",
+      "name": "legacyStorePreservesDataAndRelationshipsWhenOpenedWithV1()",
+      "result": "Passed"
+    },
+    {
+      "id": "SwiftDataSchemaMigrationTests/newInstallationCreatesAndReopensEmptyV1Store()",
+      "name": "newInstallationCreatesAndReopensEmptyV1Store()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identitySeparatesStyleVariantAndInternalProductID()",
+      "name": "identitySeparatesStyleVariantAndInternalProductID()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identityRecordsSelectedVariantWhenURLHasNoV1()",
+      "name": "identityRecordsSelectedVariantWhenURLHasNoV1()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identityRequiresJSONLDToCorroborateStyleAndVariantWhenPublished()",
+      "name": "identityRequiresJSONLDToCorroborateStyleAndVariantWhenPublished()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identityAcceptsSelectedColourAmongMultipleStructuredVariants()",
+      "name": "identityAcceptsSelectedColourAmongMultipleStructuredVariants()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/parsedMetadataPreservesVariantAndCategoryPolicyProvenance()",
+      "name": "parsedMetadataPreservesVariantAndCategoryPolicyProvenance()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/officialPDPCompositionCreatesMixedSetRetailerFact()",
+      "name": "officialPDPCompositionCreatesMixedSetRetailerFact()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/ambiguousSetTitleDoesNotCreateMixedSetRetailerFact()",
+      "name": "ambiguousSetTitleDoesNotCreateMixedSetRetailerFact()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/URLVariantRequestsOfficialSizeGuideBeforeProductPage()",
+      "name": "URLVariantRequestsOfficialSizeGuideBeforeProductPage()",
+      "result": "Failed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/URLWithoutVariantLoadsProductIdentityBeforeSizeGuide()",
+      "name": "URLWithoutVariantLoadsProductIdentityBeforeSizeGuide()",
+      "result": "Failed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/invalidDirectPageUsesStructuredWebViewFallbackWithoutChangingVariant()",
+      "name": "invalidDirectPageUsesStructuredWebViewFallbackWithoutChangingVariant()",
+      "result": "Failed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/liveDefaultLoaderResolvesOfficialProductIdentityAndGarmentGuide()",
+      "name": "liveDefaultLoaderResolvesOfficialProductIdentityAndGarmentGuide()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/liveURLVariantDirectlyResolvesOfficialGarmentGuideWithoutProductPage()",
+      "name": "liveURLVariantDirectlyResolvesOfficialGarmentGuideWithoutProductPage()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/liveUserSharedZARAURLReachesProductionParser()",
+      "name": "liveUserSharedZARAURLReachesProductionParser()",
+      "result": "Skipped"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/reviewedStructuredCategoryPathsMapToExactFitMatchDetails()",
+      "name": "reviewedStructuredCategoryPathsMapToExactFitMatchDetails()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/userConfirmedAmbiguousZARAProductsHaveStableCategories()",
+      "name": "userConfirmedAmbiguousZARAProductsHaveStableCategories()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/shadowDiscoveredAmbiguousFamiliesAndStructuredConflictsFailClosed()",
+      "name": "shadowDiscoveredAmbiguousFamiliesAndStructuredConflictsFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/userConfirmedProductOverridesFlowThroughURLParser()",
+      "name": "userConfirmedProductOverridesFlowThroughURLParser()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/shadowCorpusStructuredCategoriesNeverCrossGarmentDomain()",
+      "name": "shadowCorpusStructuredCategoriesNeverCrossGarmentDomain()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/currentOfficialZARALive300RemainsShadowOnlyAndFailClosed()",
+      "name": "currentOfficialZARALive300RemainsShadowOnlyAndFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identityRejectsVariantMismatchRedirectedStyleAndMissingProductID()",
+      "name": "identityRejectsVariantMismatchRedirectedStyleAndMissingProductID()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/identityAcceptsSameStyleRedirectWithoutGuessingIDs()",
+      "name": "identityAcceptsSameStyleRedirectWithoutGuessingIDs()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/URLIdentityParsingHandlesNoVariantAndMalformedURL()",
+      "name": "URLIdentityParsingHandlesNoVariantAndMalformedURL()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/challengeHTMLFailsBeforeIdentityOrSizeRequest()",
+      "name": "challengeHTMLFailsBeforeIdentityOrSizeRequest()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/inertChallengeSymbolInsideValidProductPageDoesNotBlockImport()",
+      "name": "inertChallengeSymbolInsideValidProductPageDoesNotBlockImport()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/unavailableProductPageFailsExplicitly()",
+      "name": "unavailableProductPageFailsExplicitly()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/verifiedUpperGarmentSubsetMapsChestShoulderAndSleeveOnly()",
+      "name": "verifiedUpperGarmentSubsetMapsChestShoulderAndSleeveOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/verifiedOuterGarmentSubsetIsComparisonReadyWithoutPromotingFrontLengthOrArmWidth()",
+      "name": "verifiedOuterGarmentSubsetIsComparisonReadyWithoutPromotingFrontLengthOrArmWidth()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/verifiedPantsSubsetMapsWaistHipAndFrontRiseOnly()",
+      "name": "verifiedPantsSubsetMapsWaistHipAndFrontRiseOnly()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/verifiedDressSubsetMapsFlatChestWaistAndHip()",
+      "name": "verifiedDressSubsetMapsFlatChestWaistAndHip()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/incompletePantsSubsetFailsClosedEvenWhenOneFieldMaps()",
+      "name": "incompletePantsSubsetFailsClosedEvenWhenOneFieldMaps()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/bodyOnlyFixtureNeverCreatesParsedMeasurements()",
+      "name": "bodyOnlyFixtureNeverCreatesParsedMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/onlyCatentryIDIsPassedToSizeGuideLoader()",
+      "name": "onlyCatentryIDIsPassedToSizeGuideLoader()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/sizeGuideHTTPFailureIsPartialAndNonComparable()",
+      "name": "sizeGuideHTTPFailureIsPartialAndNonComparable()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/missingOrNonCentimeterUnitsNeverCreateComparableMeasurements()",
+      "name": "missingOrNonCentimeterUnitsNeverCreateComparableMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/partiallyMissingSizeMeasurementsPreserveOnlyValidRawValues()",
+      "name": "partiallyMissingSizeMeasurementsPreserveOnlyValidRawValues()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/malformedAndEmptyGuideFailClosed()",
+      "name": "malformedAndEmptyGuideFailClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/unknownMixedAndExcludedCategoriesDoNotBecomeShortSleeveTops()",
+      "name": "unknownMixedAndExcludedCategoriesDoNotBecomeShortSleeveTops()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/unknownCategoryCarriesParentVariantRawEvidenceBeforeClassification()",
+      "name": "unknownCategoryCarriesParentVariantRawEvidenceBeforeClassification()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/detailsRequestUsesPDPWithExactSelectedVariantAndAjaxFlag()",
+      "name": "detailsRequestUsesPDPWithExactSelectedVariantAndAjaxFlag()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/userConfirmedBottomResumesVerifiedZARAMeasurements()",
+      "name": "userConfirmedBottomResumesVerifiedZARAMeasurements()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/userConfirmedTopWithoutVerifiedUpperFieldsStillRequestsManualEntry()",
+      "name": "userConfirmedTopWithoutVerifiedUpperFieldsStillRequestsManualEntry()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/viewModelKeepsUserCategoryWhileResumingZARAImport()",
+      "name": "viewModelKeepsUserCategoryWhileResumingZARAImport()",
+      "result": "Failed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow()",
+      "name": "cp032RealZARAParserCategoryConfirmationResumesTheSameProductFlow()",
+      "result": "Failed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/missingStructuredSectionOrFamilyFailsClosed()",
+      "name": "missingStructuredSectionOrFamilyFailsClosed()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/structuredKnitAndCardiganRemainCanonicalAfterViewModelApply()",
+      "name": "structuredKnitAndCardiganRemainCanonicalAfterViewModelApply()",
+      "result": "Passed"
+    },
+    {
+      "id": "ZARAParserPhase1_5Tests/zipJacketDoesNotMatchFurOuterwearSubstring()",
+      "name": "zipJacketDoesNotMatchFurOuterwearSubstring()",
+      "result": "Passed"
+    }
+  ]
+}

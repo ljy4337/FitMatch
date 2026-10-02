@@ -1,0 +1,256 @@
+{
+  "date": "2026-09-30",
+  "source": "hnkplvyegonlhumlejst",
+  "target": "aqhrupgjpmrtnystottx",
+  "mode": "READ ONLY",
+  "head": "3b71f15a67e64b62c762fdfb9340ff7139a9e609",
+  "source_inventory": [
+    {
+      "inventory": {
+        "other_objects": {
+          "custom_rules": [],
+          "event_triggers": []
+        },
+        "schema_grants": [
+          {
+            "acl": [
+              "pg_database_owner=UC/pg_database_owner",
+              "=U/pg_database_owner",
+              "postgres=U/pg_database_owner",
+              "anon=U/pg_database_owner",
+              "authenticated=U/pg_database_owner",
+              "service_role=U/pg_database_owner"
+            ],
+            "owner": "pg_database_owner",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=UC/postgres",
+              "service_role=U/postgres"
+            ],
+            "owner": "postgres",
+            "schema": "fitmatch_catalog"
+          },
+          {
+            "acl": [
+              "postgres=UC/postgres",
+              "authenticated=U/postgres",
+              "service_role=U/postgres"
+            ],
+            "owner": "postgres",
+            "schema": "fitmatch_vnext"
+          }
+        ],
+        "default_grants": [
+          {
+            "acl": [
+              "postgres=rwU/supabase_admin",
+              "anon=rwU/supabase_admin",
+              "authenticated=rwU/supabase_admin",
+              "service_role=rwU/supabase_admin"
+            ],
+            "role": "supabase_admin",
+            "type": "S",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=arwdDxtm/supabase_admin",
+              "anon=arwdDxtm/supabase_admin",
+              "authenticated=arwdDxtm/supabase_admin",
+              "service_role=arwdDxtm/supabase_admin"
+            ],
+            "role": "supabase_admin",
+            "type": "r",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=X/supabase_admin",
+              "anon=X/supabase_admin",
+              "authenticated=X/supabase_admin",
+              "service_role=X/supabase_admin"
+            ],
+            "role": "supabase_admin",
+            "type": "f",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=arwdDxtm/postgres",
+              "anon=Dxtm/postgres",
+              "authenticated=Dxtm/postgres",
+              "service_role=Dxtm/postgres"
+            ],
+            "role": "postgres",
+            "type": "r",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=rwU/postgres",
+              "anon=w/postgres",
+              "authenticated=w/postgres",
+              "service_role=w/postgres"
+            ],
+            "role": "postgres",
+            "type": "S",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "postgres=X/postgres"
+            ],
+            "role": "postgres",
+            "type": "f",
+            "schema": "public"
+          },
+          {
+            "acl": [
+              "service_role=arwdDxtm/postgres"
+            ],
+            "role": "postgres",
+            "type": "r",
+            "schema": "fitmatch_catalog"
+          }
+        ],
+        "function_counts": {
+          "f": 128
+        },
+        "relation_counts": {
+          "S": 1,
+          "i": 116,
+          "r": 38,
+          "v": 1
+        },
+        "auth_foreign_keys": [
+          {
+            "table": "fitmatch_catalog.product_classification_history",
+            "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          },
+          {
+            "table": "fitmatch_vnext.closet_items",
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          },
+          {
+            "table": "fitmatch_vnext.user_classification_feedback_evidence",
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          },
+          {
+            "table": "fitmatch_vnext.user_product_classification_overrides",
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          },
+          {
+            "table": "fitmatch_vnext.comparisons",
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          },
+          {
+            "table": "profiles",
+            "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          }
+        ],
+        "independent_types": [],
+        "research_policies": [],
+        "research_triggers": [],
+        "research_index_counts": {
+          "retailer_observed_categories": 1,
+          "retailer_observed_category_measurements": 1
+        }
+      }
+    }
+  ],
+  "target_relations": [],
+  "source_detail_checks": [
+    {
+      "checks": {
+        "app_triggers": 44,
+        "receipt_columns": [
+          {
+            "type": "uuid",
+            "column": "id"
+          },
+          {
+            "type": "uuid",
+            "column": "product_id"
+          },
+          {
+            "type": "text",
+            "column": "source_code"
+          },
+          {
+            "type": "text",
+            "column": "source_product_key"
+          },
+          {
+            "type": "text",
+            "column": "payload_fingerprint"
+          },
+          {
+            "type": "jsonb",
+            "column": "retailer_facts"
+          },
+          {
+            "type": "timestamp with time zone",
+            "column": "observed_at"
+          },
+          {
+            "type": "uuid",
+            "column": "actor_id_snapshot"
+          },
+          {
+            "type": "text",
+            "column": "processing_status"
+          },
+          {
+            "type": "jsonb",
+            "column": "result_summary"
+          },
+          {
+            "type": "integer",
+            "column": "submission_count"
+          },
+          {
+            "type": "timestamp with time zone",
+            "column": "first_submitted_at"
+          },
+          {
+            "type": "timestamp with time zone",
+            "column": "last_submitted_at"
+          }
+        ],
+        "app_policy_count": 26,
+        "sequence_dependency": [
+          {
+            "table": "fitmatch_vnext.size_availability_observations",
+            "column": "id",
+            "sequence": "size_availability_observations_id_seq",
+            "dependency_type": "i"
+          }
+        ],
+        "catalog_review_provenance": {
+          "rows": 27,
+          "reviewer_nonnull": 0
+        },
+        "research_foreign_key_boundary": [
+          {
+            "to": "fitmatch_catalog.retailer_observed_categories",
+            "from": "fitmatch_catalog.retailer_observed_category_measurements"
+          }
+        ]
+      }
+    }
+  ],
+  "target_existing_function": [
+    {
+      "proname": "rls_auto_enable",
+      "args": "",
+      "owner": "postgres",
+      "returns": "event_trigger",
+      "extension": null,
+      "event_triggers": [
+        "ensure_rls"
+      ]
+    }
+  ]
+}

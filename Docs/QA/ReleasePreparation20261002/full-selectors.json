@@ -1,0 +1,97 @@
+{
+  "environment": "FitMatch-QA / Debug-QA / development-only",
+  "status": "NOT RUN",
+  "note": "Run whole Swift Testing types; these suites do not prove authenticated server E2E or physical UI.",
+  "cases": [
+    {
+      "id": "suite.FitMatchReleasePreparationTests",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchClosetDeletionTransactionTests",
+      "selector": "FitMatchTests/FitMatchClosetDeletionTransactionTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchComparisonSyncCoordinatorTests",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchClosetSyncCoordinatorTests",
+      "selector": "FitMatchTests/FitMatchClosetSyncCoordinatorTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchVNextContractTests",
+      "selector": "FitMatchTests/FitMatchVNextContractTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchFinalReleaseHeadlessAcceptanceTests",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchHeadlessUserJourneyTests",
+      "selector": "FitMatchTests/FitMatchHeadlessUserJourneyTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchServerAuthorityIntegrationTests",
+      "selector": "FitMatchTests/FitMatchServerAuthorityIntegrationTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchHistoryClosetPreparationRequestGateTests",
+      "selector": "FitMatchTests/FitMatchHistoryClosetPreparationRequestGateTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchFinalReleaseScenarioExecutionTests",
+      "selector": "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchCandidateEnvelopeTests",
+      "selector": "FitMatchTests/FitMatchCandidateEnvelopeTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchComparisonPermitSequencingTests",
+      "selector": "FitMatchTests/FitMatchComparisonPermitSequencingTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchClosetTransportContractTests",
+      "selector": "FitMatchTests/FitMatchClosetTransportContractTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.MeasurementPolicyConsolidationTests",
+      "selector": "FitMatchTests/MeasurementPolicyConsolidationTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.ClosetPreviewMeasurementRegressionTests",
+      "selector": "FitMatchTests/ClosetPreviewMeasurementRegressionTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "suite.FitMatchShareClosetEntryTests",
+      "selector": "FitMatchTests/FitMatchShareClosetEntryTests",
+      "evidence": "Production Swift owners with synthetic remote. Not authenticated DB."
+    },
+    {
+      "id": "raw.replay",
+      "selector": "FitMatchTests/FitMatchReleaseRawFixtureTests",
+      "evidence": "Three representative raw body replays; ZARA synthetic page shell."
+    },
+    {
+      "id": "matrix.full",
+      "selector": "FitMatchTests/FitMatchReleaseMatrixTests/fullSyntheticCorpusCases",
+      "evidence": "Every frozen planned case executes a scoped synthetic owner probe; live semantics/group decisions remain separate."
+    }
+  ]
+}

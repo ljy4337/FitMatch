@@ -1,0 +1,24 @@
+{
+  "devicesAndConfigurations" : [
+
+  ],
+  "environmentDescription" : "FitMatch-QA · Built with macOS 15.7.7",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1790930459.467,
+  "passedTests" : 0,
+  "result" : "unknown",
+  "skippedTests" : 0,
+  "startTime" : 1790930448.56,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - FitMatch-QA",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 0
+}

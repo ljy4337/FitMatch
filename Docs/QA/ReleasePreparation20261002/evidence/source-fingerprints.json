@@ -1,0 +1,9 @@
+{
+  "scripts/release_qa.py": "1ac38af16661612a4e6cdc6d2a67d39cc72a81e59a3311b30f8615f692acd4b1",
+  "scripts/release_qa_db.py": "eaf98e88ea44654998635fdcc3a46a381d5101704688bbdf657155196bd3ca8b",
+  "scripts/tests/test_release_qa.py": "5feb61f880761068efa14c8ba006e18d5d00750b77a4cea9df43b4e9e7e760ab",
+  "scripts/test_release_qa_db.py": "80652a6defa72f8736c308a8b48521abc91eba9ffd9816685f40a031cf6fcbd5",
+  "FitMatchTests/FitMatchReleasePreparationTests.swift": "f87e73765231ca702dc532617157e36e7f782656b6278e01dc40f44728b53590",
+  "FitMatchTests/FitMatchReleaseRawFixtureTests.swift": "600cb57d2232f83b790ef3d1f547491570e8d7ced43524ccfdda66c7e42d09eb",
+  "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift": "064fa24284ca9daf35890c8979199bc14671e878d8be8fbeab5df9f9150ee728"
+}

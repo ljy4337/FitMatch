@@ -1,0 +1,108 @@
+{
+  "schema_version": "fitmatch-read-only-http-smoke-v1",
+  "plan_sha256": "7724dcfedf8261e74b7bf9ae53355c18aa2a38bc674638b50e2333c87d9ee050",
+  "network_requests": 3,
+  "scope": "Official measurement endpoint receipts only, not Swift parser or authenticated journey. No retries, DB calls or app execution.",
+  "results": [
+    {
+      "provider": "musinsa",
+      "source_product_url": "https://www.musinsa.com/products/4096130",
+      "request_url": "https://goods-detail.musinsa.com/api2/goods/4096130/actual-size",
+      "identity": {
+        "product_id": "4096130"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "scripts/collect-musinsa-parser-inputs.py:ACTUAL_SIZE_URL_TEMPLATE",
+      "started_at": "2026-10-02T08:37:25.187748+00:00",
+      "finished_at": "2026-10-02T08:37:25.303043+00:00",
+      "elapsed_seconds": 0.115,
+      "curl_exit": 0,
+      "http_status": 200,
+      "content_type": "application/json",
+      "final_url": "https://goods-detail.musinsa.com/api2/goods/4096130/actual-size",
+      "error": null,
+      "response_path": "http-smoke/network-20261002/musinsa.body",
+      "response_sha256": "8e837d5e4bfda77e414ea422783dd09f10ebfaae8ebbf4cfe128fa0492aa6745",
+      "response_bytes": 1580,
+      "shape": {
+        "json_object": true,
+        "garment_table_present": true,
+        "size_rows": 2,
+        "measurement_columns_across_sizes": 14,
+        "note": "Structural receipt check only; numeric/semantic validity and Swift parsing not asserted."
+      },
+      "swift_parser_status": "NOT RUN",
+      "page_identity_verification": "NOT RUN",
+      "db_write": false,
+      "receipt_status": "PASS"
+    },
+    {
+      "provider": "uniqlo",
+      "source_product_url": "https://www.uniqlo.com/kr/ko/products/E487688-000/00?colorDisplayCode=31&sizeDisplayCode=005&pldDisplayCode=000&utm_medium=social&utm_source=appshare",
+      "request_url": "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts?productIdsWithColorCode=E487688-000&includeBodyMeasurements=true&simpleSizeChart=true&httpFailure=true",
+      "identity": {
+        "product_core": "E487688",
+        "chart_product_id": "E487688-000",
+        "chart_variant": "generic",
+        "input_color_display_code": "31"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "scripts/collect-uniqlo-parser-inputs.py:size_chart_url",
+      "started_at": "2026-10-02T08:37:25.303460+00:00",
+      "finished_at": "2026-10-02T08:37:25.552169+00:00",
+      "elapsed_seconds": 0.249,
+      "curl_exit": 0,
+      "http_status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "final_url": "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts?productIdsWithColorCode=E487688-000&includeBodyMeasurements=true&simpleSizeChart=true&httpFailure=true",
+      "error": null,
+      "response_path": "http-smoke/network-20261002/uniqlo.body",
+      "response_sha256": "28d17bc69abb4fc69d4dd0f4950b562ffbd4056cf1d4dbe4be60584fd6c049ac",
+      "response_bytes": 6187,
+      "shape": {
+        "json_object": true,
+        "garment_table_present": true,
+        "size_rows": 7,
+        "measurement_columns_across_sizes": 28,
+        "note": "Structural receipt check only; numeric/semantic validity and Swift parsing not asserted."
+      },
+      "swift_parser_status": "NOT RUN",
+      "page_identity_verification": "NOT RUN",
+      "db_write": false,
+      "receipt_status": "PASS"
+    },
+    {
+      "provider": "zara",
+      "source_product_url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%B2%E1%84%90%E1%85%B5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06786003.html?v1=549838589&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/549838589/size-measure-guide?locale=ko_KR",
+      "identity": {
+        "internal_product_id": "549829596",
+        "selected_catentry_id": "549838589"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "FitMatch/Services/ZARAParser.swift:makeSizeMeasureGuideURL",
+      "started_at": "2026-10-02T08:37:25.552562+00:00",
+      "finished_at": "2026-10-02T08:37:26.103012+00:00",
+      "elapsed_seconds": 0.55,
+      "curl_exit": 0,
+      "http_status": 200,
+      "content_type": "application/json",
+      "final_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/549838589/size-measure-guide?locale=ko_KR",
+      "error": null,
+      "response_path": "http-smoke/network-20261002/zara.body",
+      "response_sha256": "83e714214aaf9e1c3e8ee63063b26a34645ba7f6bf49c48e751a0436ec290e46",
+      "response_bytes": 6232,
+      "shape": {
+        "json_object": true,
+        "garment_table_present": true,
+        "size_rows": 4,
+        "measurement_columns_across_sizes": 20,
+        "note": "Structural receipt check only; numeric/semantic validity and Swift parsing not asserted."
+      },
+      "swift_parser_status": "NOT RUN",
+      "page_identity_verification": "NOT RUN",
+      "db_write": false,
+      "receipt_status": "PASS"
+    }
+  ]
+}

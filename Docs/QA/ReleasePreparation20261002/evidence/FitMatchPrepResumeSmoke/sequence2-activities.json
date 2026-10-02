@@ -1,0 +1,35 @@
+{
+  "testIdentifier" : "FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch()",
+  "testIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch()",
+  "testName" : "compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch()",
+  "testRuns" : [
+    {
+      "activities" : [
+        {
+          "childActivities" : [
+            {
+              "isAssociatedWithFailure" : false,
+              "title" : "FitMatchReleaseContinuationTests.compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch()"
+            }
+          ],
+          "isAssociatedWithFailure" : true,
+          "startTime" : 1790932415.161,
+          "title" : "Expectation failed: await viewModel.calculateTemporaryRecommendation(selectedReferenceItem: first) → nil"
+        }
+      ],
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+        "deviceName" : "iPhone 17 Pro",
+        "modelName" : "iPhone 17 Pro",
+        "osBuildNumber" : "23D8133",
+        "osVersion" : "26.3.1",
+        "platform" : "iOS Simulator"
+      },
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ]
+}

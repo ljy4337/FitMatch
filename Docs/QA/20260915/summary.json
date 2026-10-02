@@ -1,0 +1,53 @@
+{
+  "sourceHEAD": "a68c8496628eb0bc1223b34708fb88e8fe945de1",
+  "includesPreexistingUncommittedChanges": true,
+  "appBuild": "PASS",
+  "liveParser": {
+    "status": "PASS",
+    "testCount": 1,
+    "urls": 185,
+    "sizes": 1144,
+    "measurementRecords": 5238,
+    "independentOriginalValueChecks": 15,
+    "matchedOriginalValueChecks": 12,
+    "missingOriginalValueChecks": 3
+  },
+  "automatedCompleted": {
+    "result": "Failed",
+    "passedTests": 658,
+    "failedTests": 82,
+    "skippedTests": 42,
+    "totalTestCount": 782
+  },
+  "initialInterrupted": {
+    "status": "BLOCKED",
+    "reason": "Headless mock always rejects observation; recoveryDoubleSubmitThenClear waits forever for a mutation it cannot reach",
+    "partialCounts": {
+      "passedTests": 177,
+      "failedTests": 34,
+      "skippedTests": 22,
+      "totalTestCount": 233
+    },
+    "countsNotAddedToCompletedRun": true
+  },
+  "physicalDevice": "NOT RUN",
+  "realAppleAuthentication": "BLOCKED",
+  "authenticatedPersistence": "BLOCKED",
+  "iOS17Runtime": "BLOCKED",
+  "serverMutationsExecuted": 0,
+  "legacyUI": {
+    "result": "Failed",
+    "passedTests": 3,
+    "failedTests": 10,
+    "skippedTests": 0,
+    "totalTestCount": 13
+  },
+  "currentUI": {
+    "result": "Passed",
+    "passedTests": 4,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 4,
+    "realAuthentication": false
+  }
+}

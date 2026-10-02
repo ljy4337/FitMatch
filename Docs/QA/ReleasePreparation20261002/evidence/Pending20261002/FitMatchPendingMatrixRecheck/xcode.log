@@ -1,0 +1,9 @@
+Writing result bundle at path:
+	/tmp/FitMatchPendingMatrixRecheck/matrix.xcresult
+
+2026-10-02 19:09:11.426 xcodebuild[72620:27241798] [MT] IDETestOperationsObserverDebug: 32.433 elapsed -- Testing started completed.
+2026-10-02 19:09:11.427 xcodebuild[72620:27241798] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 19:09:11.427 xcodebuild[72620:27241798] [MT] IDETestOperationsObserverDebug: 32.433 sec, +32.433 sec -- end
+** TEST FAILED **
+
+Testing started

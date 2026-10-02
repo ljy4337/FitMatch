@@ -1,0 +1,57 @@
+test_all_incomplete_statuses_fail_closed (test_release_qa.RunnerTests) ... ok
+test_authenticated_receipt_requires_current_run_subcases_and_cleanup (test_release_qa.RunnerTests) ... ok
+test_authenticated_swift_never_starts_without_dedicated_sessions (test_release_qa.RunnerTests) ... db.swift_manual: BLOCKED
+ok
+test_case_receipt_propagates_failed_and_unexecuted_cases (test_release_qa.RunnerTests) ... ok
+test_case_receipt_requires_exact_unique_coverage (test_release_qa.RunnerTests) ... ok
+test_cleanup_cannot_start_without_explicit_ledger_and_sessions (test_release_qa.RunnerTests) ... db.swift_cleanup: BLOCKED
+ok
+test_cleanup_receipt_cannot_impersonate_a_test_run (test_release_qa.RunnerTests) ... ok
+test_controlled_fault_fails_report (test_release_qa.RunnerTests) ... ok
+test_corpus_edit_requires_new_lock (test_release_qa.RunnerTests) ... ok
+test_discovery_errors_are_not_success (test_release_qa.RunnerTests) ... ok
+test_empty_lock_is_not_frozen (test_release_qa.RunnerTests) ... ok
+test_forwarded_production_override_rejected (test_release_qa.RunnerTests) ... ok
+test_full_report_cannot_pass_with_missing_required_cases (test_release_qa.RunnerTests) ... ok
+test_interrupted_cleanup_always_persists_blocked_report (test_release_qa.RunnerTests) ... Traceback (most recent call last):
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/__main__.py", line 18, in <module>
+    main(module=None)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/main.py", line 101, in __init__
+    self.runTests()
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/main.py", line 271, in runTests
+    self.result = testRunner.run(self.test)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/runner.py", line 176, in run
+    test(result)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 122, in run
+    test(result)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 122, in run
+    test(result)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py", line 122, in run
+    test(result)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/case.py", line 653, in __call__
+    return self.run(*args, **kwds)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/case.py", line 593, in run
+    self._callTestMethod(testMethod)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/case.py", line 550, in _callTestMethod
+    method()
+  File "/Users/jinyoung/Developer/FitMatchLocal/FitMatch/scripts/tests/test_release_qa.py", line 39, in test_interrupted_cleanup_always_persists_blocked_report
+    code=module.main()
+  File "/Users/jinyoung/Developer/FitMatchLocal/FitMatch/scripts/release_qa.py", line 536, in main
+    run_swift_cleanup(report,out,args.ledger)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 1093, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 1097, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 1152, in _execute_mock_call
+    raise effect
+KeyboardInterrupt

@@ -1,0 +1,8 @@
+COMMAND: xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-QA -configuration Debug-QA -destination platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676 -derivedDataPath /tmp/FitMatchEnvironmentBuild -disableAutomaticPackageResolution -parallel-testing-enabled NO ONLY_ACTIVE_ARCH=YES -only-testing:FitMatchTests/FitMatchReleaseLiveProductAuditTests -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 300 -resultBundlePath /private/tmp/FitMatchPrep20Smoke/live-parser.xcresult test-without-building
+Writing result bundle at path:
+	/private/tmp/FitMatchPrep20Smoke/live-parser.xcresult
+
+2026-10-02 21:22:21.125 xcodebuild[94900:27403976] [MT] IDETestOperationsObserverDebug: 14.871 elapsed -- Testing started completed.
+2026-10-02 21:22:21.125 xcodebuild[94900:27403976] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 21:22:21.125 xcodebuild[94900:27403976] [MT] IDETestOperationsObserverDebug: 14.871 sec, +14.871 sec -- end
+Testing started

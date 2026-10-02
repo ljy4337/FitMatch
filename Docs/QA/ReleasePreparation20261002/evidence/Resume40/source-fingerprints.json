@@ -1,0 +1,9 @@
+{
+  "scripts/release_qa.py": "aa1c72c6040113129a2d1bedd94101d377cab7294564cdc414810e30aeb1bc07",
+  "scripts/tests/test_release_qa.py": "dad8d057b024c1b4856318bd4946cd1dd7ee9e7855120fda5f78e10fe3455200",
+  "FitMatchTests/FitMatchReleaseMatrixTests.swift": "8ef7fc96d3a997317e70127f39d1169f7630e8f5e5fe4a63925293c552f31636",
+  "FitMatchTests/FitMatchReleaseAuthenticatedSupport.swift": "87ad7955980d796af8c18b555766ac982d4bdf043dd6058b5e28d8ddb1dfb817",
+  "FitMatchTests/FitMatchReleaseAuthenticatedTests.swift": "82a6c2436bd86a313eb35c272f4108420eb63eb85476a16b1c1b124b9a7037a6",
+  "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafety.swift": "d4491baf745640afba14dc35c60f8c9f3277937f352d03477e47631e9889fab7",
+  "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests.swift": "cd12bd9b25a860f46328d764c931804c10415264caa701fd30ad299261ac225b"
+}

@@ -1,0 +1,9 @@
+[
+  "eachBoundedRecoveryCandidateCountResumesThroughProductionSequence",
+  "recoveryDoubleSubmitThenClearUsesTheNewestProductionState",
+  "delayedRecoveryReselectCannotResurrectAfterClear",
+  "rs013PersonalResultReselectAndClearLeaveCompletedHistoryImmutable",
+  "rx013RecoveryLifecycleReconstructionUsesTheLatestClearedAuthority",
+  "cp005EachBoundedRecoveryCardinalityUsesItsOwnServerContract",
+  "cp006ZeroRecoveryCandidatesFailClosedBeforeReferenceOrEngine"
+]

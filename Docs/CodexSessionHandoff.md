@@ -1,3 +1,113 @@
+## 2026-10-02 로컬 변경 QA/main 반영 요청
+
+사용자가 기존 미커밋6개와 미추적548개 전체를 커밋하고 QA 및 main을 최신화하도록 명시적으로 요청했다. 사전 확인에서 원격 QA/main 모두 086617f였고 파일 전체 약22.8MB. 비밀키/JWT/Bearer 패턴 검사는 실제 자격증명 발견 없음. 원본 실측 관련 SQL migration은 Git 등록 대상일 뿐 DB 적용 명령을 실행하지 않는다. 이번 작업은 QA 커밋/푸시 후 main fast-forward/푸시 및 두 원격 HEAD 일치 확인으로 마감한다. 최종 커밋 SHA와 검증 결과는 Git 기록 및 작업 보고 참조.
+
+## 2026-10-02 App Store 준비 — 아카이브 성공, 제출 준비 미완료
+
+Clean main 086617f / Production Release 1.1(14) archive exit 0. 실제 산출물 운영 URL 확인. archive audit exit 1: 공개 개인정보/지원 URL 빈 값, 앱·확장 Distribution 서명 미적용. Export/Validate/upload/review NOT RUN. 주간 잔여 15% 도달로 추가 작업 중단. 상세: `Docs/QA/AppStorePreparation20261002.md`. 원래 QA 변경 보존, 추가 소스 수정·commit/push 없음.
+
+## 2026-10-02 QA → main 병합 및 원격 반영
+
+- 사용자 1차 출시 결정 및 QA→main 요청. main 5d78a42→086617f fast-forward, 9개 커밋/33개 변경 파일. origin/main push 성공. QA와 main 파일 tree 동일. 기존 QA checkout의 미커밋6개/미추적546개는 보존했고 일괄 stage/commit하지 않았다.
+- 별도 main checkout `/private/tmp/FitMatch-main-release-20261002`에서 수행. 기존 경로는 QA 유지. 누락 목록 `Docs/QA/MainMergeAudit20261002.md`(로컬 전용). 문서/테스트/fixture/helper 등 로컬 산출물은 원격 반영되지 않았다고 명확히 구분.
+- 사용자가 추가 테스트를 중단하고 출시 진행 결정. 이번 새 앱 build/test/실기기/archive/upload NOT RUN. 기존 미검증 DB 통합 항목은 남아 있다. Git diff/tree/보호스크롤 확인 PASS. 스킴별 production/QA URL source 분리 유지.
+
+## 2026-10-02 잔여15%까지 재개 — 초기화 자동 승인 거부 / 실제 DB 인증 미연결
+
+- 사용자 개발 두 계정 데이터 초기화 승인. 개발 hnkpl 프로젝트 ACTIVE_HEALTHY 및 실제 삭제 RPC/trigger/FK READ ONLY 확인. A 활성 옷/비교 0/0, B 6/9. B 전체(기존 삭제 포함) 67/38. 전체 DB가 아닌 활성 두 계정 행만 기존 soft-delete 필드로 처리하는 transaction 요청.
+- 자동 승인 검토가 관리자 SQL 변경을 거부: 정상 사용자/RLS 경로가 아니어서 데이터 보호와 권한 경계를 확인할 수 없다는 사유. 적용 0건. 우회 없음. 범위를 명시한 재승인 질문을 사용자에게 제시. 별도 READ ONLY로 A 0/0, B 6/9 불변 재확인. Auth/스키마/RLS/운영 변경 없음.
+- 앞선 '추가 이메일 계정 필수/B 제외'는 정정: B도 정상 Apple access/refresh session이면 기존 Swift/HTTP 하네스 사용 가능. 비밀번호 helper만 Apple-only 로그인을 만들 수 없다. 정상 세션은 아직 미연결이며 계정 초기화와 별개다.
+- `python3 scripts/release_qa_db.py preflight --output /tmp/FitMatchResume15DBPreflight.json`: BLOCKED exit2, 요청0/case0. 새 앱 테스트/빌드/live parser/full NOT RUN. 이전 PASS를 이번 실행으로 집계하지 않음. 문서와 증거만 갱신, 기존 dirty 보존. 최신 Resume15Report.md / DedicatedAccountReadiness.md.
+
+## 2026-10-02 사용자 제공 계정 READ ONLY 확인 — 빈 이메일계정1개 추가 필요
+
+- 사용자가지정한개발DB두계정만확인. 개인정보/자격값미기록. A=email인증·확인완료·비밀번호설정있음·미삭제옷/비교0/0. B=Apple인증·비밀번호없음·미삭제옷6/비교9행. B는기존데이터보호를위해자동테스트에서제외. 계정이나데이터변경0.
+- 기존하네스는두빈전용계정의정상인증필요. A정상세션도미연결. 빈이메일테스트계정1개추가와Mac안전로그인연결이남음. 상세DedicatedAccountReadiness.md. 관리자조회는앱사용자권한기능성공증거가아님. 새앱테스트/빌드/DB쓰기NOT RUN.
+
+## 2026-10-02 재개 — 사용자 위임 계산기준 확정 / 실제DB 인증 대기
+
+- 사용자 “알고리즘을 알아서 만들어 적용” 결정위임에 따라 1차출시에는 현재검증된5점/cm가중점수·항목/최종반올림·점수→가중절대차→정확UUID순서를 선택했다. MeasurementPolicy4.4 제품기준화,policy-expectations3개RESOLVED. 현재코드와일치하므로 산술코드/숫자정답/UI/DB정책변경0. 최적착용정확도입증아님. 과거미확정기록은이번결정으로대체하며원본JSON/hash보존.
+- QA086617f 유지. 개발DBREADONLY6상품의수집기록81/size620/원본2488candidate추출,exactidentity/변조거부테스트2개추가. 기존56realfixture·90URL불변. candidate는현재사용자승인seed가아니며BLOCKED표시. 최신/첫사이즈fallback없음. retailer details/계정/actor정보미포함.
+- 이번Swift집중10/10PASS0skip exit0(test-without-building),Python41PASS exit0,preflightexit2:정책PASS/인증DB BLOCKED. 이전85회/3사live각1URL은이전증거이며이번재실행아님. DBwrite/Auth생성/운영요청/productionSwift/commit/push/merge0.
+- 사용자아이폰Supabase관리사이트로그인가능확인. Mac연결브라우저에관리세션없음,전용테스트계정정상세션도없음. 계정존재확인/안전한Mac로그인연결안내 PhoneAuthPreparation.md. 정책질문은해소,실제DB인증후exactseed·3×3/누락정답·CRUD/A–H/격리/정리대표실행남음. 대량full/실기기/출시승인범위추가없음.
+- 최신Continuation20Report.md,DevelopmentSeedPreparation.md,ScorePolicyDecision.md,evidence/Continuation20/. 마감직전21%잔여. 기존dirty/untracked보존;이번신규test/자료는로컬미추적.
+
+## 2026-10-02 잔여20%까지 재개 — 준비 smoke85회 PASS / 인증·정답 기준 일부 BLOCKED
+
+- 사용자20%잔여까지 재개 승인으로 앞선30%기준 대체. QA HEAD086617f / FitMatch-QA Debug-QA / 개발hnkpl 유지. 마감직전24%잔여로 기준 전에 독립 가능한 보완 완료. 이번 범위는 최초 요청의 자동테스트 준비+대표smoke이며 대량full/실기기/출시승인을 잔여필수로 추가하지 않는다.
+- 신규 literal History oracle: ref50/target52/delta2/score90/reliability1/coverage1의 독립고정값으로 실제hydrator→파일SwiftData→새container확인. activeCloset61수정 후 과거50/전체envelope보존. 현재계산특성화이며 독립정책승인 아님.
+- 테스트 하네스만 보완: 다음동일상품비교 전에 이전run 소유comparison/참조옷을 list+exact조회 검증→정확hide receipt→fresh tombstone→ledger저장. RED 기존7PASS/신규7FAIL exit65 이후 GREEN focused12methods/17runsPASS exit0. 기존superseded/pending/응답유실ledger의 소유증거 부족은BLOCKED 유지. 실제DB복구성공 주장이 아님.
+- 최종 `python3 scripts/release_qa.py smoke --output /tmp/FitMatchPrep20Smoke` (실제UDID/DD환경변수는보고서): 전체exit2/71PASS3BLOCKED. 앱61methods/85runsPASS(0FAIL/0skip), 실제ProductURLParserService3사각1URLPASS(M2/U7/Z4사이즈), Python실행기·자료·세션39PASS, DBguard9PASS. report재집계exit2. focused와smoke 실행수합산금지.
+- 원문inventory:90URL(각20정상후보+10경계),56real+1synthetic,실측표51,27exact rawpointer검사 추가. 동결69파일/출처147검증. 실제3×3서버정답연결은미완료;756합성목록 전체실행을 이번완료조건으로 추가하지 않는다. 개발DBread-only ACTIVE_HEALTHY/상품M24U38Z22/정확observation2사이즈후보쌍M47U146Z27확인. 정상user승인/정답seed로승격안함.
+- 남은 원래준비:전용2계정정상인증→실제CRUD·격리/정리대표실행,exactseed/3×3방향·지원그룹·누락패턴정답연결,score-formula/rounding/tie-break 독립제품기준. 정상인증변수없음. 사용자필요도움은이메일/로그인과제품기준결정;DB/계산확인은에이전트담당. 모든오류×모든화면을새미완료로늘리지않음.
+- 최종검증PASS:plan7/data69/이번소스8해시,coverage19항목JSON,미추적소스공백,git diff --check,보호스크롤무변경.
+- 이번추가productionSwift/UI/DB계약·정책수정 없음. 기존두View등dirty/untracked보존. DBwrite/Auth생성/운영요청/commit/push/merge/deploy0. 신규테스트/지원자료로컬untracked이며원격반영아님. 최신보고Resume20Report.md,해당요구사항PreparationCoverage20.md,증거evidence/Resume20/,파일ChangedFiles.txt. 이전UserChecklist의아이폰표는이번준비범위밖이라고명확히구분.
+
+## 2026-10-02 남은 테스트 담당 구분 / 사용자용 간단 체크리스트
+
+- 사용자 요청에 따라 자동 검사 담당과 사용자 로그인 도움·실기기 확인을 분리했다. `Docs/QA/ReleasePreparation20261002/UserChecklist.md`에 간단한 체크표와 결과 전달 양식을 저장하고 README에 연결했다.
+- 에이전트 담당: 잔여 오류·취소 검사, 정확한 상품/정답 자료 준비, 중단 정리 경로 보완, 점수정책 근거 조사. 정상 인증 확보 후 실제 개발DB CRUD/비교/선택변경/보유등록/기록복원·삭제/사용자격리와 3×3 비교 실행. 실제 DB에 반영된 뒤 응답을 잃는 검사는 안전한 주입 방식 준비가 필요하며 성공 보장하지 않음. 계약변경은 기존 승인 범위와 별도 판단. 대량full은 이번 준비 범위에 포함하지 않는다.
+- 사용자 담당: 필요한 이메일 인증·로그인 도움, 근거·선택지 제시 후 실제 정책 결정, QA 아이폰의 로그인·공유·핵심화면 동작 확인. DB나 점수 손계산을 사용자에게 넘기지 않는다.
+- 이번 작업은 문서 작성만 수행. 새 테스트/빌드/DB 요청·쓰기/앱 변경/commit/push NOT RUN. 기존75회PASS를 이번 재실행으로 집계하지 않는다. 문서 diff·보호스크롤 검사 PASS.
+
+## 2026-10-02 잔여30%까지 재개 — 앱75회 PASS / 실제 인증 DB 준비 일부 BLOCKED
+
+- 사용자30%잔여까지 재개 승인으로 아래40%중단 대체. QA HEAD086617f / FitMatch-QA Debug-QA / 개발hnkpl 유지. 최종 사용량69%사용/31%잔여로 중단기준 전에 이번 소규모 검증 마감. 운영 요청·변경, 실제Auth/DB mutation, 제품 결함/정책 수정, commit/push/merge/deploy 없음. 기존 dirty/untracked 보존.
+- 두 View(CompareFlowSheet/RecommendationResultView)에 nil-default DEBUG 관찰과 기존ViewModel 주입을 추가하고 기존버튼 inline 동작만 동일 private함수로 추출. 실제마운트 화면의 다른사이즈→다른내옷→다른사이즈 state/cache/정확identity 확인. 외형·문구·제스처·보호스크롤 변경없음. 물리터치/실기기 증거아님.
+- 신규 수기계산 경계5개(정책 UNRESOLVED 유지), 저장오류7종 후 새로컬조회/무관한옷보존/동일wire요청 재시도, superseded완료비교 정리거부1개. 최초focused14메서드/32실행 중 mounted1FAIL은 History projection ID를 원본Closet ID로 오인한 테스트 결함. production 저장/onAppear 성공로그 확인후 테스트만수정. 실패보존, mounted+ledger8PASS exit0.
+- 최종 `python3 scripts/release_qa.py smoke --output /tmp/FitMatchResume30Smoke` (명시simulator env) exit2/BLOCKED. 앱빌드·발견 PASS, **56메서드/75실행 PASS·0FAIL·0skip**. 별도live parser1test에서3사각1URL PASS(무신사2/유니클로7/자라4사이즈). runner+session35/DBguard9 PASS. 총집계70PASS/3BLOCKED: 점수정책3항목, 전용인증DB, Swift DB검사. source/plan해시·diff·보호스크롤 PASS. full/실기기 NOT RUN.
+- DEV함수 READ ONLY 대조: history는 최신completed head만 반환, tombstone은deleted_at 있는행만 반환. 중단복구ledger의 superseded 완료행은 두목록에없어소유권재확인불가→BLOCKED. guard를완화하지않음. 실제사용자제품결함을재현한것은아니며 테스트정리준비제한. 전용2계정/정확seed·실제3×3승인binding·중단복구계약·독립정책승인 남음.
+- 최신 `Docs/QA/ReleasePreparation20261002/Resume30Report.md`, PendingTests.md, AuthenticatedGapAudit.md, evidence/Resume30/. 테스트/실행기/자료 대부분 로컬미추적. git status의untracked=no 설정으로기본출력에숨겨져있으므로 `git status --short -uall`로확인. 파일작성/테스트통과는원격반영아님.
+
+## 2026-10-02 남은 준비 보완 — 주간40%잔여 도달로 중단
+
+- QA HEAD086617f / FitMatch-QA Debug-QA / 개발hnkpl 유지. 제품 Swift/UI/정책/DB 계약·실제 Auth/DB mutation·commit/push 없음. 기존 dirty/untracked 보존.
+- 전용2계정 정상 세션 helper + 오프라인검사 + 안내 추가. default는 요청/파일 생성없음. 호스트/공개키/expected UUID/서버 Auth 검증후 private temp700/file600. 실제로그인NOT RUN. Mac Python3.9 임시폴더 상수 누락으로 통합34개중3FAIL 재현·수정, 최종runner23+session12=35PASS. 실패로그보존.
+- 기존 History 대체사이즈 UI 부분검사 추가. Xcode build-for-testing exit0, 신규selector enabled 발견 exit0. 실제실행BLOCKED. History 내옷변경 버튼은 후보선택전 observation mutation 가능하므로 누르지않음. 전체P03은 정확 계정/run ledger/생성ID/cleanup 연결 전 BLOCKED. 제품hook/가짜상태모델 없음.
+- preflight 호스트권한 실행 exit2: simulator/도구/QA환경/고정자료PASS, 정책3항목/전용인증BLOCKED. 이전앱smoke61회·3사대표URL PASS는 재실행하지않았음. 대량full/실기기NOT RUN.
+- 주간60%사용/40%잔여 확인후 추가검사중단, 실행중프로세스없음. 사용자 재개여부 질문. 점수현행유지/전용계정존재 질문도 미응답. 결과보존만수행. 최신 `Docs/QA/ReleasePreparation20261002/SessionPreparationReport.md`, 증거 evidence/SessionPreparation/. 신규파일 로컬미추적·미커밋.
+
+## 2026-10-02 잔여 40%까지 추가 검사 승인 — 대표 검사 PASS / 인증·정책 근거 BLOCKED
+
+- 사용자가 이전50%잔여 중단을 해제하고40%잔여까지 진행 승인. 이번 마감조회55%사용/45%잔여로 새중단기준 미도달. QA HEAD086617f / FitMatch-QA Debug-QA / 개발hnkpl 유지. 제품 Swift/UI/비교정책/DB 계약 수정·실제DB write·commit/push/merge 없음. 기존 dirty/untracked 보존.
+- **이전 무신사0 표시 BUG 판정 철회:** MeasurementPolicy3.1/3.5·commit5d78a42·10/1 후속결정은 받은 무신사0만 `-` 표시. 이전matrix v1은 이를 빠뜨린 parent해석을 최신사용자명령으로 오인했다. 후속철회 원문 근거 없음. v1/실패로그/원문corpus 보존하고 matrix-binding-v2.json에 사유·대체관계 기록. 제품/정책은 그대로, MUS0 dash/기타0숨김/원본0보존/점수제외를 검증해3probe PASS. 이보다 아래의 ‘0표시결함’ 보고는 과거 오판이며 현행제품결함 근거로 쓰지 않는다.
+- `/tmp/FitMatchResume40Combined`: `python3 scripts/release_qa.py smoke --output /tmp/FitMatchResume40Combined` exit2/BLOCKED. 앱컴파일 및48메서드/매개변수61회 PASS,0FAIL/0skip. 별도 실제파서1test에서 MUSINSA/UNIQLO/ZARA각1URL PASS(2/7/4사이즈). 당시runner20/DBguard9 PASS. 이후runner보고수정 단위검사23PASS; Swift변경없이파이썬만변경하였으므로 전체Swift재실행으로표현하지않음.
+- `/tmp/FitMatchResume40Focused`:10메서드/11회PASS(exit0). 실제Task.cancel은이미기존테스트에존재했음; 수동read-back, 링크authority준비(false/true), Zara페이지대기→guide취소3메서드/4회 재사용. synthetic remote증거이며 전체화면/실제네트워크취소아님. 새Swift ledger안전helper6개PASS. 독립restorecleanupselector는컴파일/발견만PASS; 실제인증실행NOT RUN.
+- `release_qa.py cleanup --ledger <original Swift ledger> --output <new dir>` 구현. 원래run/두계정/dev/project/marker/exact ID/전체온라인소유근거 확인후자기데이터만정리. 불명확pending비교는BLOCKED. 인증없음실제명령은exit2/BLOCKED·요청미시작. review에서발견한 Ctrl-C후보고누락/nonobjectreceipt예외를RED→GREEN수정; stale mode/binding/corpus hash도거부. 최종runner23PASS, 수정독립읽기리뷰추가결함없음(리뷰agent테스트실행아님).
+- 개발DB READ ONLY:프로젝트ACTIVE_HEALTHY, 일부catalog조회. 최종runtime조회는read-onlytransaction에서도Authentication required로차단; auth.uid/권한우회없음. 전용2계정세션/검증seed없어실제사용자CRUD·RLS·A–H·cleanupBLOCKED. rawclassification_status만으로최종분류/준비상태결론내리지않음. 점수공식/반올림/동점독립승인근거UNRESOLVED 유지(ExpectationAudit.md). 대량full/실기기NOT RUN.
+- 최신보고 `Docs/QA/ReleasePreparation20261002/Resume40Report.md`, 미진행목록PendingTests.md, 증거evidence/Resume40/. 새테스트/helper/binding/로그모두ChangedFiles.txt 포함, 로컬미추적·미커밋이며원격반영아님. 현행본검사명령 `python3 scripts/release_qa.py full`은필수BLOCKED가남아전체PASS불가.
+- 마감PASS:plan/data해시,신규source whitespace,git diff --check,보호스크롤무변경. report재집계exit2/BLOCKED. 이전준비/실패로그보존. 제품출시승인또는전체테스트완료로표현하지않음.
+
+## 2026-10-02 미진행 테스트 보완 — 추가 실행 완료 / 50% 사용량 기준 중단
+
+- QA HEAD `086617f49cd19c8c3e2777e75efa820d7f886b5f`. FitMatch-QA/Debug-QA/개발 hnkpl 환경. 제품 Swift/UI/정책/DB 계약 변경, 실제 DB write, commit/push/merge 없음. 기존 dirty/untracked 자료 보존. 새 테스트와 실행기·문서는 로컬 미추적이며 원격 반영 아님.
+- `python3 scripts/release_qa.py smoke --output /tmp/FitMatchPendingSmokeChecked` exit2, 전체 FAIL. 앱/테스트 컴파일 성공, 39 메서드 PASS/1 FAIL/0skip (매개변수 확장51PASS/1FAIL). 새 lifecycle2개 PASS: 등록→재조회→현행 async 수정→재조회→삭제, 실측 async 수정→같은 상품 새 비교. 실제 Swift owner+synthetic remote이며 real DB 아님. 별도 live parser1test에서 MUSINSA/UNIQLO/ZARA 각1URL PASS(2/7/4사이즈). runner18/DBguard9 PASS.
+- 새 matrix binding은756개 ID를 실제 Swift synthetic probe에 연결, 이번에는3개만 실행했다. raw_zero 실제 owner에서 FAIL: MUSINSA0은 행을 남기고 `-`로 표시하며 최신사용자 zero숨김 요청과 충돌. 원본저장과 별개. 제품/정책 수정 금지 범위여서 FAIL 유지. 또 exact size 불일치가 DTO의 `conflictingProof("authorized_candidate_product_size_ids")`로 더 일찍 정상거부된 것을 테스트가 오판해 해당 정확한 오류만 허용하도록 테스트수정. 좁은 재검사 exit65 결과는 아래와 같음.
+- musinsa-to-musinsa-A-raw_zero=FAIL, musinsa-to-uniqlo-A-complete_shared_canonical=PASS, zara-to-musinsa-G-exact_identity_mismatch=PASS. 최초 실패를 덮어쓰지 않으며 후속 재검사는 matrix1method만 실행했다. 실제 retailer/그룹 승인과 synthetic provider 이름은 별개다. 756대량검사 NOT RUN.
+- 실제 Swift 인증 DB테스트2개 및 지원 코드 추가, 빌드·발견 PASS / 실행 BLOCKED. 전용2계정 access+refresh token과 정확한상품 seed 없음. SDK/DomainClient/engine/history/deletion owner를 호출하고 fresh read, 소유ledger, 자체정리 검증을 준비했다. interrupted Swift ledger 독립 재정리 명령은 미완료. 개인Keychain·관리자권한·RLS우회 사용 없음.
+- 실행기: exact case목록/현재run ID/cleanup/모든subcase 통과를 확인해야PASS, forwarded 운영DB override차단. RED/GREEN18개. 초기testonly생성자/throwing macro컴파일오류는 수정했으며 실패로그보존. 실제점수정책 독립근거·실제3×3승인·일부private UI선택상태는 여전히BLOCKED. full/실기기/출시승인 NOT RUN.
+- 최신목록 `Docs/QA/ReleasePreparation20261002/PendingTests.md`, 결과 `PendingReport.md`, 코드범위 LifecycleCoverage/MatrixCoverage/AuthenticatedCoverage, 증거 evidence/Pending20261002/. 이전 ResumeReport의37메서드 통과 기록을 현재전체PASS로 사용하지 않는다.
+- 주간50%사용/50%잔여도달로 추가테스트중단, 사용자에게 계속/중지결정요청. 실행중작업은종료됐고 결과보존만완료. 사용자답변없이 추가검사재개하지않음.
+
+## 2026-10-02 QA 테스트 준비 재개 — 대표 검사 PASS / 실제 인증 DB·본검사 준비 일부 BLOCKED
+
+- 기준 `QA` HEAD `086617f49cd19c8c3e2777e75efa820d7f886b5f`, `FitMatch-QA` / `Debug-QA` / 개발 `hnkplvyegonlhumlejst`. 기존 dirty/untracked 자료 보존. 이번 변경은 테스트·실행기·문서이며 production Swift/UI/DB 계약·정책 변경, DB write, commit/push/merge/deploy 없음. 아래 이전 준비 기록 중 디스크 차단·대표 연속 검사 2/3 미연결 상태는 이번 결과로 대체하며 과거 실행 기록은 보존한다.
+- Mac 저장공간: 앞선 승인된 정리에서 오래된 `/private/tmp/FitMatch*` 빌드 캐시만 제거하여 약 17.8GiB 확보. 소스/Git/현재 QA 캐시/배포 아카이브/기존 테스트 증거 유지. 최종 smoke 공간 검사 PASS. 정리 journal 사본 `Docs/QA/ReleasePreparation20261002/evidence/Resume20261002/`.
+- 최종 명령 `python3 scripts/release_qa.py smoke --output /tmp/FitMatchPrepResumeFinal`: 전체 exit 2/BLOCKED. QA 앱·테스트 빌드 및 **37개 메서드 / 매개변수별 49회 실행 PASS, 0 FAIL/0 skip**. 실제 ProductURLParserService 별도 1개 테스트에서 MUSINSA/UNIQLO/ZARA 각 1URL PASS(2/7/4사이즈). runner self-test 13 PASS, 오프라인 DB 안전장치 9 PASS. 발견된 요청 선택자 실행 여부 확인 PASS. 원본 xcresult `/tmp/FitMatchPrepResumeFinal/`; 로그/JSON 사본은 문서 evidence/에 보존.
+- `FitMatchReleaseContinuationTests` 2개 추가: 새 내 옷 선택 후 새로운 승인 batch 분리, 현재 선택 사이즈 L 보유 등록→정확 read-back 투영→등록한 옷으로 새 비교. 실제 앱 owner + synthetic RPC이며 대체 사이즈의 UI 선택 state/실제 DB E2E 증거는 아니다. 신규 fixture의 historical canonical code 및 local History ID/server comparison ID 가정 오류로 최초 실패했고 fixture만 보정 후 최종 통과. 제품 결함 수정으로 집계하지 않는다.
+- `FitMatchReleaseTransportFaultTests` 3개 메서드/15회 실행: 실제 Supabase SDK·앱 RPC client에 URLProtocol로 offline/403/429/500/timeout/malformed/cancelled 주입. 43개 가로챈 HTTP 요청, 실제 전송/DB write 0. 삭제는 로컬 commit 차단까지, 다른 RPC는 오류 전파까지 검증했다. URL 취소 오류는 실제 Task.cancel/UI 이탈의 대체 증거가 아니다.
+- 실행기 결함 2건 RED→GREEN: mode 없는 결과의 허위 PASS, 중단된 비어 있지 않은 output 폴더의 과거 증거 재사용. 결과 종류 검증 및 실행 전 출력 폴더 검사 추가. 기대값/정책/원문 corpus를 완화하지 않았다. 변경 전 정답표·계획 해시 및 실패 로그 보존.
+- 실제 개발 Auth read-only: ACTIVE_HEALTHY, `/auth/v1/settings` HTTP 200, email 가입 활성/확인 필요. 서로 다른 전용 2계정의 인증 token/UUID 미설정으로 실제 사용자권한 DB 검사 BLOCKED. 개인 Keychain 사용·계정 생성·인증/RLS 완화 없음. 점수 공식/반올림/동점 처리의 최신 독립 정책은 UNRESOLVED. 실제 인증 Swift A–H, 3×3/A–G/누락패턴 본검사 연결도 미완료이며 full은 이를 BLOCKED로 보고한다. 대량 full, 실기기 UI, 출시 승인 NOT RUN.
+- 최신 상세 결과 `Docs/QA/ReleasePreparation20261002/ResumeReport.md`, 계정 준비 `AuthReadiness.md`, 변경/재현 기록 `PreparationChanges.md`, 전체 파일 목록 `ChangedFiles.txt`. 신규 파일은 로컬 미커밋/미추적이며 원격 반영 아님. 최종 사용량 조회 주간 38% 사용/62% 잔여로 사용자 지정 50% 잔여 확인 기준에 도달하지 않음.
+- 마무리 PASS: `git diff --check`, 보호 스크롤 무변경, 실행 소스 9개·계획 4개·데이터 69개 해시 검증. report 재집계 exit2로 정책/DB BLOCKED 유지. 마지막 디스크 여유 16GiB.
+
+## 2026-10-02 QA 1차 출시 자동 테스트 준비 — 부분 완료
+
+- 기준 QA HEAD `086617f`; 기존 untracked자료 보존. 실제 production/UI/DB 정책 변경 없음. 테스트/실행기/고정 원문·URL·정답표·보고서를 `Docs/QA/ReleasePreparation20261002/`에 준비. 진입 `python3 scripts/release_qa.py preflight|smoke|full|report` (report는 --output 필요). QA/Debug-QA/개발 hnkpl만 허용하며 운영/forwarded override 차단. full 대량 검사는 NOT RUN.
+- 최종 smoke `/tmp/FitMatchPrepSmokeFinal`: 실제 Swift owner32 PASS/0 FAIL/0skip, 실제 ProductURLParserService live1 test 안에서 MUSINSA/UNIQLO/ZARA 각1URL PASS (2/7/4사이즈,14/28/20원본행). runner11/DBguard9 PASS. 새 oracle4개 및 synthetic commit→response timeout→동일request retry 추가. 원문 replay3개 포함, Zara measurement real+page shell synthetic 구분. 초기 nested macro 컴파일/선택자0실행/합성 Zara 상품명누락은 테스트 도구 결함으로 수정했고 제품 결함으로 판단하지 않음.
+- 전체 종료2/BLOCKED: 전용 개발 계정2개 자격정보 없어 DB write0; score formula/round/tie 독립 정책 미확정; 연속2/3/실제 auth3x3 전체 연결 미완성. 90URL(각20정상후보+10경계),56real+1syntheticfixture,756미실행조합 명세는 이번 실행PASS수에 포함하지 않음. DB 구조 read-only 확인, 실제 사용자권한 mutation NOT RUN. 데이터/테스트정답 해시 고정. report필수항목 누락/0tests/skip을 PASS로 처리하지 않음.
+- 최종 preflight `/tmp/FitMatchPrepFinalPreflight`는 locks/simulator PASS지만 여유337MiB로 새빌드 BLOCKED. 기존캐시/사용자파일 삭제 안 함. git diff --check/protected-scroll PASS. 실기기UI/TestFlight/full/commit/push/merge/DBwrite 없음. 최종 상세근거 `Docs/QA/ReleasePreparation20261002/Report.md`; 실행 로그·test tree복사 evidence/; 원본xcresult는 /tmp에 보존. 사용자 요청 주간50% 잔여알림: 최종조회25%사용/75%잔여, 확인요청기준 미도달.
+
 ## 2026-10-02 QA 통합 및 개발환경 테스트 기준
 
 - `sharebtnmodify`의 검토된 5개 커밋(`854ed0b`..`1c09701`)을 `QA`의 병합 커밋 `a9f0769`에 전체 반영하고 원격 `QA`로 푸시했다. 공통 부모 이후 `QA`에는 무신사 0 실측 표시 수정의 별도 커밋 `5d78a42`가 있어 단순 fast-forward가 아니며, `FitMatch Behavior Map.md`의 겹친 설명만 두 흐름을 보존해 해결했다. 원격 재조회 시 `QA=a9f0769`, `main=5d78a42`; `main`은 변경하지 않았다.

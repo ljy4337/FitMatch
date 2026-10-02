@@ -1,0 +1,7 @@
+Writing result bundle at path:
+	/tmp/FitMatchResume30MountedLedger.xcresult
+
+2026-10-02 20:42:37.826 xcodebuild[86825:27348019] [MT] IDETestOperationsObserverDebug: 14.252 elapsed -- Testing started completed.
+2026-10-02 20:42:37.826 xcodebuild[86825:27348019] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 20:42:37.826 xcodebuild[86825:27348019] [MT] IDETestOperationsObserverDebug: 14.252 sec, +14.252 sec -- end
+Testing started

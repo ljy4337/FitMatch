@@ -1,0 +1,644 @@
+{
+  "version": 1,
+  "scope": "Automated test preparation and small smoke only; no mass full, release/device qualification, product or policy fix.",
+  "baseline": "QA 086617f49cd19c8c3e2777e75efa820d7f886b5f with existing local changes",
+  "execution_semantics": "A-H/1-10 PASS rows refreshed by Resume20 smoke:61 methods/85 parameter executions, synthetic remote. Persisted History also focused-tested. Real authenticated DB remains BLOCKED.",
+  "prior_execution": {
+    "methods": 56,
+    "parameter_expanded": 75,
+    "failures": 0,
+    "skips": 0,
+    "evidence": "evidence/Resume30/smoke/app-summary.json"
+  },
+  "requirements": [
+    {
+      "requirement": "A",
+      "smoke_ids": [
+        "A",
+        "A-duplicate/8",
+        "9-committed-response-lost"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess",
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave",
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback"
+      ],
+      "input": "Exact product/variant/selected size/observation and immutable client item UUID.",
+      "expected_owner_or_view_output": "Authoritative receipt projected before saved; ambiguous reply retains same request.",
+      "expected_counts": "Local created1; concurrent duplicate/retry additional0. Fake remote accepted identity1; real DB NOT RUN.",
+      "fresh_instance_read": "Exact remote get; local fresh-context preservation also fault.linked_save_state.",
+      "unaffected": "Other items covered by sequence1 and save-fault control row, not every A selector.",
+      "policy_basis": "AGENTS Persistence; MeasurementPolicy 3.1/3.3/3.6",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:2137",
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:1451",
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:2048"
+      ]
+    },
+    {
+      "requirement": "B",
+      "smoke_ids": [
+        "B",
+        "B-rejection",
+        "sequence.1",
+        "sequence.4.async"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess",
+        "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues",
+        "FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity",
+        "FitMatchTests/FitMatchReleaseLifecycleTests/asyncManualMeasurementEditRereadsBeforeExplicitNewComparison"
+      ],
+      "input": "Linked exact size edit; manual chest50→56; independent control chest61.",
+      "expected_owner_or_view_output": "Read-back matches request before saved; stale read-back cannot succeed; next explicit comparison uses56.",
+      "expected_counts": "Existing target update1/new0; control unchanged.",
+      "fresh_instance_read": "New ModelContext before comparison and after edit.",
+      "unaffected": "Control receipt unchanged; prior captured measurement50 retained. Persisted numeric History added separately.",
+      "policy_basis": "MeasurementPolicy 3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift:843",
+        "FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift:8",
+        "FitMatchTests/FitMatchReleaseLifecycleTests.swift:10",
+        "FitMatchTests/FitMatchReleaseLifecycleTests.swift:70"
+      ]
+    },
+    {
+      "requirement": "C",
+      "smoke_ids": [
+        "C",
+        "C/6",
+        "sequence.1",
+        "fault-delete-ambiguous"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence",
+        "FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity",
+        "FitMatchTests/FitMatchClosetDeletionTransactionTests/ambiguousNetworkFailureKeepsIntentAndLocalItemThenRetryConfirmsAbsence"
+      ],
+      "input": "Two Closet identities; delete target only; associated synthetic completed History.",
+      "expected_owner_or_view_output": "Server acknowledgement precedes local removal; ambiguous response retains intent.",
+      "expected_counts": "Target active−1/control delta0; associated History visibility hidden, remote evidence retained.",
+      "fresh_instance_read": "New local context and synthetic list read.",
+      "unaffected": "Other Closet remains; remote History immutable evidence is not hard-deleted.",
+      "policy_basis": "AGENTS Persistence; MeasurementPolicy5; current deletion contract",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:664",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:600",
+        "FitMatchTests/FitMatchReleaseLifecycleTests.swift:10",
+        "FitMatchTests/FitMatchClosetDeletionTransactionTests.swift:80"
+      ]
+    },
+    {
+      "requirement": "D",
+      "smoke_ids": [
+        "D",
+        "D-partial",
+        "D-tie",
+        "D-malformed",
+        "D-boundary.item-half",
+        "D-boundary.final-half",
+        "D-boundary.clamp-endpoints",
+        "D-boundary.weighted-delta-tie",
+        "D-boundary.negative-absolute-evidence"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload",
+        "FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts",
+        "FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder",
+        "FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult",
+        "FitMatchTests/FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean",
+        "FitMatchTests/FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores",
+        "FitMatchTests/FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence",
+        "FitMatchTests/FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID",
+        "FitMatchTests/FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore"
+      ],
+      "input": "oracle.json literal ref[50,48,70,60], candidates[52,47,73,61]/[54,50,76,63], weights[2,1.5,1,1]; oracle-boundaries-v1.json.",
+      "expected_owner_or_view_output": "Preview/detail/completion score91/82; signed[2,-1,3,1]; reliability4/coverage1; partial94/2/.5; malformed evidence rejected.",
+      "expected_counts": "DB0: pure production decoder/adapter/scoring/payload. History projection numeric bridge is separate new test.",
+      "fresh_instance_read": "None in D oracle; new History test reopens disk.",
+      "unaffected": "Same-label sizes distinguished by exact UUID; malformed input produces no result.",
+      "policy_basis": "MeasurementPolicy4.3/5; formula/rounding/tie characterization, independent approval UNRESOLVED",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:9",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:49",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:65",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:75",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:85",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:101",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:116",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:136",
+        "FitMatchTests/FitMatchReleasePreparationTests.swift:155"
+      ]
+    },
+    {
+      "requirement": "E",
+      "smoke_ids": [
+        "E",
+        "E-failure"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry"
+      ],
+      "input": "Completed History with synthetic remote tombstone; hide failure variant.",
+      "expected_owner_or_view_output": "Acknowledged deletion absent after sync and modeled second session; failure preserves cache.",
+      "expected_counts": "Target local History1→0 on success; failure delta0.",
+      "fresh_instance_read": "New container + coordinator, same synthetic remote.",
+      "unaffected": "Explicit other-History preservation has existing additional selector below; not asserted by E alone.",
+      "policy_basis": "AGENTS Persistence; current visibility contract",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:450",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:895"
+      ]
+    },
+    {
+      "requirement": "F",
+      "smoke_ids": [
+        "F",
+        "F-stale",
+        "sequence.2.mounted"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult"
+      ],
+      "input": "Two exact approved sizes and completed History; wrong comparison/account-late response.",
+      "expected_owner_or_view_output": "Restored exact IDs; mounted alternate applies requested server size with its evidence; invalid replay rejected.",
+      "expected_counts": "No additional begin/complete for temporary size choice (recorded calls unchanged).",
+      "fresh_instance_read": "Fresh History replay + actual Result remount, not process restart.",
+      "unaffected": "Previous Result selected ID/cache cleared on new Result.",
+      "policy_basis": "MeasurementPolicy4.3/5; no new completion is current behavior characterization",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:34",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:102",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests.swift:11"
+      ]
+    },
+    {
+      "requirement": "G",
+      "smoke_ids": [
+        "G",
+        "sequence.2",
+        "sequence.2.mounted"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests/resultRecompareRunsANewServerAuthorizedCompletionWithoutMutatingTheOldResultTarget",
+        "FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult"
+      ],
+      "input": "Same product with explicit Closet A50 then B56.",
+      "expected_owner_or_view_output": "New eligibility/begin/complete; new comparison identity; new result uses B.",
+      "expected_counts": "Two begin/two complete for two explicit choices; no extra calls for alternatives.",
+      "fresh_instance_read": "Same ViewModel plus actual Result subtree replacement.",
+      "unaffected": "Old batch remains reference50; new selected/cache starts empty.",
+      "policy_basis": "MeasurementPolicy4.3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests.swift:571",
+        "FitMatchTests/FitMatchReleaseContinuationTests.swift:10",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests.swift:11"
+      ]
+    },
+    {
+      "requirement": "H",
+      "smoke_ids": [
+        "H",
+        "H-retry",
+        "sequence.3"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate",
+        "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow",
+        "FitMatchTests/FitMatchReleaseContinuationTests/compareRegisterOwnedSizeThenCompareUsingAuthoritativeRegisteredItem"
+      ],
+      "input": "Recommended first size; explicitly owned second exact size with chest56.",
+      "expected_owner_or_view_output": "Result preparation→normal linked server-first save→registered item becomes explicit new comparison reference.",
+      "expected_counts": "Local Closet1; upsert1/get_exact1; new comparison complete1. Retry test projects1.",
+      "fresh_instance_read": "Authoritative exact remote read and SwiftData fetch; not a fresh-container H chain.",
+      "unaffected": "Exact registered ID differs from original reference; original result object retained.",
+      "policy_basis": "MeasurementPolicy3.1/3.6/4.3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests.swift:863",
+        "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests.swift:1418",
+        "FitMatchTests/FitMatchReleaseContinuationTests.swift:90"
+      ]
+    },
+    {
+      "requirement": "sequence.1",
+      "smoke_ids": [
+        "sequence.1"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity"
+      ],
+      "input": "Linked exact size edit; manual chest50→56; independent control chest61.",
+      "expected_owner_or_view_output": "Read-back matches request before saved; stale read-back cannot succeed; next explicit comparison uses56.",
+      "expected_counts": "Existing target update1/new0; control unchanged.",
+      "fresh_instance_read": "New ModelContext before comparison and after edit.",
+      "unaffected": "Control receipt unchanged; prior captured measurement50 retained. Persisted numeric History added separately.",
+      "policy_basis": "MeasurementPolicy 3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleaseLifecycleTests.swift:10"
+      ]
+    },
+    {
+      "requirement": "sequence.2",
+      "smoke_ids": [
+        "sequence.2",
+        "sequence.2.mounted"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult"
+      ],
+      "input": "Same product with explicit Closet A50 then B56.",
+      "expected_owner_or_view_output": "New eligibility/begin/complete; new comparison identity; new result uses B.",
+      "expected_counts": "Two begin/two complete for two explicit choices; no extra calls for alternatives.",
+      "fresh_instance_read": "Same ViewModel plus actual Result subtree replacement.",
+      "unaffected": "Old batch remains reference50; new selected/cache starts empty.",
+      "policy_basis": "MeasurementPolicy4.3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleaseContinuationTests.swift:10",
+        "FitMatchTests/FitMatchReleaseMountedSelectionTests.swift:11"
+      ]
+    },
+    {
+      "requirement": "sequence.3",
+      "smoke_ids": [
+        "sequence.3"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseContinuationTests/compareRegisterOwnedSizeThenCompareUsingAuthoritativeRegisteredItem"
+      ],
+      "input": "Recommended first size; explicitly owned second exact size with chest56.",
+      "expected_owner_or_view_output": "Result preparation→normal linked server-first save→registered item becomes explicit new comparison reference.",
+      "expected_counts": "Local Closet1; upsert1/get_exact1; new comparison complete1. Retry test projects1.",
+      "fresh_instance_read": "Authoritative exact remote read and SwiftData fetch; not a fresh-container H chain.",
+      "unaffected": "Exact registered ID differs from original reference; original result object retained.",
+      "policy_basis": "MeasurementPolicy3.1/3.6/4.3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleaseContinuationTests.swift:90"
+      ]
+    },
+    {
+      "requirement": "sequence.4",
+      "smoke_ids": [
+        "sequence.4.async"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseLifecycleTests/asyncManualMeasurementEditRereadsBeforeExplicitNewComparison"
+      ],
+      "input": "Linked exact size edit; manual chest50→56; independent control chest61.",
+      "expected_owner_or_view_output": "Read-back matches request before saved; stale read-back cannot succeed; next explicit comparison uses56.",
+      "expected_counts": "Existing target update1/new0; control unchanged.",
+      "fresh_instance_read": "New ModelContext before comparison and after edit.",
+      "unaffected": "Control receipt unchanged; prior captured measurement50 retained. Persisted numeric History added separately.",
+      "policy_basis": "MeasurementPolicy 3/5",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleaseLifecycleTests.swift:70"
+      ]
+    },
+    {
+      "requirement": "sequence.5",
+      "smoke_ids": [
+        "5",
+        "F"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities"
+      ],
+      "input": "Two completed schema4 rows for the same target, second current head.",
+      "expected_owner_or_view_output": "Disk-reopened container contains only latest projected History; exact tuple and reliability retained.",
+      "expected_counts": "History1 after replacement; old visible head0. No remote mutation.",
+      "fresh_instance_read": "New disk-backed ModelContainer.",
+      "unaffected": "Immutable target tuple detached from active product; numeric persistence covered by new test.",
+      "policy_basis": "MeasurementPolicy4.3/5; no new completion is current behavior characterization",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:1805",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:34"
+      ]
+    },
+    {
+      "requirement": "sequence.6",
+      "smoke_ids": [
+        "C/6"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence"
+      ],
+      "input": "Two Closet identities; delete target only; associated synthetic completed History.",
+      "expected_owner_or_view_output": "Server acknowledgement precedes local removal; ambiguous response retains intent.",
+      "expected_counts": "Target active−1/control delta0; associated History visibility hidden, remote evidence retained.",
+      "fresh_instance_read": "New local context and synthetic list read.",
+      "unaffected": "Other Closet remains; remote History immutable evidence is not hard-deleted.",
+      "policy_basis": "AGENTS Persistence; MeasurementPolicy5; current deletion contract",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:600"
+      ]
+    },
+    {
+      "requirement": "sequence.7",
+      "smoke_ids": [
+        "7",
+        "F-stale"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse"
+      ],
+      "input": "Request A held, request B completes, A replies late; separately wrong comparison/account switch late response.",
+      "expected_owner_or_view_output": "Newest request remains; old response cannot replace authority.",
+      "expected_counts": "No accepted stale completion/cache overwrite.",
+      "fresh_instance_read": "No restart; deterministic request-generation gates.",
+      "unaffected": "Current B result stays selected.",
+      "policy_basis": "MeasurementPolicy4.3/5; no new completion is current behavior characterization",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "A→B→late A is exercised; a third new A submission is not executed. This is stale-response boundary evidence, not every switch permutation.",
+      "source_refs": [
+        "FitMatchTests/FitMatchP0ProductionPathTests.swift:1183",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift:102"
+      ]
+    },
+    {
+      "requirement": "sequence.8",
+      "smoke_ids": [
+        "A-duplicate/8"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave"
+      ],
+      "input": "Exact product/variant/selected size/observation and immutable client item UUID.",
+      "expected_owner_or_view_output": "Authoritative receipt projected before saved; ambiguous reply retains same request.",
+      "expected_counts": "Local created1; concurrent duplicate/retry additional0. Fake remote accepted identity1; real DB NOT RUN.",
+      "fresh_instance_read": "Exact remote get; local fresh-context preservation also fault.linked_save_state.",
+      "unaffected": "Other items covered by sequence1 and save-fault control row, not every A selector.",
+      "policy_basis": "AGENTS Persistence; MeasurementPolicy 3.1/3.3/3.6",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:1451"
+      ]
+    },
+    {
+      "requirement": "sequence.9",
+      "smoke_ids": [
+        "9-committed-response-lost"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback"
+      ],
+      "input": "Exact product/variant/selected size/observation and immutable client item UUID.",
+      "expected_owner_or_view_output": "Authoritative receipt projected before saved; ambiguous reply retains same request.",
+      "expected_counts": "Local created1; concurrent duplicate/retry additional0. Fake remote accepted identity1; real DB NOT RUN.",
+      "fresh_instance_read": "Exact remote get; local fresh-context preservation also fault.linked_save_state.",
+      "unaffected": "Other items covered by sequence1 and save-fault control row, not every A selector.",
+      "policy_basis": "AGENTS Persistence; MeasurementPolicy 3.1/3.3/3.6",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests.swift:2048"
+      ]
+    },
+    {
+      "requirement": "sequence.10",
+      "smoke_ids": [
+        "10-empty-closet",
+        "10-no-common",
+        "10-no-size"
+      ],
+      "selectors": [
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp013EmptyClosetHasNoReferenceAndNeverStartsComparison",
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp024RequiredMeasurementAbsenceStatesBlockWithNoCompletedResult",
+        "FitMatchTests/FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers"
+      ],
+      "input": "Empty Closet; missing common required metrics; missing sizes then valid retry.",
+      "expected_owner_or_view_output": "No completed result without authority; retry recovers available sizes.",
+      "expected_counts": "No begin/complete for empty candidate/required metric absence.",
+      "fresh_instance_read": "Owner reload/retry; no new app process.",
+      "unaffected": "No implicit first candidate or invented measurement/size.",
+      "policy_basis": "MeasurementPolicy4.3/5; formula/rounding/tie characterization, independent approval UNRESOLVED",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "Synthetic remote/local evidence; live DB and physical UI are NOT RUN.",
+      "source_refs": [
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests.swift:1296",
+        "FitMatchTests/FitMatchHeadlessUserJourneyTests.swift:1688",
+        "FitMatchTests/FitMatchP0ProductionPathTests.swift:1288"
+      ]
+    },
+    {
+      "requirement": "D.persisted-History",
+      "smoke_ids": [],
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseHistoryOracleTests/literalCompletedHistoryKeepsNumbersAndIdentityAfterDiskReopen"
+      ],
+      "input": "Literal schema4/v2 completed row: reference chest50,target52,CM/WIDTH,delta+2,weight1.",
+      "expected_owner_or_view_output": "History score90,reliability1,coverage1,signed delta+2,totalDifference2,exact selected/ref projection IDs.",
+      "expected_counts": "Local History1/UserFit2(active+immutable reference); DB0.",
+      "fresh_instance_read": "Close original scope; new ModelContainer on same disk store.",
+      "unaffected": "Active Closet chest50→61 and memo keep persist; frozen History chest50 and full envelope unchanged.",
+      "policy_basis": "MeasurementPolicy4.3/5; numeric formula characterization remains UNRESOLVED.",
+      "execution_status": "PASS",
+      "execution_evidence": "evidence/Resume20/smoke/app-tests.json",
+      "evidence_limit": "New deterministic preparation; no live persistence/auth/UI claim.",
+      "source_refs": [
+        "FitMatchTests/FitMatchReleaseHistoryOracleTests.swift:10"
+      ]
+    }
+  ],
+  "fault_boundaries": [
+    {
+      "fault": "offline",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "403",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "429",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "500",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "timeout",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "malformed",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "transport_cancelled",
+      "required_boundary": "Real DomainClient→SDK→intercepted URLSession for upsert/update/begin/complete/History hide/Closet delete.",
+      "selectors": [
+        "FitMatchTests/FitMatchReleaseTransportFaultTests"
+      ],
+      "expected": "Each exact POST path reached and fails; delete intent retained/local commit0; linked save projection0/persist0, fresh context control chest61/memo keep, two identical wire requests.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No live network; status-specific save/delete state is covered. Separate component tests cover edit/comparison/history refusal. Not a Cartesian claim for every screen/fault pairing."
+    },
+    {
+      "fault": "actual_task_cancel",
+      "required_boundary": "Manual save readback; link authority preparation; Zara page waiting with speculative guide.",
+      "selectors": [
+        "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationCancellationDuringReadbackDoesNotPublish",
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkDraftPrecedesServerCompletionAndCancellationCannotPublishAuthority(cancel:)",
+        "FitMatchTests/ZARAParserConcurrencyTests/cancellationWhilePageIsPendingCancelsSpeculativeGuideBeforePageCompletes"
+      ],
+      "expected": "Task.cancel reached; no publication; canceled guide/no detail request. Link noncancel control preserves exact selected size.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "Not equivalent to live network rollback or every view disappearance."
+    },
+    {
+      "fault": "synthetic_commit_then_lost_reply",
+      "required_boundary": "Save action immutable retry identity after remote acceptance.",
+      "selectors": [
+        "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback"
+      ],
+      "expected": "First local0, retry local1, fake accepted identity1, same complete request twice, exact read-back1.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "Actual DB atomicity/deduplication NOT RUN."
+    },
+    {
+      "fault": "late_or_account_changed_reply",
+      "required_boundary": "Product generation and completed History restoration.",
+      "selectors": [
+        "FitMatchTests/FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct",
+        "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse"
+      ],
+      "expected": "Stale response cannot overwrite current authority or restore another comparison.",
+      "execution_status": "PASS",
+      "evidence": "evidence/Resume20/smoke/app-tests.json",
+      "limit": "No claim for every screen/account timing permutation."
+    }
+  ],
+  "additional_existing_prepared_selector": {
+    "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/explicitServerTombstoneRemovesOnlyTheMatchingStaleLocalHistory",
+    "purpose": "E: unrelated History isolation after explicit tombstone.",
+    "execution_status": "NOT RUN",
+    "limit": "Exists in source outside frozen previous smoke; not counted in75."
+  },
+  "raw_counts": {
+    "uniqlo": {
+      "sizes": 8,
+      "raw": 32
+    },
+    "musinsa": {
+      "sizes": 4,
+      "raw": 24
+    },
+    "zara": {
+      "sizes": 4,
+      "raw": 20
+    },
+    "basis": "FitMatchReleaseRawFixtureTests captured replay; canonical/policy/common counts are distinct; live DB counts NOT RUN."
+  },
+  "non_preparation_execution_dependencies": [
+    "Dedicated normal Auth sessions/exact verified server seeds for later live DB execution.",
+    "Mass3x3/A–G live campaigns and physical device/release checks are outside this narrowed run.",
+    "Formula/rounding/tie approval remains UNRESOLVED; characterization preparation can be verified independently."
+  ],
+  "current_execution": {
+    "methods": 61,
+    "parameter_expanded": 85,
+    "failures": 0,
+    "skips": 0,
+    "evidence": "evidence/Resume20/smoke/app-summary.json"
+  }
+}

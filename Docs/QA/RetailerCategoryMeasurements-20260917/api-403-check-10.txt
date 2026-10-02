@@ -1,0 +1,10 @@
+https://goods-detail.musinsa.com/api2/goods/4096130/actual-size
+https://goods-detail.musinsa.com/api2/goods/4341120/actual-size
+https://goods-detail.musinsa.com/api2/goods/2447802/actual-size
+https://goods-detail.musinsa.com/api2/goods/3442344/actual-size
+https://goods-detail.musinsa.com/api2/goods/6341391/actual-size
+https://www.zara.com/itxrest/4/catalog/store/11717/product/582770479/size-measure-guide?locale=ko_KR
+https://www.zara.com/itxrest/4/catalog/store/11717/product/545410220/size-measure-guide?locale=ko_KR
+https://www.zara.com/itxrest/4/catalog/store/11717/product/545431375/size-measure-guide?locale=ko_KR
+https://www.zara.com/itxrest/4/catalog/store/11717/product/545436534/size-measure-guide?locale=ko_KR
+https://www.zara.com/itxrest/4/catalog/store/11717/product/545474934/size-measure-guide?locale=ko_KR

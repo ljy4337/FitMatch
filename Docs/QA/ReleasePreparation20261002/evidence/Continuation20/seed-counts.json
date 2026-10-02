@@ -1,0 +1,12 @@
+{
+  "products": 6,
+  "observations": 81,
+  "observation_variant_pairs": 81,
+  "size_rows": 620,
+  "raw_measurements": 2488,
+  "providers": {
+    "musinsa": 4,
+    "uniqlo": 75,
+    "zara": 2
+  }
+}

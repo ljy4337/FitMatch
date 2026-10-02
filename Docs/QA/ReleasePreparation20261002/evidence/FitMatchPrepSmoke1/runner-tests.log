@@ -1,0 +1,12 @@
+COMMAND: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 -m unittest discover -s scripts/tests -p test_release_qa*.py -v
+test_all_incomplete_statuses_fail_closed (test_release_qa.RunnerTests) ... ok
+test_controlled_fault_fails_report (test_release_qa.RunnerTests) ... ok
+test_corpus_edit_requires_new_lock (test_release_qa.RunnerTests) ... ok
+test_prod_or_lookalike_host_rejected (test_release_qa.RunnerTests) ... ok
+test_redacts_credentials (test_release_qa.RunnerTests) ... ok
+test_zero_or_skipped_tests_not_pass (test_release_qa.RunnerTests) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.007s
+
+OK

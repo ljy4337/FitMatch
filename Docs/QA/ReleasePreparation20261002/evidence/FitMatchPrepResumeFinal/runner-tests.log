@@ -1,0 +1,21 @@
+COMMAND: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 -m unittest discover -s scripts/tests -p test_release_qa*.py -v
+test_all_incomplete_statuses_fail_closed (test_release_qa.RunnerTests) ... ok
+test_controlled_fault_fails_report (test_release_qa.RunnerTests) ... ok
+test_corpus_edit_requires_new_lock (test_release_qa.RunnerTests) ... ok
+test_discovery_errors_are_not_success (test_release_qa.RunnerTests) ... ok
+test_empty_lock_is_not_frozen (test_release_qa.RunnerTests) ... ok
+test_forwarded_production_override_rejected (test_release_qa.RunnerTests) ... ok
+test_full_report_cannot_pass_with_missing_required_cases (test_release_qa.RunnerTests) ... ok
+test_interrupted_output_is_rejected_before_any_execution (test_release_qa.RunnerTests) ... usage: release_qa.py [-h] [--output OUTPUT] {preflight,smoke,full,report}
+release_qa.py: error: Output must be a new or empty directory; use report mode for prior results
+ok
+test_missing_or_unknown_mode_cannot_report_success (test_release_qa.RunnerTests) ... ok
+test_prod_or_lookalike_host_rejected (test_release_qa.RunnerTests) ... ok
+test_redacts_credentials (test_release_qa.RunnerTests) ... ok
+test_swift_testing_selector_has_parentheses (test_release_qa.RunnerTests) ... ok
+test_zero_or_skipped_tests_not_pass (test_release_qa.RunnerTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.020s
+
+OK

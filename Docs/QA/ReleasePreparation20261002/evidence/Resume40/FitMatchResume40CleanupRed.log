@@ -1,0 +1,45 @@
+test_all_incomplete_statuses_fail_closed (test_release_qa.RunnerTests) ... ok
+test_authenticated_receipt_requires_current_run_subcases_and_cleanup (test_release_qa.RunnerTests) ... ok
+test_authenticated_swift_never_starts_without_dedicated_sessions (test_release_qa.RunnerTests) ... db.swift_manual: BLOCKED
+ok
+test_case_receipt_propagates_failed_and_unexecuted_cases (test_release_qa.RunnerTests) ... ok
+test_case_receipt_requires_exact_unique_coverage (test_release_qa.RunnerTests) ... ok
+test_cleanup_cannot_start_without_explicit_ledger_and_sessions (test_release_qa.RunnerTests) ... FAIL
+test_cleanup_receipt_cannot_impersonate_a_test_run (test_release_qa.RunnerTests) ... FAIL
+test_controlled_fault_fails_report (test_release_qa.RunnerTests) ... ok
+test_corpus_edit_requires_new_lock (test_release_qa.RunnerTests) ... ok
+test_discovery_errors_are_not_success (test_release_qa.RunnerTests) ... ok
+test_empty_lock_is_not_frozen (test_release_qa.RunnerTests) ... ok
+test_forwarded_production_override_rejected (test_release_qa.RunnerTests) ... ok
+test_full_report_cannot_pass_with_missing_required_cases (test_release_qa.RunnerTests) ... ok
+test_interrupted_output_is_rejected_before_any_execution (test_release_qa.RunnerTests) ... usage: release_qa.py [-h] [--output OUTPUT] {preflight,smoke,full,report}
+release_qa.py: error: Output must be a new or empty directory; use report mode for prior results
+ok
+test_matrix_receipt_missing_cannot_be_reported_as_executed (test_release_qa.RunnerTests) ... matrix.synthetic_coverage: BLOCKED
+ok
+test_missing_or_unknown_mode_cannot_report_success (test_release_qa.RunnerTests) ... ok
+test_prod_or_lookalike_host_rejected (test_release_qa.RunnerTests) ... ok
+test_redacts_credentials (test_release_qa.RunnerTests) ... ok
+test_swift_testing_selector_has_parentheses (test_release_qa.RunnerTests) ... ok
+test_zero_or_skipped_tests_not_pass (test_release_qa.RunnerTests) ... ok
+
+======================================================================
+FAIL: test_cleanup_cannot_start_without_explicit_ledger_and_sessions (test_release_qa.RunnerTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jinyoung/Developer/FitMatchLocal/FitMatch/scripts/tests/test_release_qa.py", line 15, in test_cleanup_cannot_start_without_explicit_ledger_and_sessions
+    self.assertTrue(callable(getattr(module, 'run_swift_cleanup', None)))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_cleanup_receipt_cannot_impersonate_a_test_run (test_release_qa.RunnerTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jinyoung/Developer/FitMatchLocal/FitMatch/scripts/tests/test_release_qa.py", line 24, in test_cleanup_receipt_cannot_impersonate_a_test_run
+    self.assertTrue(callable(getattr(module,'cleanup_receipt_status',None)))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.037s
+
+FAILED (failures=2)

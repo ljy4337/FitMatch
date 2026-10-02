@@ -4,6 +4,9 @@ import SwiftData
 struct RecommendationResultView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.fitMatchComparisonSyncCoordinator) private var comparisonSync
+    #if DEBUG
+    @Environment(\.fitMatchReleaseSelectionProbe) private var releaseSelectionProbe
+    #endif
     @EnvironmentObject private var tabBarVisibilityController: TabBarVisibilityController
     @Query private var closetItems: [UserFit]
     let result: RecommendationHistory
@@ -74,6 +77,20 @@ struct RecommendationResultView: View {
     private var currentResult: RecommendationHistory {
         result
     }
+
+    #if DEBUG
+    var releaseSelectedSizeID: UUID? { selectedAlternativeSizeID }
+    var releaseDisplayedServerSizeID: UUID? { displayedServerProductSizeID }
+    var releaseAnalysisCount: Int { temporaryAnalysisCache.count }
+    var releaseSizeSheetPresented: Bool { isShowingAlternativeSizeComparison }
+    var releaseTemporaryReferenceChest: Double? {
+        temporarySizeAnalysis?.comparisonResult.comparedItems.first?.referenceValue
+    }
+    func releaseOpenAlternativeSizes() { presentAlternativeSizeComparison() }
+    func releaseChooseAlternativeSize(_ id: UUID) { selectAlternativeSize(id) }
+    func releaseApplyAlternativeSize() { analyzeSelectedAlternativeSize() }
+    func releaseShowOtherCloset() { showOtherClosetComparison() }
+    #endif
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -175,6 +192,10 @@ struct RecommendationResultView: View {
                 Text(closetRegistrationPreparationErrorMessage ?? "")
             }
             .onAppear {
+                #if DEBUG
+                releaseSelectionProbe?.result = self
+                releaseSelectionProbe?.resultAppearances.append(result.id)
+                #endif
                 FitMatchPerformanceDiagnosticsStore.shared.mark(.historyToResult, event: "result_appeared")
                 #if !DEBUG
                 FitMatchReleaseHistoryResultTransitionMonitor.shared.resultAppeared()
@@ -189,6 +210,7 @@ struct RecommendationResultView: View {
             }
             .onDisappear {
                 #if DEBUG
+                releaseSelectionProbe?.resultDisappearances.append(result.id)
                 print("[화면: 비교 결과][동작: 결과 화면 종료][상태: 완료]")
                 #endif
                 tabBarVisibilityController.release(reason: .navigationDetail, source: "recommendation result disappear")
@@ -518,15 +540,7 @@ struct RecommendationResultView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    Button {
-                        if let onShowOtherClosetComparison {
-                            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToCandidates)
-                            onShowOtherClosetComparison()
-                        } else {
-                            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToOtherClothesSheet)
-                            isShowingOtherClosetComparison = true
-                        }
-                    } label: {
+                    Button(action: showOtherClosetComparison) {
                         Text("비교할 내 옷 변경")
                     }
                     .font(.subheadline.weight(.bold))
@@ -608,7 +622,7 @@ struct RecommendationResultView: View {
                                 fitColor: score.map(fitMatchColor(for:)),
                                 measurements: alternativeMeasurementSummaries(for: analysis)
                             ) {
-                                selectedAlternativeSizeID = size.id
+                                selectAlternativeSize(size.id)
                             }
                         }
                     }
@@ -1122,6 +1136,20 @@ struct RecommendationResultView: View {
         FitMatchPerformanceDiagnosticsStore.shared.mark(
             .resultToSizesSheet, event: "sizes_prepared", finished: true
         )
+    }
+
+    private func showOtherClosetComparison() {
+        if let onShowOtherClosetComparison {
+            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToCandidates)
+            onShowOtherClosetComparison()
+        } else {
+            FitMatchPerformanceDiagnosticsStore.shared.begin(.resultToOtherClothesSheet)
+            isShowingOtherClosetComparison = true
+        }
+    }
+
+    private func selectAlternativeSize(_ id: UUID) {
+        selectedAlternativeSizeID = id
     }
 
     private func presentAlternativeSizeComparison() {

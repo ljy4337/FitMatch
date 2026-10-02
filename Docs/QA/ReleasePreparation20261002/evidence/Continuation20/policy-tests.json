@@ -1,0 +1,122 @@
+{
+  "devices" : [
+    {
+      "architecture" : "x86_64",
+      "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+      "deviceName" : "iPhone 17 Pro",
+      "modelName" : "iPhone 17 Pro",
+      "osBuildNumber" : "23D8133",
+      "osVersion" : "26.3.1",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "name" : "literalCompletedHistoryKeepsNumbersAndIdentityAfterDiskReopen()",
+                  "nodeIdentifier" : "FitMatchReleaseHistoryOracleTests/literalCompletedHistoryKeepsNumbersAndIdentityAfterDiskReopen()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseHistoryOracleTests/literalCompletedHistoryKeepsNumbersAndIdentityAfterDiskReopen()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchReleaseHistoryOracleTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseHistoryOracleTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "name" : "weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchReleasePreparationTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "FitMatchTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Passed"
+        }
+      ],
+      "name" : "FitMatch-QA",
+      "nodeType" : "Test Plan",
+      "result" : "Passed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

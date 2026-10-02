@@ -1,0 +1,1242 @@
+[
+  {
+    "elapsedSeconds" : 0.34684693813323975,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "(우먼) 스퀘어 로고 반소매 티셔츠_화이트",
+    "notice" : null,
+    "observation" : {
+      "audience" : "WOMEN",
+      "canonicalURL" : "https:\/\/www.musinsa.com\/products\/4096130",
+      "detailsJSONAvailable" : true,
+      "externalProductID" : "4096130",
+      "measurementsJSONAvailable" : true,
+      "rawPayloadKeys" : [
+        "brand_name",
+        "checked_size_name",
+        "external_product_reference",
+        "external_variant_id",
+        "internal_product_id",
+        "local_classification_conflict",
+        "local_classification_conflict_dimensions",
+        "local_classification_conflict_evidence",
+        "local_classification_safety_policy_version",
+        "measurement_availability",
+        "observation_contract",
+        "parser_code",
+        "parser_field_sources",
+        "parser_notice",
+        "parser_provenance_available",
+        "parser_provenance_contract",
+        "parser_version",
+        "price",
+        "source_name",
+        "style_number"
+      ],
+      "retailerAPIContract" : "fitmatch-retailer-api-v1",
+      "retailerAPIProductKey" : "4096130",
+      "retailerAPISelectedVariantKey" : null,
+      "sourceCategoryCodes" : [
+        "001",
+        "001001"
+      ],
+      "structuredFactKeys" : [
+        "comparison_measurement_contract",
+        "comparison_measurement_contract_evidence",
+        "comparison_measurement_contract_source",
+        "size_type"
+      ],
+      "variants" : [
+        {
+          "colorCode" : null,
+          "colorName" : null,
+          "externalVariantID" : "__default__",
+          "sizes" : [
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body_length_back_neck_to_hem:0",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "총장",
+                  "rawUnit" : "cm",
+                  "rawValue" : 44.5
+                },
+                {
+                  "measurementIdentity" : "shoulder_width_seam_to_seam:1",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "어깨너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 37
+                },
+                {
+                  "measurementIdentity" : "chest_width_pit_to_pit:2",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "가슴단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 43
+                },
+                {
+                  "measurementIdentity" : "sleeve_shoulder_seam_to_cuff:3",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "소매길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 14.5
+                },
+                {
+                  "measurementIdentity" : "unknown:4",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "밑단단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                },
+                {
+                  "measurementIdentity" : "unknown:5",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "소매부리단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                },
+                {
+                  "measurementIdentity" : "unknown:6",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "암홀",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                }
+              ],
+              "sizeIdentity" : "S",
+              "sizeLabel" : "S",
+              "stockStatus" : "UNKNOWN"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body_length_back_neck_to_hem:0",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "총장",
+                  "rawUnit" : "cm",
+                  "rawValue" : 46.5
+                },
+                {
+                  "measurementIdentity" : "shoulder_width_seam_to_seam:1",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "어깨너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 39
+                },
+                {
+                  "measurementIdentity" : "chest_width_pit_to_pit:2",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "가슴단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 45.5
+                },
+                {
+                  "measurementIdentity" : "sleeve_shoulder_seam_to_cuff:3",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "소매길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 15.300000000000001
+                },
+                {
+                  "measurementIdentity" : "unknown:4",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "밑단단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                },
+                {
+                  "measurementIdentity" : "unknown:5",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "소매부리단면",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                },
+                {
+                  "measurementIdentity" : "unknown:6",
+                  "parserCode" : "actual_size",
+                  "rawCode" : null,
+                  "rawLabel" : "암홀",
+                  "rawUnit" : "cm",
+                  "rawValue" : 0
+                }
+              ],
+              "sizeIdentity" : "M",
+              "sizeLabel" : "M",
+              "stockStatus" : "UNKNOWN"
+            }
+          ]
+        }
+      ]
+    },
+    "observationAvailable" : true,
+    "productID" : "4096130",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 44.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 37
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 43
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 14.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 0
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 0
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 0
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "총장",
+            "unit" : "cm",
+            "value" : 46.5
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비",
+            "unit" : "cm",
+            "value" : 39
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴단면",
+            "unit" : "cm",
+            "value" : 45.5
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "소매길이",
+            "unit" : "cm",
+            "value" : 15.300000000000001
+          },
+          {
+            "code" : "unknown",
+            "label" : "밑단단면",
+            "unit" : "cm",
+            "value" : 0
+          },
+          {
+            "code" : "unknown",
+            "label" : "소매부리단면",
+            "unit" : "cm",
+            "value" : 0
+          },
+          {
+            "code" : "unknown",
+            "label" : "암홀",
+            "unit" : "cm",
+            "value" : 0
+          }
+        ],
+        "name" : "M"
+      }
+    ],
+    "source" : "musinsa",
+    "sourceCategoryPath" : "상의 > 반소매 티셔츠",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.musinsa.com\/products\/4096130"
+  },
+  {
+    "elapsedSeconds" : 2.340770959854126,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "커버롤",
+    "notice" : null,
+    "observation" : {
+      "audience" : "UNISEX",
+      "canonicalURL" : "https:\/\/www.uniqlo.com\/kr\/ko\/products\/E487688-000\/00",
+      "detailsJSONAvailable" : true,
+      "externalProductID" : "E487688",
+      "measurementsJSONAvailable" : true,
+      "rawPayloadKeys" : [
+        "brand_name",
+        "checked_size_name",
+        "external_product_reference",
+        "external_variant_id",
+        "internal_product_id",
+        "local_classification_conflict",
+        "local_classification_conflict_dimensions",
+        "local_classification_conflict_evidence",
+        "local_classification_safety_policy_version",
+        "measurement_availability",
+        "observation_contract",
+        "parser_code",
+        "parser_field_sources",
+        "parser_notice",
+        "parser_provenance_available",
+        "parser_provenance_contract",
+        "parser_version",
+        "price",
+        "source_name",
+        "style_number"
+      ],
+      "retailerAPIContract" : "fitmatch-retailer-api-v1",
+      "retailerAPIProductKey" : "E487688",
+      "retailerAPISelectedVariantKey" : null,
+      "sourceCategoryCodes" : [
+        "57966",
+        "58035",
+        "98331"
+      ],
+      "structuredFactKeys" : [
+        "comparison_measurement_contract",
+        "comparison_measurement_contract_evidence",
+        "comparison_measurement_contract_source",
+        "source_category_path_completeness",
+        "source_category_path_source"
+      ],
+      "variants" : [
+        {
+          "colorCode" : "31",
+          "colorName" : "31",
+          "externalVariantID" : "31",
+          "sizes" : [
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 68
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 49
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 56
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 82.5
+                }
+              ],
+              "sizeIdentity" : "S",
+              "sizeLabel" : "S",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 70
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 50.5
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 59
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 85
+                }
+              ],
+              "sizeIdentity" : "M",
+              "sizeLabel" : "M",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 72
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 52
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 62
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 87.5
+                }
+              ],
+              "sizeIdentity" : "L",
+              "sizeLabel" : "L",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 75
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 54
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 66
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 90
+                }
+              ],
+              "sizeIdentity" : "XL",
+              "sizeLabel" : "XL",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 76
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 56
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 70
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 91
+                }
+              ],
+              "sizeIdentity" : "XXL",
+              "sizeLabel" : "XXL",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 77
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 58
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 74
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 92
+                }
+              ],
+              "sizeIdentity" : "3XL",
+              "sizeLabel" : "3XL",
+              "stockStatus" : "AVAILABLE"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "body-length",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-length",
+                  "rawLabel" : "전체 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 78
+                },
+                {
+                  "measurementIdentity" : "shoulder-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "shoulder-width",
+                  "rawLabel" : "어깨너비(솔기에서 솔기까지)",
+                  "rawUnit" : "cm",
+                  "rawValue" : 60
+                },
+                {
+                  "measurementIdentity" : "body-width",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "body-width",
+                  "rawLabel" : "가슴너비",
+                  "rawUnit" : "cm",
+                  "rawValue" : 78
+                },
+                {
+                  "measurementIdentity" : "sleeve-length-cb",
+                  "parserCode" : "size_chart",
+                  "rawCode" : "sleeve-length-cb",
+                  "rawLabel" : "등 중심부터 소매까지 길이",
+                  "rawUnit" : "cm",
+                  "rawValue" : 93
+                }
+              ],
+              "sizeIdentity" : "4XL",
+              "sizeLabel" : "4XL",
+              "stockStatus" : "AVAILABLE"
+            }
+          ]
+        }
+      ]
+    },
+    "observationAvailable" : true,
+    "productID" : "E487688",
+    "sizes" : [
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 68
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 49
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 82.5
+          }
+        ],
+        "name" : "S"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 70
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 50.5
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 59
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 85
+          }
+        ],
+        "name" : "M"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 72
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 52
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 62
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 87.5
+          }
+        ],
+        "name" : "L"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 75
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 66
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 90
+          }
+        ],
+        "name" : "XL"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 76
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 70
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 91
+          }
+        ],
+        "name" : "XXL"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 77
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 92
+          }
+        ],
+        "name" : "3XL"
+      },
+      {
+        "availability" : "AVAILABLE",
+        "measurements" : [
+          {
+            "code" : "body_length_back_neck_to_hem",
+            "label" : "전체 길이",
+            "unit" : "cm",
+            "value" : 78
+          },
+          {
+            "code" : "shoulder_width_seam_to_seam",
+            "label" : "어깨너비(솔기에서 솔기까지)",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "가슴너비",
+            "unit" : "cm",
+            "value" : 78
+          },
+          {
+            "code" : "sleeve_center_back_to_cuff",
+            "label" : "등 중심부터 소매까지 길이",
+            "unit" : "cm",
+            "value" : 93
+          }
+        ],
+        "name" : "4XL"
+      }
+    ],
+    "source" : "uniqlo",
+    "sourceCategoryPath" : "아우터 > 파카 & 블루종 > 재킷",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.uniqlo.com\/kr\/ko\/products\/E487688-000\/00?colorDisplayCode=31&sizeDisplayCode=005&pldDisplayCode=000&utm_medium=social&utm_source=appshare"
+  },
+  {
+    "elapsedSeconds" : 4.1193070411682129,
+    "imageAvailable" : true,
+    "measurementAvailability" : "actualMeasurements",
+    "name" : "레귤러 핏 유틸리티 포켓 파카",
+    "notice" : null,
+    "observation" : {
+      "audience" : "MEN",
+      "canonicalURL" : "https:\/\/www.zara.com\/kr\/ko\/%E1%84%8B%E1%85%B2%E1%84%90%E1%85%B5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06786003.html?v1=549838589&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "detailsJSONAvailable" : true,
+      "externalProductID" : "549829596",
+      "measurementsJSONAvailable" : true,
+      "rawPayloadKeys" : [
+        "brand_name",
+        "checked_size_name",
+        "external_product_reference",
+        "external_variant_id",
+        "internal_product_id",
+        "local_classification_conflict",
+        "local_classification_conflict_dimensions",
+        "local_classification_conflict_evidence",
+        "local_classification_safety_policy_version",
+        "measurement_availability",
+        "observation_contract",
+        "parser_code",
+        "parser_field_sources",
+        "parser_notice",
+        "parser_provenance_available",
+        "parser_provenance_contract",
+        "parser_version",
+        "price",
+        "source_name",
+        "style_number"
+      ],
+      "retailerAPIContract" : "fitmatch-retailer-api-v2",
+      "retailerAPIProductKey" : "549829596",
+      "retailerAPISelectedVariantKey" : "549838589",
+      "sourceCategoryCodes" : [
+        "MAN",
+        "MAN:스포츠 재킷",
+        "MAN:스포츠 재킷:B. Cazadora"
+      ],
+      "structuredFactKeys" : [
+        "comparison_measurement_contract",
+        "comparison_measurement_contract_evidence",
+        "comparison_measurement_contract_source",
+        "family",
+        "section",
+        "subfamily"
+      ],
+      "variants" : [
+        {
+          "colorCode" : null,
+          "colorName" : null,
+          "externalVariantID" : "549838589",
+          "sizes" : [
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "zone-name-chest",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-chest",
+                  "rawLabel" : "zone-name-chest",
+                  "rawUnit" : "cm",
+                  "rawValue" : 54
+                },
+                {
+                  "measurementIdentity" : "zone-name-front-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-front-length",
+                  "rawLabel" : "zone-name-front-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 74
+                },
+                {
+                  "measurementIdentity" : "zone-name-sleeve-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-sleeve-length",
+                  "rawLabel" : "zone-name-sleeve-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 64
+                },
+                {
+                  "measurementIdentity" : "zone-name-arm-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-arm-width",
+                  "rawLabel" : "zone-name-arm-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 19.5
+                },
+                {
+                  "measurementIdentity" : "zone-name-back-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-back-width",
+                  "rawLabel" : "zone-name-back-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 48
+                }
+              ],
+              "sizeIdentity" : "S(KR90)",
+              "sizeLabel" : "S (KR 90)",
+              "stockStatus" : "UNKNOWN"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "zone-name-chest",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-chest",
+                  "rawLabel" : "zone-name-chest",
+                  "rawUnit" : "cm",
+                  "rawValue" : 56
+                },
+                {
+                  "measurementIdentity" : "zone-name-front-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-front-length",
+                  "rawLabel" : "zone-name-front-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 75
+                },
+                {
+                  "measurementIdentity" : "zone-name-sleeve-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-sleeve-length",
+                  "rawLabel" : "zone-name-sleeve-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 65
+                },
+                {
+                  "measurementIdentity" : "zone-name-arm-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-arm-width",
+                  "rawLabel" : "zone-name-arm-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 20
+                },
+                {
+                  "measurementIdentity" : "zone-name-back-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-back-width",
+                  "rawLabel" : "zone-name-back-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 49
+                }
+              ],
+              "sizeIdentity" : "M(KR95-100)",
+              "sizeLabel" : "M (KR 95-100)",
+              "stockStatus" : "UNKNOWN"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "zone-name-chest",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-chest",
+                  "rawLabel" : "zone-name-chest",
+                  "rawUnit" : "cm",
+                  "rawValue" : 58
+                },
+                {
+                  "measurementIdentity" : "zone-name-front-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-front-length",
+                  "rawLabel" : "zone-name-front-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 76
+                },
+                {
+                  "measurementIdentity" : "zone-name-sleeve-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-sleeve-length",
+                  "rawLabel" : "zone-name-sleeve-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 66
+                },
+                {
+                  "measurementIdentity" : "zone-name-arm-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-arm-width",
+                  "rawLabel" : "zone-name-arm-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 20.5
+                },
+                {
+                  "measurementIdentity" : "zone-name-back-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-back-width",
+                  "rawLabel" : "zone-name-back-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 50
+                }
+              ],
+              "sizeIdentity" : "L(KR100-105)",
+              "sizeLabel" : "L (KR 100-105)",
+              "stockStatus" : "UNKNOWN"
+            },
+            {
+              "measurements" : [
+                {
+                  "measurementIdentity" : "zone-name-chest",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-chest",
+                  "rawLabel" : "zone-name-chest",
+                  "rawUnit" : "cm",
+                  "rawValue" : 60
+                },
+                {
+                  "measurementIdentity" : "zone-name-front-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-front-length",
+                  "rawLabel" : "zone-name-front-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 77
+                },
+                {
+                  "measurementIdentity" : "zone-name-sleeve-length",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-sleeve-length",
+                  "rawLabel" : "zone-name-sleeve-length",
+                  "rawUnit" : "cm",
+                  "rawValue" : 67
+                },
+                {
+                  "measurementIdentity" : "zone-name-arm-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-arm-width",
+                  "rawLabel" : "zone-name-arm-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 21
+                },
+                {
+                  "measurementIdentity" : "zone-name-back-width",
+                  "parserCode" : "zara_kr_size_measure_guide_v1",
+                  "rawCode" : "zone-name-back-width",
+                  "rawLabel" : "zone-name-back-width",
+                  "rawUnit" : "cm",
+                  "rawValue" : 51
+                }
+              ],
+              "sizeIdentity" : "XL(KR105-110)",
+              "sizeLabel" : "XL (KR 105-110)",
+              "stockStatus" : "UNKNOWN"
+            }
+          ]
+        }
+      ]
+    },
+    "observationAvailable" : true,
+    "productID" : "549829596",
+    "sizes" : [
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "zone-name-chest",
+            "unit" : "cm",
+            "value" : 54
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-front-length",
+            "unit" : "cm",
+            "value" : 74
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "zone-name-sleeve-length",
+            "unit" : "cm",
+            "value" : 64
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-arm-width",
+            "unit" : "cm",
+            "value" : 19.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-back-width",
+            "unit" : "cm",
+            "value" : 48
+          }
+        ],
+        "name" : "S (KR 90)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "zone-name-chest",
+            "unit" : "cm",
+            "value" : 56
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-front-length",
+            "unit" : "cm",
+            "value" : 75
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "zone-name-sleeve-length",
+            "unit" : "cm",
+            "value" : 65
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-arm-width",
+            "unit" : "cm",
+            "value" : 20
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-back-width",
+            "unit" : "cm",
+            "value" : 49
+          }
+        ],
+        "name" : "M (KR 95-100)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "zone-name-chest",
+            "unit" : "cm",
+            "value" : 58
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-front-length",
+            "unit" : "cm",
+            "value" : 76
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "zone-name-sleeve-length",
+            "unit" : "cm",
+            "value" : 66
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-arm-width",
+            "unit" : "cm",
+            "value" : 20.5
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-back-width",
+            "unit" : "cm",
+            "value" : 50
+          }
+        ],
+        "name" : "L (KR 100-105)"
+      },
+      {
+        "availability" : "UNKNOWN",
+        "measurements" : [
+          {
+            "code" : "chest_width_pit_to_pit",
+            "label" : "zone-name-chest",
+            "unit" : "cm",
+            "value" : 60
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-front-length",
+            "unit" : "cm",
+            "value" : 77
+          },
+          {
+            "code" : "sleeve_shoulder_seam_to_cuff",
+            "label" : "zone-name-sleeve-length",
+            "unit" : "cm",
+            "value" : 67
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-arm-width",
+            "unit" : "cm",
+            "value" : 21
+          },
+          {
+            "code" : "unknown",
+            "label" : "zone-name-back-width",
+            "unit" : "cm",
+            "value" : 51
+          }
+        ],
+        "name" : "XL (KR 105-110)"
+      }
+    ],
+    "source" : "zara",
+    "sourceCategoryPath" : "ZARA > 남성 > 스포츠 재킷 > B. Cazadora",
+    "status" : "PARSED_WITH_MEASUREMENTS",
+    "url" : "https:\/\/www.zara.com\/kr\/ko\/%E1%84%8B%E1%85%B2%E1%84%90%E1%85%B5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06786003.html?v1=549838589&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil"
+  }
+]

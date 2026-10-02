@@ -1,0 +1,280 @@
+{
+  "environment": "FitMatch-QA / Debug-QA / development-only",
+  "cases": [
+    {
+      "id": "A",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionProjectsExactReadBackReceiptBeforeLocalSuccess",
+      "evidence": "Synthetic remote; real server-first save action and exact authoritative projector",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "A-duplicate/8",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/comparedProductClosetSubmissionSerializesConcurrentDuplicateSave",
+      "evidence": "Two concurrent production action tasks; persistence boundary held; one accepted interaction",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "B",
+      "selector": "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess",
+      "evidence": "Synthetic exact linked read-back; production edit projection",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "B-rejection",
+      "selector": "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues",
+      "evidence": "Synthetic stale read-back; save cannot publish success",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "C",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists",
+      "evidence": "Production deletion action; requested local identity only",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "C/6",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence",
+      "evidence": "Synthetic server hide acknowledgement; original remote evidence retained",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "D",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload",
+      "evidence": "Synthetic approved snapshot; independent literal numeric oracle; preview/detail/completion",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "D-partial",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts",
+      "evidence": "Two of four policy metrics; literal score94, reliability2, coverage0.5",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "D-tie",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder",
+      "evidence": "Duplicate source label M; exact UUID tie-break with reversed input",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "D-malformed",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult",
+      "evidence": "Forged signed delta is rejected by production adapter",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "E",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession",
+      "evidence": "Synthetic tombstone; sync plus modeled second session",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "E-failure",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry",
+      "evidence": "Synthetic hide transport failure; local cache preserved",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "F",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities",
+      "evidence": "Synthetic completed row; exact two approved IDs restored through production recovery",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "F-stale",
+      "selector": "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse",
+      "evidence": "Wrong comparison ID and account-switch late response fail closed",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "G",
+      "selector": "FitMatchTests/FitMatchHeadlessUserJourneyTests/resultRecompareRunsANewServerAuthorizedCompletionWithoutMutatingTheOldResultTarget",
+      "evidence": "Production result recompare with synthetic transport; fresh begin/complete; old result intact",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "H",
+      "selector": "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate",
+      "evidence": "History-to-Closet production payload boundary; synthetic global/personal snapshots; not server persistence",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "H-retry",
+      "selector": "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow",
+      "evidence": "Production local persistence side-effect failure/retry; exactly one projected row",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "4",
+      "selector": "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot",
+      "evidence": "Production edit followed by synthetic current-authority comparison; not authenticated edit/read-back",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "5",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/v4PersonalHistoryProjectionSurvivesFreshContainerWithoutTupleSharing",
+      "evidence": "Completed snapshot reconstructed in fresh SwiftData container",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "7",
+      "selector": "FitMatchTests/FitMatchP0ProductionPathTests/p0LateFirstRequestCannotOverwriteTheLatestProduct",
+      "evidence": "Production ViewModel A request delayed until B wins",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "9-accepted-response",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure",
+      "evidence": "Server accepted response then local failure/retry; same ID no second upsert; not lost-response proof",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "9-timeout",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/timeoutThenReplayRejectKeepsOriginalImmutableRequestLocked",
+      "evidence": "URLError timedOut then deterministic replay rejection retains immutable request; no server commit proof",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "10-empty-closet",
+      "selector": "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp013EmptyClosetHasNoReferenceAndNeverStartsComparison",
+      "evidence": "Synthetic empty candidate/Closet receipt; no begin",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "10-no-common",
+      "selector": "FitMatchTests/FitMatchHeadlessUserJourneyTests/cp024RequiredMeasurementAbsenceStatesBlockWithNoCompletedResult",
+      "evidence": "Synthetic no eligible evidence; real authority gates block result",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "10-no-size",
+      "selector": "FitMatchTests/FitMatchP0ProductionPathTests/p0PartialProductLoadExplainsMissingSizesAndRetryRecovers",
+      "evidence": "Synthetic missing size product then retry through actual ViewModel",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "fault-offline",
+      "selector": "FitMatchTests/FitMatchClosetSyncCoordinatorTests/rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers",
+      "evidence": "Scripted remote transport failure and reconnect; production cache sync",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "fault-cancel",
+      "selector": "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationCancellationDuringReadbackDoesNotPublish",
+      "evidence": "Cancellation injected during actual read-back boundary",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "fault-delete-ambiguous",
+      "selector": "FitMatchTests/FitMatchClosetDeletionTransactionTests/ambiguousNetworkFailureKeepsIntentAndLocalItemThenRetryConfirmsAbsence",
+      "evidence": "Ambiguous delete response then absent-row retry; production transaction",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "raw.uniqlo",
+      "selector": "FitMatchTests/FitMatchReleaseRawFixtureTests/uniqloArchivedChartPreserves32RawFacts",
+      "evidence": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof"
+    },
+    {
+      "id": "raw.musinsa",
+      "selector": "FitMatchTests/FitMatchReleaseRawFixtureTests/musinsaArchivedChartPreserves24RawFacts",
+      "evidence": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof"
+    },
+    {
+      "id": "raw.zara",
+      "selector": "FitMatchTests/FitMatchReleaseRawFixtureTests/zaraArchivedGuidePreserves20RawFactsWithSyntheticPageShell",
+      "evidence": "Archived raw measurement replay; ZARA page shell synthetic; no live or DB proof"
+    },
+    {
+      "id": "9-committed-response-lost",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/committedClosetResponseLostThenRetryReusesExactRequestAndReadback",
+      "evidence": "Synthetic transport records commit then throws timedOut; real production submission retries same immutable ID and projects exact receipt once; no deployed DB idempotency proof",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "fault.http_transport",
+      "selector": "FitMatchTests/FitMatchReleaseTransportFaultTests",
+      "evidence": "Actual Supabase SDK and FitMatch RPC client via intercept-only URLSession; offline/403/429/500/timeout/malformed/cancelled over six mutation endpoints. Delete transaction failure and success control. No DB write."
+    },
+    {
+      "id": "sequence.2",
+      "selector": "FitMatchTests/FitMatchReleaseContinuationTests/compareChangeSizeChangeClosetThenChangeSizeKeepsEachApprovedBatch",
+      "evidence": "Same real ViewModel compares two explicitly selected Closet items with fresh authority, then reads each exact alternative-size batch; synthetic RPC, not SwiftUI taps."
+    },
+    {
+      "id": "sequence.3",
+      "selector": "FitMatchTests/FitMatchReleaseContinuationTests/compareRegisterOwnedSizeThenCompareUsingAuthoritativeRegisteredItem",
+      "evidence": "Real result registration preparation, server-first submission, exact readback projection and fresh comparison using the registered item; synthetic RPC, not live DB."
+    },
+    {
+      "id": "sequence.1",
+      "selector": "FitMatchTests/FitMatchReleaseLifecycleTests/manualRegistrationReadAsyncEditReadDeleteReadPreservesExactIdentity",
+      "evidence": "Real manual registration, async edit and delete actions with fresh SwiftData reads; synthetic remote, not live DB."
+    },
+    {
+      "id": "sequence.4.async",
+      "selector": "FitMatchTests/FitMatchReleaseLifecycleTests/asyncManualMeasurementEditRereadsBeforeExplicitNewComparison",
+      "evidence": "Current async manual edit and fresh read feed explicit new comparison; prior receipt unchanged. Synthetic remote."
+    },
+    {
+      "id": "matrix.smoke",
+      "selector": "FitMatchTests/FitMatchReleaseMatrixTests/smokeRepresentativeCorpusCases",
+      "evidence": "Three frozen synthetic case bindings through actual Swift owners; does not prove retailer/DB group authorization."
+    },
+    {
+      "id": "fault.cancel.link_actual",
+      "selector": "FitMatchTests/FitMatchFinalReleaseHeadlessAcceptanceTests/linkDraftPrecedesServerCompletionAndCancellationCannotPublishAuthority(cancel:)",
+      "evidence": "Real Task.cancel at controlled link authority wait; stale readiness cannot republish. Synthetic remote, two parameter cases."
+    },
+    {
+      "id": "fault.cancel.zara_actual",
+      "selector": "FitMatchTests/ZARAParserConcurrencyTests/cancellationWhilePageIsPendingCancelsSpeculativeGuideBeforePageCompletes",
+      "evidence": "Actual parser cancellation; speculative guide receives cancellation before page completion. Event gate, no network."
+    },
+    {
+      "id": "db.ledger_guards",
+      "selector": "FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests",
+      "evidence": "Eleven offline methods / sixteen parameter cases: exact ownership, safe pre-supersession retirement, fresh tombstone and interruption guards. No actual database mutations."
+    },
+    {
+      "id": "D-boundary.item-half",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean",
+      "evidence": "Literal arithmetic characterization; formula/rounding/tie policy remains UNRESOLVED."
+    },
+    {
+      "id": "D-boundary.final-half",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores",
+      "evidence": "Literal arithmetic characterization; formula/rounding/tie policy remains UNRESOLVED."
+    },
+    {
+      "id": "D-boundary.clamp-endpoints",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence",
+      "evidence": "Literal arithmetic characterization; formula/rounding/tie policy remains UNRESOLVED."
+    },
+    {
+      "id": "D-boundary.weighted-delta-tie",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID",
+      "evidence": "Literal arithmetic characterization; formula/rounding/tie policy remains UNRESOLVED."
+    },
+    {
+      "id": "D-boundary.negative-absolute-evidence",
+      "selector": "FitMatchTests/FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore",
+      "evidence": "Literal arithmetic characterization; formula/rounding/tie policy remains UNRESOLVED."
+    },
+    {
+      "id": "fault.linked_save_state",
+      "selector": "FitMatchTests/FitMatchReleaseTransportFaultTests/linkedSaveHTTPFailureKeepsLocalDataAndRetriesExactWireRequest(_:)",
+      "evidence": "Actual save action + SDK + intercepted HTTP. Fresh local cache preserves unrelated row; repeated wire payload identical. Seven error cases, not live DB."
+    },
+    {
+      "id": "sequence.2.mounted",
+      "selector": "FitMatchTests/FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult",
+      "evidence": "Mounted actual CompareFlowSheet/Result state and shared button functions; synthetic remote, not physical taps/Auth/DB."
+    },
+    {
+      "id": "D/5-persisted-oracle",
+      "selector": "FitMatchTests/FitMatchReleaseHistoryOracleTests/literalCompletedHistoryKeepsNumbersAndIdentityAfterDiskReopen",
+      "evidence": "Independent literal numerical snapshot through real History hydrator and disk ModelContainer reopen; active Closet edit does not alter frozen History. Synthetic source, no DB mutation."
+    }
+  ],
+  "scope": "Production Swift owners and a mounted selection-state probe with synthetic remote boundaries; physical UI/authenticated DB not proven"
+}

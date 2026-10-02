@@ -1,0 +1,9 @@
+Writing result bundle at path:
+	/tmp/FitMatchPrep20CleanupRed.xcresult
+
+2026-10-02 21:13:58.468 xcodebuild[93397:27385334] [MT] IDETestOperationsObserverDebug: 38.882 elapsed -- Testing started completed.
+2026-10-02 21:13:58.470 xcodebuild[93397:27385334] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 21:13:58.470 xcodebuild[93397:27385334] [MT] IDETestOperationsObserverDebug: 38.882 sec, +38.882 sec -- end
+** TEST FAILED **
+
+Testing started

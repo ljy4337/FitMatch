@@ -1,0 +1,9 @@
+{
+  "reason": "Resume preparation after Mac storage cleanup; preserve previous smoke evidence and expected values. Add real production-owner sequence/transport probes and fix two independently reproduced runner false-evidence defects. No product policy change.",
+  "previous_plan_hashes": {
+    "smoke-selectors.json": "55525b7c1738b418d0069027457eb101149b629df3f79490869544b39609e666",
+    "full-selectors.json": "a9ff82003f17e51a87cddaa736895fb63588538c84425c5d2b2356d57e250797",
+    "oracle.json": "1964fbb68bd7bd58c9e382ca7f97485728a4e2d4248dec0bcc8350b3fbc4d5c1",
+    "policy-expectations.json": "125b6b6a7e0d0df307cf559d777cf0ca01a1af57fccd6c7f4a07500842e290ea"
+  }
+}

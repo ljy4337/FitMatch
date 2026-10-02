@@ -1,0 +1,5 @@
+# Actual focused commands (exit65 RED; exit0 GREEN)
+xcodebuild -quiet -project FitMatch.xcodeproj -scheme FitMatch-QA -configuration Debug-QA -destination 'platform=iOS Simulator,id=03BAF093-552E-4E53-ABFB-7DE0653BE676' -derivedDataPath /tmp/FitMatchEnvironmentBuild -disableAutomaticPackageResolution -parallel-testing-enabled NO -only-testing:FitMatchTests/FitMatchReleaseAuthenticatedLedgerSafetyTests -only-testing:FitMatchTests/FitMatchReleaseHistoryOracleTests -resultBundlePath /tmp/FitMatchPrep20Focused.xcresult test
+# Actual smoke (exit2)
+FITMATCH_QA_SIMULATOR_ID=03BAF093-552E-4E53-ABFB-7DE0653BE676 FITMATCH_QA_DERIVED_DATA=/tmp/FitMatchEnvironmentBuild python3 scripts/release_qa.py smoke --output /tmp/FitMatchPrep20Smoke
+# Main runner logs record exact xcode commands, output IDs and counts.

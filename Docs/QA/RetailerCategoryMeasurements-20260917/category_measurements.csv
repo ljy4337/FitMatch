@@ -1,0 +1,704 @@
+﻿source,category_id,category_path,raw_code,raw_label,unit,observed_products,measurement_source_capture
+musinsa,,Clothing > 니트/스웨터,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6341391.json
+musinsa,,Clothing > 니트/스웨터,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6341391.json
+musinsa,,Clothing > 니트/스웨터,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6341391.json
+musinsa,,Clothing > 니트/스웨터,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6341391.json
+musinsa,,Clothing > 무스탕/퍼,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5673055.json
+musinsa,,Clothing > 무스탕/퍼,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5673055.json
+musinsa,,Clothing > 무스탕/퍼,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5673055.json
+musinsa,,Clothing > 무스탕/퍼,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5673055.json
+musinsa,,Clothing > 바지 > 기타 바지,,밑단단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3346165.json
+musinsa,,Clothing > 바지 > 기타 바지,,밑위,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3346165.json
+musinsa,,Clothing > 바지 > 기타 바지,,엉덩이단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4062254.json
+musinsa,,Clothing > 바지 > 기타 바지,,총장,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3346165.json
+musinsa,,Clothing > 바지 > 기타 바지,,허리단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3346165.json
+musinsa,,Clothing > 바지 > 기타 바지,,허벅지단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3346165.json
+musinsa,,Clothing > 바지 > 숏팬츠,,밑단단면,unknown,10,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3225860.json
+musinsa,,Clothing > 바지 > 숏팬츠,,밑위,unknown,11,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3225860.json
+musinsa,,Clothing > 바지 > 숏팬츠,,엉덩이단면,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4720624.json
+musinsa,,Clothing > 바지 > 숏팬츠,,총장,unknown,11,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3225860.json
+musinsa,,Clothing > 바지 > 숏팬츠,,허리단면,unknown,11,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3225860.json
+musinsa,,Clothing > 바지 > 숏팬츠,,허벅지단면,unknown,10,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3225860.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,밑단단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,밑위,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,엉덩이단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,허리단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 슈트 팬츠/슬랙스,,허벅지단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2518490.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,밑단단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,밑위,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,엉덩이단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,허리단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 조거 팬츠,,허벅지단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260818-152745/new_products/raw/musinsa/actual_size/3503598.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,밑단단면,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,밑위,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,엉덩이단면,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,총장,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,허리단면,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 청/데님 팬츠,,허벅지단면,unknown,8,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2447802.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,밑단단면,unknown,7,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,밑위,unknown,7,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,엉덩이단면,unknown,6,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,총장,unknown,7,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,허리단면,unknown,7,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 코튼 팬츠,,허벅지단면,unknown,7,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4747236.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,밑단단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,밑위,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,엉덩이단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,총장,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,허리단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 바지 > 트레이닝 팬츠,,허벅지단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702426.json
+musinsa,,Clothing > 블라우스,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5661658.json
+musinsa,,Clothing > 블라우스,,소매길이,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5661658.json
+musinsa,,Clothing > 블라우스,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5661658.json
+musinsa,,Clothing > 셔츠/남방 > 캐주얼 셔츠,,가슴단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6777736.json
+musinsa,,Clothing > 셔츠/남방 > 캐주얼 셔츠,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6777736.json
+musinsa,,Clothing > 셔츠/남방 > 캐주얼 셔츠,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6777736.json
+musinsa,,Clothing > 스커트 > 롱스커트,,밑단단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4664068.json
+musinsa,,Clothing > 스커트 > 롱스커트,,엉덩이단면,unknown,6,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4664068.json
+musinsa,,Clothing > 스커트 > 롱스커트,,총장,unknown,6,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4664068.json
+musinsa,,Clothing > 스커트 > 롱스커트,,허리단면,unknown,6,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4664068.json
+musinsa,,Clothing > 스커트 > 미니스커트,,밑단단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3144417.json
+musinsa,,Clothing > 스커트 > 미니스커트,,엉덩이단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3144417.json
+musinsa,,Clothing > 스커트 > 미니스커트,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3144417.json
+musinsa,,Clothing > 스커트 > 미니스커트,,허리단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3144417.json
+musinsa,,Clothing > 스커트 > 미디스커트,,밑단단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5698179.json
+musinsa,,Clothing > 스커트 > 미디스커트,,엉덩이단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5698179.json
+musinsa,,Clothing > 스커트 > 미디스커트,,총장,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5698179.json
+musinsa,,Clothing > 스커트 > 미디스커트,,허리단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5698179.json
+musinsa,,Clothing > 원피스 > 맥시 원피스,,가슴단면,unknown,10,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3442344.json
+musinsa,,Clothing > 원피스 > 맥시 원피스,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5038460.json
+musinsa,,Clothing > 원피스 > 맥시 원피스,,어깨너비,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4651400.json
+musinsa,,Clothing > 원피스 > 맥시 원피스,,엉덩이단면,unknown,6,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4636893.json
+musinsa,,Clothing > 원피스 > 맥시 원피스,,총장,unknown,11,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3442344.json
+musinsa,,Clothing > 원피스 > 미니 원피스,,가슴단면,unknown,13,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5322326.json
+musinsa,,Clothing > 원피스 > 미니 원피스,,소매길이,unknown,9,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5322326.json
+musinsa,,Clothing > 원피스 > 미니 원피스,,어깨너비,unknown,9,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5322326.json
+musinsa,,Clothing > 원피스 > 미니 원피스,,엉덩이단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5698186.json
+musinsa,,Clothing > 원피스 > 미니 원피스,,총장,unknown,13,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5322326.json
+musinsa,,Clothing > 원피스 > 미디 원피스,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5795942.json
+musinsa,,Clothing > 원피스 > 미디 원피스,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6496880.json
+musinsa,,Clothing > 원피스 > 미디 원피스,,어깨너비,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5795942.json
+musinsa,,Clothing > 원피스 > 미디 원피스,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5795942.json
+musinsa,,Clothing > 점퍼/재킷 > 나일론/코치 재킷,,가슴단면,unknown,28,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3822928.json
+musinsa,,Clothing > 점퍼/재킷 > 나일론/코치 재킷,,소매길이,unknown,20,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4696797.json
+musinsa,,Clothing > 점퍼/재킷 > 나일론/코치 재킷,,어깨너비,unknown,16,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4696797.json
+musinsa,,Clothing > 점퍼/재킷 > 나일론/코치 재킷,,총장,unknown,28,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3822928.json
+musinsa,,Clothing > 점퍼/재킷 > 데님/트러커 재킷,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702453.json
+musinsa,,Clothing > 점퍼/재킷 > 데님/트러커 재킷,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702453.json
+musinsa,,Clothing > 점퍼/재킷 > 데님/트러커 재킷,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702453.json
+musinsa,,Clothing > 점퍼/재킷 > 데님/트러커 재킷,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6702453.json
+musinsa,,Clothing > 점퍼/재킷 > 레더/라이더스 재킷,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3042005.json
+musinsa,,Clothing > 점퍼/재킷 > 레더/라이더스 재킷,,소매길이,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3042005.json
+musinsa,,Clothing > 점퍼/재킷 > 레더/라이더스 재킷,,어깨너비,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3042005.json
+musinsa,,Clothing > 점퍼/재킷 > 레더/라이더스 재킷,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/3042005.json
+musinsa,,Clothing > 점퍼/재킷 > 사파리/헌팅 재킷,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2737014.json
+musinsa,,Clothing > 점퍼/재킷 > 사파리/헌팅 재킷,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2737014.json
+musinsa,,Clothing > 점퍼/재킷 > 사파리/헌팅 재킷,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2737014.json
+musinsa,,Clothing > 점퍼/재킷 > 사파리/헌팅 재킷,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/2737014.json
+musinsa,,Clothing > 점퍼/재킷 > 아노락 재킷,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6800367.json
+musinsa,,Clothing > 점퍼/재킷 > 아노락 재킷,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6800367.json
+musinsa,,Clothing > 점퍼/재킷 > 아노락 재킷,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6800367.json
+musinsa,,Clothing > 점퍼/재킷 > 아노락 재킷,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6800367.json
+musinsa,,Clothing > 점퍼/재킷 > 트레이닝 재킷,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6686197.json
+musinsa,,Clothing > 점퍼/재킷 > 트레이닝 재킷,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6686197.json
+musinsa,,Clothing > 점퍼/재킷 > 트레이닝 재킷,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6686197.json
+musinsa,,Clothing > 점퍼/재킷 > 트레이닝 재킷,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6686197.json
+musinsa,,Clothing > 점퍼/재킷 > 플리스,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5343592.json
+musinsa,,Clothing > 점퍼/재킷 > 플리스,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5343592.json
+musinsa,,Clothing > 점퍼/재킷 > 플리스,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5343592.json
+musinsa,,Clothing > 점퍼/재킷 > 플리스,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5343592.json
+musinsa,,Clothing > 점퍼/재킷 > 항공 점퍼/블루종/MA-1,,가슴단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6021332.json
+musinsa,,Clothing > 점퍼/재킷 > 항공 점퍼/블루종/MA-1,,소매길이,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6021332.json
+musinsa,,Clothing > 점퍼/재킷 > 항공 점퍼/블루종/MA-1,,어깨너비,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6021332.json
+musinsa,,Clothing > 점퍼/재킷 > 항공 점퍼/블루종/MA-1,,총장,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6021332.json
+musinsa,,Clothing > 카디건,,가슴단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5070728.json
+musinsa,,Clothing > 카디건,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5070728.json
+musinsa,,Clothing > 카디건,,어깨너비,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5070728.json
+musinsa,,Clothing > 카디건,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5070728.json
+musinsa,,Clothing > 코트 > 겨울 싱글 코트,,가슴단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5489923.json
+musinsa,,Clothing > 코트 > 겨울 싱글 코트,,소매길이,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5828291.json
+musinsa,,Clothing > 코트 > 겨울 싱글 코트,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/865862.json
+musinsa,,Clothing > 코트 > 겨울 싱글 코트,,총장,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5489923.json
+musinsa,,Clothing > 티셔츠 > 긴소매 티셔츠,,가슴단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6595807.json
+musinsa,,Clothing > 티셔츠 > 긴소매 티셔츠,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6595807.json
+musinsa,,Clothing > 티셔츠 > 긴소매 티셔츠,,어깨너비,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6595807.json
+musinsa,,Clothing > 티셔츠 > 긴소매 티셔츠,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6595807.json
+musinsa,,Clothing > 티셔츠 > 나시/민소매 티셔츠,,가슴단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6716197.json
+musinsa,,Clothing > 티셔츠 > 나시/민소매 티셔츠,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6716197.json
+musinsa,,Clothing > 티셔츠 > 반소매 티셔츠,,가슴단면,unknown,19,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4341120.json
+musinsa,,Clothing > 티셔츠 > 반소매 티셔츠,,소매길이,unknown,18,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4341120.json
+musinsa,,Clothing > 티셔츠 > 반소매 티셔츠,,어깨너비,unknown,18,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4341120.json
+musinsa,,Clothing > 티셔츠 > 반소매 티셔츠,,총장,unknown,19,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/4341120.json
+musinsa,,Clothing > 티셔츠 > 피케/카라 티셔츠,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6849281.json
+musinsa,,Clothing > 티셔츠 > 피케/카라 티셔츠,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6849281.json
+musinsa,,Clothing > 티셔츠 > 피케/카라 티셔츠,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6849281.json
+musinsa,,Clothing > 티셔츠 > 피케/카라 티셔츠,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6849281.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 숏 패딩/숏 헤비 아우터,,가슴단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6957088.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 숏 패딩/숏 헤비 아우터,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6957088.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 숏 패딩/숏 헤비 아우터,,어깨너비,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6957088.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 숏 패딩/숏 헤비 아우터,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6957088.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 하프 패딩/하프 헤비 아우터,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6960215.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 하프 패딩/하프 헤비 아우터,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6960215.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 하프 패딩/하프 헤비 아우터,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6960215.json
+musinsa,,Clothing > 패딩/헤비 아우터 > 하프 패딩/하프 헤비 아우터,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6960215.json
+musinsa,,Clothing > 후드 집업,,가슴단면,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5329359.json
+musinsa,,Clothing > 후드 집업,,소매길이,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5329359.json
+musinsa,,Clothing > 후드 집업,,어깨너비,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5329359.json
+musinsa,,Clothing > 후드 집업,,총장,unknown,5,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/5329359.json
+musinsa,,Sportswear > 상의 > 긴소매 티셔츠,,가슴단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6812676.json
+musinsa,,Sportswear > 상의 > 긴소매 티셔츠,,소매길이,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6812676.json
+musinsa,,Sportswear > 상의 > 긴소매 티셔츠,,어깨너비,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6812676.json
+musinsa,,Sportswear > 상의 > 긴소매 티셔츠,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6812676.json
+musinsa,,Sportswear > 상의 > 나시/민소매 티셔츠,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6781113.json
+musinsa,,Sportswear > 상의 > 나시/민소매 티셔츠,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6781113.json
+musinsa,,Sportswear > 상의 > 반소매 티셔츠,,가슴단면,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6842612.json
+musinsa,,Sportswear > 상의 > 반소매 티셔츠,,소매길이,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6842612.json
+musinsa,,Sportswear > 상의 > 반소매 티셔츠,,어깨너비,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6842612.json
+musinsa,,Sportswear > 상의 > 반소매 티셔츠,,총장,unknown,3,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6842612.json
+musinsa,,Sportswear > 아우터 > 나일론/코치 재킷,,가슴단면,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6764812.json
+musinsa,,Sportswear > 아우터 > 나일론/코치 재킷,,소매길이,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6764812.json
+musinsa,,Sportswear > 아우터 > 나일론/코치 재킷,,어깨너비,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6764812.json
+musinsa,,Sportswear > 아우터 > 나일론/코치 재킷,,총장,unknown,2,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6764812.json
+musinsa,,Sportswear > 아우터 > 하프 패딩/하프 헤비 아우터,,가슴단면,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6908583.json
+musinsa,,Sportswear > 아우터 > 하프 패딩/하프 헤비 아우터,,소매길이,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6908583.json
+musinsa,,Sportswear > 아우터 > 하프 패딩/하프 헤비 아우터,,총장,unknown,4,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6908583.json
+musinsa,,Sportswear > 하의 > 트레이닝 팬츠,,밑단단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6907230.json
+musinsa,,Sportswear > 하의 > 트레이닝 팬츠,,총장,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6907230.json
+musinsa,,Sportswear > 하의 > 트레이닝 팬츠,,허리단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6907230.json
+musinsa,,Sportswear > 하의 > 트레이닝 팬츠,,허벅지단면,unknown,1,Docs/TestEvidence/MusinsaCatalogIncremental/runs/20260815-115051/new_products/raw/musinsa/actual_size/6907230.json
+uniqlo,,GU > 원피스 & 스커트 > 스커트,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E486689.json
+uniqlo,,GU > 원피스 & 스커트 > 스커트,skirt-length,스커트 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E486689.json
+uniqlo,,GU > 원피스 & 스커트 > 스커트,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E486689.json
+uniqlo,,GU > 팬츠 > 팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,GU > 팬츠 > 팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,GU > 팬츠 > 팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,GU > 팬츠 > 팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,GU > 팬츠 > 팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,GU > 팬츠 > 팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486724.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,UV Protection > 팬츠 & 레깅스 > 팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483001.json
+uniqlo,,남아 & 공용 > 이너웨어 > 언더웨어,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485389.json
+uniqlo,,남아 & 공용 > 이너웨어 > 언더웨어,side-length,측면 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485389.json
+uniqlo,,남아 & 공용 > 이너웨어 > 언더웨어,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485389.json
+uniqlo,,니트 & 가디건 > 니트 > 반팔 니트,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482979.json
+uniqlo,,니트 & 가디건 > 니트 > 반팔 니트,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482979.json
+uniqlo,,니트 & 가디건 > 니트 > 반팔 니트,knit-body-length-front,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487719.json
+uniqlo,,니트 & 가디건 > 니트 > 반팔 니트,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482979.json
+uniqlo,,니트 & 가디건 > 니트 > 반팔 니트,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482979.json
+uniqlo,,니트 & 가디건 > 니트 > 코튼,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482973.json
+uniqlo,,니트 & 가디건 > 니트 > 코튼,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482973.json
+uniqlo,,니트 & 가디건 > 니트 > 코튼,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482973.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,bottom-width,밑단 너비,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,hip-product-size,엉덩이 둘레,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,inseam,다리 길이,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,rising-length,밑위 길이,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,thigh,허벅지 너비,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,라운지 팬츠 > 라운지 팬츠 > 롱 팬츠,waist-product-size,허리 둘레,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E461420.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 디자인 블라우스,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484848.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 디자인 블라우스,body-width-gather-and-tack,몸 너비<br>(주름 및 박음질 포함),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484848.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 디자인 블라우스,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484848.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,body-length,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475648.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475648.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,body-width-gather-and-tack,몸 너비<br>(주름 및 박음질 포함),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483870.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,neck-circumference,목둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483870.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475648.json
+uniqlo,,셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 리넨,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475648.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 데님 & 샴브레이,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484877.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 데님 & 샴브레이,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484877.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 데님 & 샴브레이,neck-circumference,목둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484877.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 데님 & 샴브레이,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484877.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 데님 & 샴브레이,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484877.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 리넨,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482443.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 리넨,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482443.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 리넨,neck-circumference,목둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482443.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 리넨,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482443.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 리넨,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482443.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 반팔,body-length,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485131.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 반팔,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485131.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 반팔,neck-circumference,목둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485131.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 반팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485131.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 반팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485131.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 오픈 칼라,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482481.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 오픈 칼라,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482481.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 오픈 칼라,neck-circumference,목둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482481.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 오픈 칼라,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482481.json
+uniqlo,,셔츠 > 캐주얼셔츠 > 오픈 칼라,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482481.json
+uniqlo,,스커트 & 원피스 > 원피스 > 슬리브리스,belt-length,벨트 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483340.json
+uniqlo,,스커트 & 원피스 > 원피스 > 슬리브리스,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483340.json
+uniqlo,,스커트 & 원피스 > 원피스 > 슬리브리스,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483340.json
+uniqlo,,스포츠 유틸리티 웨어 > 아우터 > 포켓터블,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487395.json
+uniqlo,,스포츠 유틸리티 웨어 > 아우터 > 포켓터블,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487395.json
+uniqlo,,스포츠 유틸리티 웨어 > 아우터 > 포켓터블,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487395.json
+uniqlo,,스포츠 유틸리티 웨어 > 아우터 > 포켓터블,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487395.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,스포츠 유틸리티 웨어 > 팬츠 > 기어 팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482939.json
+uniqlo,,아우터 > 재킷 & 블레이저 > 캐주얼 재킷,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483819.json
+uniqlo,,아우터 > 재킷 & 블레이저 > 캐주얼 재킷,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483819.json
+uniqlo,,아우터 > 재킷 & 블레이저 > 캐주얼 재킷,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483819.json
+uniqlo,,아우터 > 재킷 & 블레이저 > 캐주얼 재킷,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483819.json
+uniqlo,,아우터 > 재킷 & 코트 > 캐주얼 재킷,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487846.json
+uniqlo,,아우터 > 재킷 & 코트 > 캐주얼 재킷,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487846.json
+uniqlo,,아우터 > 재킷 & 코트 > 캐주얼 재킷,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487846.json
+uniqlo,,아우터 > 재킷 & 코트 > 캐주얼 재킷,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487846.json
+uniqlo,,아우터 > 파카 & 블루종 > 파카,body-length,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478231.json
+uniqlo,,아우터 > 파카 & 블루종 > 파카,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478231.json
+uniqlo,,아우터 > 파카 & 블루종 > 파카,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478231.json
+uniqlo,,액세서리 > 모자 > 캡,around-the-head-product,머리둘레<br>(제품 사이즈),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478307.json
+uniqlo,,액세서리 > 모자 > 캡,brim,가장자리,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478307.json
+uniqlo,,액세서리 > 모자 > 캡,crown-length,크라운 높이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478307.json
+uniqlo,,액세서리 > 선글라스 > 패션 선글라스,bridge-width,브릿지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485008.json
+uniqlo,,액세서리 > 선글라스 > 패션 선글라스,goods-height,높이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485008.json
+uniqlo,,액세서리 > 선글라스 > 패션 선글라스,goods-width,가로폭,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485008.json
+uniqlo,,액세서리 > 선글라스 > 패션 선글라스,lens-width,렌즈 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485008.json
+uniqlo,,액세서리 > 선글라스 > 패션 선글라스,temple-length,템플 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485008.json
+uniqlo,,액세서리 > 신발 > UNIQLO : C,ball-girth,신발 둘레(내측),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482815.json
+uniqlo,,액세서리 > 신발 > UNIQLO : C,insole-length,신발 길이<br>(인솔 길이),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482815.json
+uniqlo,,액세서리 > 신발 > UNIQLO : C,width-length,신발 폭(내측),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482815.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection,waist-product-size-bottoms,허리<br>[하의],cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481804.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 롱팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487375.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 쇼트팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481790.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 레깅스 & 팬츠 > 크롭레깅스,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E481782.json
+uniqlo,,영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔),body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483130.json
+uniqlo,,영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔),body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483130.json
+uniqlo,,영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔),shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483130.json
+uniqlo,,영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔),sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483130.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,영유아(6개월~5세) > 홈웨어 & 파자마 > 긴팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E478465.json
+uniqlo,,원피스 & 스커트 > 스커트 > 롱 (맥시),hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487792.json
+uniqlo,,원피스 & 스커트 > 스커트 > 롱 (맥시),skirt-length,스커트 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487792.json
+uniqlo,,원피스 & 스커트 > 스커트 > 롱 (맥시),waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487792.json
+uniqlo,,원피스 & 스커트 > 스커트 > 플레어,bottom-width,밑단 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482285.json
+uniqlo,,원피스 & 스커트 > 스커트 > 플레어,hip-product-size,엉덩이 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482285.json
+uniqlo,,원피스 & 스커트 > 스커트 > 플레어,skirt-length,스커트 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482285.json
+uniqlo,,원피스 & 스커트 > 스커트 > 플레어,slit-length,슬릿 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482285.json
+uniqlo,,원피스 & 스커트 > 스커트 > 플레어,waist-product-size,허리 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482285.json
+uniqlo,,원피스 & 스커트 > 원피스 > 긴팔원피스,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485269.json
+uniqlo,,원피스 & 스커트 > 원피스 > 긴팔원피스,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485269.json
+uniqlo,,원피스 & 스커트 > 원피스 > 긴팔원피스,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485269.json
+uniqlo,,원피스 & 스커트 > 원피스 > 긴팔원피스,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485269.json
+uniqlo,,원피스 & 스커트 > 원피스 > 긴팔원피스,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485269.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487822.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E488218.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,body-width-gather-and-tack,몸 너비<br>(주름 및 박음질 포함),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487822.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487822.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E488218.json
+uniqlo,,원피스 & 스커트 > 원피스 > 반팔원피스,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E487822.json
+uniqlo,,원피스 & 스커트 > 원피스 > 슬리브리스 원피스,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483564.json
+uniqlo,,원피스 & 스커트 > 원피스 > 슬리브리스 원피스,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483564.json
+uniqlo,,원피스 & 스커트 > 원피스 > 슬리브리스 원피스,body-width-gather-and-tack,몸 너비<br>(주름 및 박음질 포함),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483564.json
+uniqlo,,원피스 & 스커트 > 원피스 > 슬리브리스 원피스,skirt-length-petticoat,치마 길이<br> [페티코트],cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483564.json
+uniqlo,,원피스 & 스커트 > 원피스 > 슬리브리스 원피스,waist-product-size-petticoat,허리 둘레 (상품 사이즈)<br> [페티코트],cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483564.json
+uniqlo,,이너웨어 > 브라탑 > 코튼,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482197.json
+uniqlo,,이너웨어 > 브라탑 > 코튼,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482197.json
+uniqlo,,이너웨어 > 언더웨어 > 복서브리프,hip-product-size,엉덩이 둘레,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E439340.json
+uniqlo,,이너웨어 > 언더웨어 > 복서브리프,side-length,측면 길이,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E439340.json
+uniqlo,,이너웨어 > 언더웨어 > 복서브리프,waist-product-size,허리 둘레,cm,5,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E439340.json
+uniqlo,,이너웨어 > 언더웨어 > 쇼츠,hip-product-size,엉덩이 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482008.json
+uniqlo,,이너웨어 > 언더웨어 > 쇼츠,side-length,측면 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482008.json
+uniqlo,,이너웨어 > 언더웨어 > 쇼츠,waist-product-size,허리 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482008.json
+uniqlo,,이너웨어 > 언더웨어 > 코튼 브리프,hip-product-size,엉덩이 둘레,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E464311.json
+uniqlo,,이너웨어 > 언더웨어 > 코튼 브리프,side-length,측면 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E464311.json
+uniqlo,,이너웨어 > 언더웨어 > 코튼 브리프,waist-product-size,허리 둘레,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E464311.json
+uniqlo,,이너웨어 > 에어리즘 > 긴팔,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484088.json
+uniqlo,,이너웨어 > 에어리즘 > 긴팔,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484088.json
+uniqlo,,이너웨어 > 에어리즘 > 긴팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484088.json
+uniqlo,,이너웨어 > 에어리즘 > 긴팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484088.json
+uniqlo,,이너웨어 > 에어리즘 > 에어리즘,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E454312.json
+uniqlo,,이너웨어 > 에어리즘 > 에어리즘,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E454312.json
+uniqlo,,이너웨어 > 에어리즘 > 에어리즘,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E454312.json
+uniqlo,,이너웨어 > 에어리즘 > 에어리즘,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E454312.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,청바지 & 팬츠 > 반바지 > 반바지,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E465112.json
+uniqlo,,티셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,body-length-back,전체 길이,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E459565.json
+uniqlo,,티셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,body-width,가슴너비,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E459565.json
+uniqlo,,티셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,shoulder-width,어깨너비(솔기에서 솔기까지),cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E459565.json
+uniqlo,,티셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,sleeve-length-cb,등 중심부터 소매까지 길이,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E459565.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > CHIIKAWA,body-length-back,전체 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485530.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > CHIIKAWA,body-width,가슴너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485530.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > CHIIKAWA,sleeve-length-cb,등 중심부터 소매까지 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485530.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Disney/PIXAR,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483255.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Disney/PIXAR,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483255.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Disney/PIXAR,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483255.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Disney/PIXAR,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483255.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Jason Polan,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485803.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Jason Polan,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485803.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Jason Polan,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485803.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Jason Polan,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485803.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484215.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484215.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484215.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484215.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,body-length-back,전체 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488309.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,body-width,가슴너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488309.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,sleeve-length-cb,등 중심부터 소매까지 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488309.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Mickey & Friends,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489392.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Mickey & Friends,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489392.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Mickey & Friends,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489392.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Mickey & Friends,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489392.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Minecraft,body-length-back,전체 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483680.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Minecraft,body-width,가슴너비,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483680.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Minecraft,shoulder-width,어깨너비(솔기에서 솔기까지),cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483680.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Minecraft,sleeve-length-cb,등 중심부터 소매까지 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483680.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Monchhichi,body-length-back,전체 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488936.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Monchhichi,body-width,가슴너비,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488936.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Monchhichi,shoulder-width,어깨너비(솔기에서 솔기까지),cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488936.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Monchhichi,sleeve-length-cb,등 중심부터 소매까지 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E488936.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > NY POP ART,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483660.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > NY POP ART,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483660.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > NY POP ART,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483660.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > NY POP ART,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483660.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > PEANUTS,body-length-back,전체 길이,cm,13,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483258.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > PEANUTS,body-width,가슴너비,cm,13,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483258.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > PEANUTS,shoulder-width,어깨너비(솔기에서 솔기까지),cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483258.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > PEANUTS,sleeve-length,소매 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484477.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > PEANUTS,sleeve-length-cb,등 중심부터 소매까지 길이,cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483258.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Pokémon,body-length-back,전체 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483670.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Pokémon,body-width,가슴너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483670.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Pokémon,shoulder-width,어깨너비(솔기에서 솔기까지),cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483670.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Pokémon,sleeve-length-cb,등 중심부터 소매까지 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483670.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E473486.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E473486.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E473486.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E473486.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Sanrio characters,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483349.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Sanrio characters,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483349.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Sanrio characters,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483349.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > Sanrio characters,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483349.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > The Super Mario Galaxy Movie,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483707.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > The Super Mario Galaxy Movie,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483707.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > The Super Mario Galaxy Movie,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483707.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > The Super Mario Galaxy Movie,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483707.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > miffy in bloom,body-length-back,전체 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484121.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > miffy in bloom,body-width,가슴너비,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484121.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > miffy in bloom,shoulder-width,어깨너비(솔기에서 솔기까지),cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484121.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > miffy in bloom,sleeve-length-cb,등 중심부터 소매까지 길이,cm,6,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484121.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > mofusand,body-length-back,전체 길이,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483373.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > mofusand,body-width,가슴너비,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483373.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > mofusand,shoulder-width,어깨너비(솔기에서 솔기까지),cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483373.json
+uniqlo,,티셔츠 & UT > 그래픽티셔츠 > mofusand,sleeve-length-cb,등 중심부터 소매까지 길이,cm,10,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483373.json
+uniqlo,,티셔츠 & UT > 브라탑 > 코튼,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482202.json
+uniqlo,,티셔츠 & UT > 브라탑 > 코튼,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482202.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484231.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484231.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484231.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 긴팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484231.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483463.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483463.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483463.json
+uniqlo,,티셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483463.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,body-length-back,전체 길이,cm,28,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E457111.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,body-width,가슴너비,cm,28,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E457111.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,shoulder-width,어깨너비(솔기에서 솔기까지),cm,28,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E457111.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > PEACE FOR ALL > 그래픽 티셔츠,sleeve-length-cb,등 중심부터 소매까지 길이,cm,28,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E457111.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Andy Warhol Transformation,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482804.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Andy Warhol Transformation,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482804.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Andy Warhol Transformation,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482804.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Andy Warhol Transformation,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482804.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,body-length-back,전체 길이,cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484758.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,body-width,가슴너비,cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484758.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,shoulder-width,어깨너비(솔기에서 솔기까지),cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484758.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MAGIC FOR ALL ICONS,sleeve-length-cb,등 중심부터 소매까지 길이,cm,9,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484758.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,body-length-back,전체 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482769.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,body-width,가슴너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482769.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,shoulder-width,어깨너비(솔기에서 솔기까지),cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482769.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > MARIO KART WORLD,sleeve-length-cb,등 중심부터 소매까지 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482769.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > NY POP ART,body-length-back,전체 길이,cm,11,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484766.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > NY POP ART,body-width,가슴너비,cm,11,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484766.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > NY POP ART,shoulder-width,어깨너비(솔기에서 솔기까지),cm,11,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484766.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > NY POP ART,sleeve-length-cb,등 중심부터 소매까지 길이,cm,11,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484766.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > PEANUTS,body-length-back,전체 길이,cm,7,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482751.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > PEANUTS,body-width,가슴너비,cm,7,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482751.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > PEANUTS,shoulder-width,어깨너비(솔기에서 솔기까지),cm,7,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482751.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > PEANUTS,sleeve-length-cb,등 중심부터 소매까지 길이,cm,7,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482751.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Pokémon,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482756.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Pokémon,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482756.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Pokémon,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482756.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > Pokémon,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E482756.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,body-length-back,전체 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E474462.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,body-width,가슴너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E474462.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,shoulder-width,어깨너비(솔기에서 솔기까지),cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E474462.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 그래픽티셔츠 > STUDIO GHIBLI,sleeve-length-cb,등 중심부터 소매까지 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E474462.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠,body-length-back,전체 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475377.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠,body-width,가슴너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475377.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠,shoulder-width,어깨너비(솔기에서 솔기까지),cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475377.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 스웨트셔츠 & 후드집업 > 스웨트셔츠,sleeve-length-cb,등 중심부터 소매까지 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E475377.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482301.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,body-width,가슴너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482301.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,shoulder-width,어깨너비(솔기에서 솔기까지),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482301.json
+uniqlo,,티셔츠 & 스웨트셔츠 & UT > 티셔츠 (반팔 & 긴팔) > 반팔,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482301.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 리넨 블렌드,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485251.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 쇼트 팬츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482648.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,bottom-width,밑단 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,hip-product-size,엉덩이 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,inseam,다리 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,rising-length,밑위 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,thigh,허벅지 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 라운지 팬츠 > 이지 팬츠,waist-product-size,허리 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482245.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,body-length-back,전체 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,body-width-gather-and-tack,몸 너비<br>(주름 및 박음질 포함),cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,sleeve-length-cb,등 중심부터 소매까지 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,파자마 & 홈웨어 > 파자마 > 반팔 파자마,waist-product-size-bottoms,허리<br>[하의],cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E483754.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 레깅스 > 울트라 스트레치,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E485725.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 배럴 레그 팬츠 > 긴 기장,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489417.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 데님,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E483512.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 반바지,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E484598.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 스코츠,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E480302.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 스코츠,skirt-length,스커트 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E480302.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 스코츠,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E480302.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,bottom-width,밑단 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,hip-product-size,엉덩이 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,inseam,다리 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,rising-length,밑위 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,thigh,허벅지 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 유니섹스,waist-product-size,허리 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E482944.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 이지(허리 밴딩),waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484208.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,bottom-width,밑단 너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,hip-product-size,엉덩이 둘레,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,inseam,다리 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,rising-length,밑위 길이,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,thigh,허벅지 너비,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 쇼트 팬츠(반바지) > 큐롯,waist-product-size,허리 둘레,cm,4,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485593.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 그 외,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486107.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 스웨트 팬츠 & 조거 팬츠 > 스웨트,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E451648.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,bottom-width,밑단 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,hip-product-size,엉덩이 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,inseam,다리 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,rising-length,밑위 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,thigh,허벅지 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 그 외,waist-product-size,허리 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E475598.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,bottom-width,밑단 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,hip-product-size,엉덩이 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,inseam,다리 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,rising-length,밑위 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,thigh,허벅지 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 스마트 팬츠,waist-product-size,허리 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487959.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,bottom-width,밑단 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,hip-product-size,엉덩이 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,inseam,다리 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,rising-length,밑위 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,thigh,허벅지 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 슬랙스(트라우저) > 와이드 팬츠,waist-product-size,허리 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E486984.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > UNIQLO : C,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E484662.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 데님,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E491104.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E489191.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 스트레이트,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E485737.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,bottom-width,밑단 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,hip-product-size,엉덩이 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,inseam,다리 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,rising-length,밑위 길이,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,thigh,허벅지 너비,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 진(청바지) > 슬림,waist-product-size,허리 둘레,cm,3,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E459688.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 치노 팬츠 > 레귤러,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479424.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 울트라 스트레치,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E465206.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,bottom-width,밑단 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,hip-product-size,엉덩이 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,inseam,다리 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,rising-length,밑위 길이,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,thigh,허벅지 너비,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 웜 팬츠,waist-product-size,허리 둘레,cm,2,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260815-111623/new_products/raw/uniqlo/size_charts/E487261.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,bottom-width,밑단 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,hip-product-size,엉덩이 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,inseam,다리 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,rising-length,밑위 길이,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,thigh,허벅지 너비,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+uniqlo,,팬츠 > 캐주얼 팬츠 > 유틸리티ㆍ워크,waist-product-size,허리 둘레,cm,1,Docs/TestEvidence/UniqloCatalogIncremental/runs/20260818-152230/new_products/raw/uniqlo/size_charts/E479382.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 가디건 > KNIT CARDIGAN,zone-name-arm-width,zone-name-arm-width,cm,1,ZARAAudit/production_sample_30_cache/547294158.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 가디건 > KNIT CARDIGAN,zone-name-back-width,zone-name-back-width,cm,1,ZARAAudit/production_sample_30_cache/547294158.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 가디건 > KNIT CARDIGAN,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/547294158.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 가디건 > KNIT CARDIGAN,zone-name-front-length,zone-name-front-length,cm,1,ZARAAudit/production_sample_30_cache/547294158.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 가디건 > KNIT CARDIGAN,zone-name-sleeve-length,zone-name-sleeve-length,cm,1,ZARAAudit/production_sample_30_cache/547294158.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 브레이저 > B.BLAZER,zone-name-arm-width,zone-name-arm-width,cm,1,ZARAAudit/production_sample_30_cache/545431375.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 브레이저 > B.BLAZER,zone-name-back-width,zone-name-back-width,cm,1,ZARAAudit/production_sample_30_cache/545431375.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 브레이저 > B.BLAZER,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/545431375.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 브레이저 > B.BLAZER,zone-name-front-length,zone-name-front-length,cm,1,ZARAAudit/production_sample_30_cache/545431375.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 브레이저 > B.BLAZER,zone-name-sleeve-length,zone-name-sleeve-length,cm,1,ZARAAudit/production_sample_30_cache/545431375.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > B.SHORT-OUTWEAR,zone-name-arm-width,zone-name-arm-width,cm,1,ZARAAudit/production_sample_30_cache/572132324.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > B.SHORT-OUTWEAR,zone-name-back-width,zone-name-back-width,cm,1,ZARAAudit/production_sample_30_cache/572132324.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > B.SHORT-OUTWEAR,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/572132324.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > B.SHORT-OUTWEAR,zone-name-front-length,zone-name-front-length,cm,1,ZARAAudit/production_sample_30_cache/572132324.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > B.SHORT-OUTWEAR,zone-name-sleeve-length,zone-name-sleeve-length,cm,1,ZARAAudit/production_sample_30_cache/572132324.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > T.SHORT-OUTWEAR,zone-name-arm-width,zone-name-arm-width,cm,1,ZARAAudit/production_sample_30_cache/547014734.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > T.SHORT-OUTWEAR,zone-name-back-width,zone-name-back-width,cm,1,ZARAAudit/production_sample_30_cache/547014734.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > T.SHORT-OUTWEAR,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/547014734.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > T.SHORT-OUTWEAR,zone-name-front-length,zone-name-front-length,cm,1,ZARAAudit/production_sample_30_cache/547014734.json
+zara,2417772,여성 > 컬렉션 > 자켓 | 점퍼 > 모두 보기 > 스포츠 재킷 > T.SHORT-OUTWEAR,zone-name-sleeve-length,zone-name-sleeve-length,cm,1,ZARAAudit/production_sample_30_cache/547014734.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS FANTASI,zone-name-arm-width,zone-name-arm-width,cm,2,ZARAAudit/production_sample_30_cache/551168862.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS FANTASI,zone-name-back-width,zone-name-back-width,cm,2,ZARAAudit/production_sample_30_cache/551168862.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS FANTASI,zone-name-chest,zone-name-chest,cm,2,ZARAAudit/production_sample_30_cache/551168862.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS FANTASI,zone-name-front-length,zone-name-front-length,cm,2,ZARAAudit/production_sample_30_cache/551168862.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS FANTASI,zone-name-sleeve-length,zone-name-sleeve-length,cm,2,ZARAAudit/production_sample_30_cache/551168862.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS POSICIO,zone-name-arm-width,zone-name-arm-width,cm,2,ZARAAudit/production_sample_30_cache/557451555.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS POSICIO,zone-name-back-width,zone-name-back-width,cm,2,ZARAAudit/production_sample_30_cache/557451555.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS POSICIO,zone-name-chest,zone-name-chest,cm,2,ZARAAudit/production_sample_30_cache/557451555.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS POSICIO,zone-name-front-length,zone-name-front-length,cm,2,ZARAAudit/production_sample_30_cache/557451555.json
+zara,2420417,여성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > C.CTAS POSICIO,zone-name-sleeve-length,zone-name-sleeve-length,cm,2,ZARAAudit/production_sample_30_cache/557451555.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > B.PANTS,zone-name-back-rise,zone-name-back-rise,cm,2,ZARAAudit/production_sample_30_cache/560359449.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > B.PANTS,zone-name-front-length-lower,zone-name-front-length-lower,cm,2,ZARAAudit/production_sample_30_cache/560359449.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > B.PANTS,zone-name-front-rise,zone-name-front-rise,cm,2,ZARAAudit/production_sample_30_cache/560359449.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > B.PANTS,zone-name-hips,zone-name-hips,cm,2,ZARAAudit/production_sample_30_cache/560359449.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > B.PANTS,zone-name-waist,zone-name-waist,cm,2,ZARAAudit/production_sample_30_cache/560359449.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > C.PTON-LEGGING,zone-name-back-rise,zone-name-back-rise,cm,1,ZARAAudit/production_sample_30_cache/561619028.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > C.PTON-LEGGING,zone-name-front-length-lower,zone-name-front-length-lower,cm,1,ZARAAudit/production_sample_30_cache/561619028.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > C.PTON-LEGGING,zone-name-front-rise,zone-name-front-rise,cm,1,ZARAAudit/production_sample_30_cache/561619028.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > C.PTON-LEGGING,zone-name-hips,zone-name-hips,cm,1,ZARAAudit/production_sample_30_cache/561619028.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > C.PTON-LEGGING,zone-name-waist,zone-name-waist,cm,1,ZARAAudit/production_sample_30_cache/561619028.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > L. PANT. PIJAMA,zone-name-back-rise,zone-name-back-rise,cm,1,ZARAAudit/production_sample_30_cache/545474934.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > L. PANT. PIJAMA,zone-name-front-length-lower,zone-name-front-length-lower,cm,1,ZARAAudit/production_sample_30_cache/545474934.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > L. PANT. PIJAMA,zone-name-front-rise,zone-name-front-rise,cm,1,ZARAAudit/production_sample_30_cache/545474934.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > L. PANT. PIJAMA,zone-name-hips,zone-name-hips,cm,1,ZARAAudit/production_sample_30_cache/545474934.json
+zara,2420795,여성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > L. PANT. PIJAMA,zone-name-waist,zone-name-waist,cm,1,ZARAAudit/production_sample_30_cache/545474934.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > B.DRESS,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/561603690.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > B.DRESS,zone-name-front-length-full-body,zone-name-front-length-full-body,cm,1,ZARAAudit/production_sample_30_cache/561603690.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > B.DRESS,zone-name-hips,zone-name-hips,cm,1,ZARAAudit/production_sample_30_cache/561603690.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > B.DRESS,zone-name-waist-full-body,zone-name-waist-full-body,cm,1,ZARAAudit/production_sample_30_cache/561603690.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > W.DRESS,zone-name-chest,zone-name-chest,cm,1,ZARAAudit/production_sample_30_cache/558218256.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > W.DRESS,zone-name-front-length-full-body,zone-name-front-length-full-body,cm,1,ZARAAudit/production_sample_30_cache/558218256.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > W.DRESS,zone-name-hips,zone-name-hips,cm,1,ZARAAudit/production_sample_30_cache/558218256.json
+zara,2420896,여성 > 컬렉션 > 원피스 > 모두 보기 > 드레스 > W.DRESS,zone-name-waist-full-body,zone-name-waist-full-body,cm,1,ZARAAudit/production_sample_30_cache/558218256.json
+zara,2431994,남성 > 컬렉션 > 셔츠 > 모두 보기 > 셔츠 > F. Camisería,zone-name-arm-width,zone-name-arm-width,cm,4,ZARAAudit/production_sample_30_cache/552172712.json
+zara,2431994,남성 > 컬렉션 > 셔츠 > 모두 보기 > 셔츠 > F. Camisería,zone-name-back-width,zone-name-back-width,cm,4,ZARAAudit/production_sample_30_cache/552172712.json
+zara,2431994,남성 > 컬렉션 > 셔츠 > 모두 보기 > 셔츠 > F. Camisería,zone-name-chest,zone-name-chest,cm,4,ZARAAudit/production_sample_30_cache/552172712.json
+zara,2431994,남성 > 컬렉션 > 셔츠 > 모두 보기 > 셔츠 > F. Camisería,zone-name-front-length,zone-name-front-length,cm,4,ZARAAudit/production_sample_30_cache/552172712.json
+zara,2431994,남성 > 컬렉션 > 셔츠 > 모두 보기 > 셔츠 > F. Camisería,zone-name-sleeve-length,zone-name-sleeve-length,cm,4,ZARAAudit/production_sample_30_cache/552172712.json
+zara,2432042,남성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > Camiseta M/L,zone-name-arm-width,zone-name-arm-width,cm,3,ZARAAudit/production_sample_30_cache/550434327.json
+zara,2432042,남성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > Camiseta M/L,zone-name-back-width,zone-name-back-width,cm,3,ZARAAudit/production_sample_30_cache/550434327.json
+zara,2432042,남성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > Camiseta M/L,zone-name-chest,zone-name-chest,cm,3,ZARAAudit/production_sample_30_cache/550434327.json
+zara,2432042,남성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > Camiseta M/L,zone-name-front-length,zone-name-front-length,cm,3,ZARAAudit/production_sample_30_cache/550434327.json
+zara,2432042,남성 > 컬렉션 > 티셔츠 > 모두 보기 > 티셔츠 > Camiseta M/L,zone-name-sleeve-length,zone-name-sleeve-length,cm,3,ZARAAudit/production_sample_30_cache/550434327.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > F. Pant Resto,zone-name-back-rise,zone-name-back-rise,cm,2,ZARAAudit/production_sample_30_cache/555174285.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > F. Pant Resto,zone-name-front-length-lower,zone-name-front-length-lower,cm,2,ZARAAudit/production_sample_30_cache/555174285.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > F. Pant Resto,zone-name-front-rise,zone-name-front-rise,cm,2,ZARAAudit/production_sample_30_cache/555174285.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > F. Pant Resto,zone-name-hips,zone-name-hips,cm,2,ZARAAudit/production_sample_30_cache/555174285.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > F. Pant Resto,zone-name-waist,zone-name-waist,cm,2,ZARAAudit/production_sample_30_cache/555174285.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > Sastrería Pant.,zone-name-back-rise,zone-name-back-rise,cm,1,ZARAAudit/production_sample_30_cache/556168954.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > Sastrería Pant.,zone-name-front-length-lower,zone-name-front-length-lower,cm,1,ZARAAudit/production_sample_30_cache/556168954.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > Sastrería Pant.,zone-name-front-rise,zone-name-front-rise,cm,1,ZARAAudit/production_sample_30_cache/556168954.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > Sastrería Pant.,zone-name-hips,zone-name-hips,cm,1,ZARAAudit/production_sample_30_cache/556168954.json
+zara,2432096,남성 > 컬렉션 > 팬츠 > 모두 보기 > 바지 > Sastrería Pant.,zone-name-waist,zone-name-waist,cm,1,ZARAAudit/production_sample_30_cache/556168954.json
+zara,2536906,남성 > 컬렉션 > 점퍼 | 자켓 > 모두 보기 > 스포츠 재킷 > F. Cazadora,zone-name-arm-width,zone-name-arm-width,cm,4,ZARAAudit/production_sample_30_cache/545410220.json
+zara,2536906,남성 > 컬렉션 > 점퍼 | 자켓 > 모두 보기 > 스포츠 재킷 > F. Cazadora,zone-name-back-width,zone-name-back-width,cm,4,ZARAAudit/production_sample_30_cache/545410220.json
+zara,2536906,남성 > 컬렉션 > 점퍼 | 자켓 > 모두 보기 > 스포츠 재킷 > F. Cazadora,zone-name-chest,zone-name-chest,cm,4,ZARAAudit/production_sample_30_cache/545410220.json
+zara,2536906,남성 > 컬렉션 > 점퍼 | 자켓 > 모두 보기 > 스포츠 재킷 > F. Cazadora,zone-name-front-length,zone-name-front-length,cm,4,ZARAAudit/production_sample_30_cache/545410220.json
+zara,2536906,남성 > 컬렉션 > 점퍼 | 자켓 > 모두 보기 > 스포츠 재킷 > F. Cazadora,zone-name-sleeve-length,zone-name-sleeve-length,cm,4,ZARAAudit/production_sample_30_cache/545410220.json

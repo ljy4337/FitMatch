@@ -1,0 +1,19 @@
+{
+  "categories": 161,
+  "category_measurements": 703,
+  "by_source": {
+    "musinsa": {
+      "categories": 44,
+      "category_measurements": 169
+    },
+    "uniqlo": {
+      "categories": 101,
+      "category_measurements": 456
+    },
+    "zara": {
+      "categories": 16,
+      "category_measurements": 78
+    }
+  },
+  "provenance": "retained official response captures; not refreshed live"
+}

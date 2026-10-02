@@ -1,0 +1,86 @@
+[
+  {
+    "name": "musinsa-6158959-details",
+    "url": "https://goods-detail.musinsa.com/api2/goods/6158959",
+    "http": "200",
+    "error": "",
+    "bytes": 14849,
+    "keys": [
+      "meta",
+      "data",
+      "error"
+    ],
+    "json": true
+  },
+  {
+    "name": "musinsa-6158959-sizes",
+    "url": "https://goods-detail.musinsa.com/api2/goods/6158959/actual-size",
+    "http": "200",
+    "error": "",
+    "bytes": 2648,
+    "keys": [
+      "meta",
+      "data",
+      "error"
+    ],
+    "json": true
+  },
+  {
+    "name": "musinsa-6322076-details",
+    "url": "https://goods-detail.musinsa.com/api2/goods/6322076",
+    "http": "200",
+    "error": "",
+    "bytes": 15827,
+    "keys": [
+      "meta",
+      "data",
+      "error"
+    ],
+    "json": true
+  },
+  {
+    "name": "musinsa-6322076-sizes",
+    "url": "https://goods-detail.musinsa.com/api2/goods/6322076/actual-size",
+    "http": "200",
+    "error": "",
+    "bytes": 120,
+    "keys": [
+      "meta",
+      "data",
+      "error"
+    ],
+    "json": true
+  },
+  {
+    "name": "uniqlo-E485575-details",
+    "url": "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/E485575-000/price-groups/00/details?httpFailure=true",
+    "http": "200",
+    "error": "",
+    "bytes": 6782,
+    "keys": [
+      "status",
+      "result"
+    ],
+    "json": true
+  },
+  {
+    "name": "uniqlo-E485575-sizes",
+    "url": "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts?productIdsWithColorCode=E485575-000&includeBodyMeasurements=true&simpleSizeChart=true&httpFailure=true",
+    "http": "200",
+    "error": "",
+    "bytes": 5645,
+    "keys": [
+      "status",
+      "result"
+    ],
+    "json": true
+  },
+  {
+    "name": "zara-04496307-page",
+    "url": "https://www.zara.com/kr/ko/rll-p-shrt-p04496307.html",
+    "http": "200",
+    "error": "",
+    "bytes": 2241,
+    "json": false
+  }
+]

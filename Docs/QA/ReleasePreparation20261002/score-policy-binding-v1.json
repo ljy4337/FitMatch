@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "policy": "Docs/FitMatchMeasurementPolicy.md#4.4",
+  "decision": "Agent-selected existing release algorithm under explicit user delegation, 2026-10-02",
+  "golden_values_changed": false,
+  "production_arithmetic_changed": false,
+  "historical_characterization_files": [
+    "oracle.json",
+    "oracle-boundaries-v1.json"
+  ],
+  "status": "RESOLVED",
+  "evidence_limit": "Independent literal calculations validate rule conformance, not empirical wearing-fit accuracy or authenticated DB persistence."
+}

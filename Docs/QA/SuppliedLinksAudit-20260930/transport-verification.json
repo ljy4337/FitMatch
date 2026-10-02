@@ -1,0 +1,6 @@
+{
+  "checks": 1329,
+  "failures": [],
+  "status": "PASS",
+  "boundary": "parser output to observation payload; not database mutation or E2E"
+}

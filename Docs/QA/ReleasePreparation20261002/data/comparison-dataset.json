@@ -1,0 +1,142 @@
+{
+  "schema_version": "fitmatch-release-comparison-dataset-v1",
+  "kind": "synthetic_contract_specification_with_real_source_pointers",
+  "not_executed": true,
+  "directions": [
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "musinsa",
+      "raw_comparison_allowed_only_when": "verified_identical_source_schema_identity_unit_basis_representation_component",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "uniqlo",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "musinsa",
+      "target_provider": "zara",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "musinsa",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "uniqlo",
+      "raw_comparison_allowed_only_when": "verified_identical_source_schema_identity_unit_basis_representation_component",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "uniqlo",
+      "target_provider": "zara",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "musinsa",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "uniqlo",
+      "raw_comparison_allowed_only_when": "never",
+      "current_e2e_status": "NOT RUN"
+    },
+    {
+      "closet_provider": "zara",
+      "target_provider": "zara",
+      "raw_comparison_allowed_only_when": "verified_identical_source_schema_identity_unit_basis_representation_component",
+      "current_e2e_status": "NOT RUN"
+    }
+  ],
+  "requested_test_groups": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G"
+  ],
+  "current_real_group_assignments": null,
+  "missing_patterns": [
+    {
+      "id": "complete_shared_canonical",
+      "policy_expectation": "require_server_approved_common_code_unit_basis"
+    },
+    {
+      "id": "no_common_metric",
+      "policy_expectation": "block_comparison"
+    },
+    {
+      "id": "missing_unit",
+      "policy_expectation": "preserve_raw_and_exclude_or_block"
+    },
+    {
+      "id": "unit_conflict",
+      "policy_expectation": "verified_conversion_only_otherwise_block"
+    },
+    {
+      "id": "basis_conflict",
+      "policy_expectation": "exclude_or_block"
+    },
+    {
+      "id": "component_conflict",
+      "policy_expectation": "exclude_or_block"
+    },
+    {
+      "id": "raw_zero",
+      "policy_expectation": "retain_raw_exclude_score_musinsa_display_dash"
+    },
+    {
+      "id": "unknown_raw_positive",
+      "policy_expectation": "display_and_preserve_exclude_until_verified"
+    },
+    {
+      "id": "group_unmapped",
+      "policy_expectation": "explicit_user_group_selection_then_server_validation"
+    },
+    {
+      "id": "different_group",
+      "policy_expectation": "block_even_with_common_metrics"
+    },
+    {
+      "id": "exact_identity_mismatch",
+      "policy_expectation": "block_save_and_comparison"
+    },
+    {
+      "id": "same_retailer_different_schema",
+      "policy_expectation": "shared_verified_canonical_only"
+    }
+  ],
+  "cartesian_case_count": 756,
+  "execution_requires": [
+    "fresh authenticated server group/Closet receipts",
+    "exact selected product/variant/size",
+    "approved begin evidence"
+  ],
+  "real_source_references": {
+    "url_manifest": "url-manifest.json",
+    "measurements": "historical-parser-observations.json",
+    "raw_fixture_index": "fixture-index.json"
+  },
+  "coverage_gaps": [
+    "No fresh server-authorized A-G assignment is fabricated for any URL.",
+    "Cross-provider same-group metric pairs require current DB/authenticated setup; matrix rows are planned assertions, not ready E2E seeds.",
+    "Single metric, body-only and invalid raw cases may be excluded by server authority; no local eligibility inferred."
+  ],
+  "materialized_cases": {
+    "path": "Docs/QA/ReleasePreparation20261002/data/comparison-cases.jsonl",
+    "count": 756,
+    "sha256": "6c1b712d806068cc3e44689149f8dd35421ac22a99c1bd964d690f48e3e114e0"
+  }
+}

@@ -308,6 +308,10 @@ The IDs below are documentation labels, not claims about literal runtime error c
 
 ## 7. Focused verification entry points
 
+Release preparation (QA only): `python3 scripts/release_qa.py smoke`; evidence boundaries and remaining authenticated/continuous-flow gaps: `Docs/QA/ReleasePreparation20261002/README.md`. This runner executes real Swift owners with scripted remote boundaries plus three live retailer parsers; it is not release approval. `full` is separately opt-in and currently reports incomplete required evidence.
+Mounted QA selection probe: `FitMatchReleaseMountedSelectionTests` injects the existing ViewModel transport into actual `CompareFlowSheet`, then calls the existing Result button owners. Nil-default DEBUG observers read mounted state; runtime flow, UI and server contracts are unchanged. Evidence: `Docs/QA/ReleasePreparation20261002/Resume30Report.md`.
+
+
 | Area | Test source | Evidence boundary |
 |---|---|---|
 | URL/category / UNIQLO live regression | `FitMatchTests/LiveMusinsaValidationTests.swift` | Opt-in external retailer audit; not authenticated ingestion |

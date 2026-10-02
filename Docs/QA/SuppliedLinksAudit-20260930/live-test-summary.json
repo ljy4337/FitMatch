@@ -1,0 +1,49 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+        "deviceName" : "iPhone 17 Pro",
+        "modelName" : "iPhone 17 Pro",
+        "osBuildNumber" : "23D8133",
+        "osVersion" : "26.3.1",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 0,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "FitMatch · Built with macOS 15.7.7",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1790724392.508,
+  "passedTests" : 0,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1790723933.521,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "Expectation failed: (records.filter { $0[\"status\"] as? String == \"FAILED\" } → [[\"error\": \"상품 정보를 서비스에서 확인하지 못했어요. 문제가 계속되면 문의해 주세요.\", \"elapsedSeconds\": 0.016190052032470703, \"status\": \"FAILED\", \"url\": \"https://musinsa.onelink.me/PvkC/rz4cmoa784%87%E1%85%A1%E1%84%8C%E1%85%B5-p00774307.html?v1=556169729&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil\"]]).isEmpty → false: // A completed audit is not a product pass; preserve every failed/partial row.",
+      "targetName" : "FitMatchTests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "FitMatchReleaseLiveProductAuditTests/suppliedURLsLoadThroughTheFullProductionParser()",
+      "testIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseLiveProductAuditTests/suppliedURLsLoadThroughTheFullProductionParser()",
+      "testName" : "suppliedURLsLoadThroughTheFullProductionParser()"
+    }
+  ],
+  "title" : "Test - FitMatch",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 1
+}

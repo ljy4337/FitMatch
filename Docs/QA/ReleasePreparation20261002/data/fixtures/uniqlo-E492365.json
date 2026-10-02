@@ -1,0 +1,871 @@
+{
+  "product_id": "E492365",
+  "product_name": "배기스트레이트진",
+  "canonical_url": "https://www.uniqlo.com/kr/ko/products/E492365-000/00",
+  "observed_ids": [
+    "E492365-000"
+  ],
+  "source_path": "팬츠 > 진(청바지) > 스트레이트",
+  "source_depth_names": [
+    "팬츠",
+    "진(청바지)",
+    "스트레이트"
+  ],
+  "source_depth_codes": [
+    "57968",
+    "58048",
+    "123531"
+  ],
+  "audience": "MEN",
+  "gender_name": "men",
+  "gender_category": "MEN",
+  "product_type": "unknown",
+  "product_type_kr": "",
+  "size_chart_payload": {
+    "result": [
+      {
+        "productId": "E492365-000",
+        "sizeChart": [
+          {
+            "sizeCode": "INS028",
+            "displayCode": "028",
+            "name": "28",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "100",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "39 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "33.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "25.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "74",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS029",
+            "displayCode": "029",
+            "name": "29",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "31",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "102.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "40 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "34",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "26",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS030",
+            "displayCode": "030",
+            "name": "30",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "81",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "32",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "105",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "41 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "34.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "13 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "26",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "75",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS031",
+            "displayCode": "031",
+            "name": "31",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "83.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "32 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "107.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "42 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "35.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "29.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "26.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS032",
+            "displayCode": "032",
+            "name": "32",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "86",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "110",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "43 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "36",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "30",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "11 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "27",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS033",
+            "displayCode": "033",
+            "name": "33",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "88.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "34 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "112.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "44 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "36.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "30.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "27.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "77",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS034",
+            "displayCode": "034",
+            "name": "34",
+            "sizeParts": [
+              {
+                "code": "waist-product-size",
+                "name": "허리 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "91",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "35 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "hip-product-size",
+                "name": "엉덩이 둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "115",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "45 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "thigh",
+                "name": "허벅지 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "37.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "14 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "rising-length",
+                "name": "밑위 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "30.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "12",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "bottom-width",
+                "name": "밑단 너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "27.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "10 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "inseam",
+                "name": "다리 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "77",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bodyMeasurements": [
+          {
+            "sizeCode": "INS028",
+            "displayCode": "028",
+            "name": "28",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "71",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS029",
+            "displayCode": "029",
+            "name": "29",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "73.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "29",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS030",
+            "displayCode": "030",
+            "name": "30",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS031",
+            "displayCode": "031",
+            "name": "31",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "31",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS032",
+            "displayCode": "032",
+            "name": "32",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "81.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "32",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS033",
+            "displayCode": "033",
+            "name": "33",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "84",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "33",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "INS034",
+            "displayCode": "034",
+            "name": "34",
+            "sizeParts": [
+              {
+                "code": "nude-waist",
+                "name": "허리둘레",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "86.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "34",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imageUrl": "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/492365/item/krgoods_65_492365_3x4.jpg",
+        "colorCode": ""
+      }
+    ]
+  },
+  "size_count_official": 7
+}

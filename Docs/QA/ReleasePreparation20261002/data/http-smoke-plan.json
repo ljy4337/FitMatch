@@ -1,0 +1,40 @@
+{
+  "schema_version": "fitmatch-http-smoke-plan-v1",
+  "maximum_requests": 3,
+  "requests": [
+    {
+      "provider": "musinsa",
+      "source_product_url": "https://www.musinsa.com/products/4096130",
+      "request_url": "https://goods-detail.musinsa.com/api2/goods/4096130/actual-size",
+      "identity": {
+        "product_id": "4096130"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "scripts/collect-musinsa-parser-inputs.py:ACTUAL_SIZE_URL_TEMPLATE"
+    },
+    {
+      "provider": "uniqlo",
+      "source_product_url": "https://www.uniqlo.com/kr/ko/products/E487688-000/00?colorDisplayCode=31&sizeDisplayCode=005&pldDisplayCode=000&utm_medium=social&utm_source=appshare",
+      "request_url": "https://www.uniqlo.com/kr/api/commerce/v5/ko/products/size-charts?productIdsWithColorCode=E487688-000&includeBodyMeasurements=true&simpleSizeChart=true&httpFailure=true",
+      "identity": {
+        "product_core": "E487688",
+        "chart_product_id": "E487688-000",
+        "chart_variant": "generic",
+        "input_color_display_code": "31"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "scripts/collect-uniqlo-parser-inputs.py:size_chart_url"
+    },
+    {
+      "provider": "zara",
+      "source_product_url": "https://www.zara.com/kr/ko/%E1%84%8B%E1%85%B2%E1%84%90%E1%85%B5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5-%E1%84%91%E1%85%A9%E1%84%8F%E1%85%A6%E1%86%BA-%E1%84%85%E1%85%A6%E1%84%80%E1%85%B2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%91%E1%85%B5%E1%86%BA-%E1%84%8C%E1%85%A2%E1%84%8F%E1%85%B5%E1%86%BA-p06786003.html?v1=549838589&utm_campaign=productShare&utm_medium=mobile_sharing_iOS&utm_source=red_social_movil",
+      "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/549838589/size-measure-guide?locale=ko_KR",
+      "identity": {
+        "internal_product_id": "549829596",
+        "selected_catentry_id": "549838589"
+      },
+      "identity_provenance": "SuppliedLinksAudit-20260930/results.json; historical evidence only",
+      "request_owner": "FitMatch/Services/ZARAParser.swift:makeSizeMeasureGuideURL"
+    }
+  ]
+}

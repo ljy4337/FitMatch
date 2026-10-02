@@ -1,0 +1,8 @@
+{
+  "FitMatchTests/FitMatchReleaseLifecycleTests.swift": "e6e475391e36841471b3f45c7b7ae66547f87f9c91202e6393a875611456832f",
+  "FitMatchTests/FitMatchReleaseMatrixTests.swift": "2829e9caa2ba9a2e11255342eab71dee0d1aac2430886694baf4ef3c5bc4b640",
+  "FitMatchTests/FitMatchReleaseAuthenticatedTests.swift": "ffe1595705d7135ffc3fbfc34272597fc32bd86559e91df9e27f46e33370429a",
+  "FitMatchTests/FitMatchReleaseAuthenticatedSupport.swift": "44d312371d6525298df6b059a4e5e2cce4f3fd46df816b9e932c2b967bdb630f",
+  "scripts/release_qa.py": "2b61f29832e1e36d40b95d457dad8c2d5a8d79549c419ff33aa36bd269003d02",
+  "scripts/tests/test_release_qa.py": "209cb470e36da553d295b83d949efbde89b29ec1347c0202cdb8b28171755f56"
+}

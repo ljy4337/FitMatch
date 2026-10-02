@@ -1,0 +1,683 @@
+[
+  {
+    "id": "c4c1b9c1-29e8-4942-bdae-f8263f4fa1f2",
+    "fit_score": 0,
+    "created_at": "2026-09-16T22:54:28.780953+00:00",
+    "deleted_at": null,
+    "updated_at": "2026-09-21T21:53:08.778702+00:00",
+    "is_favorite": false,
+    "completed_at": "2026-09-21T21:53:08.778702+00:00",
+    "result_status": "COMPLETED",
+    "coverage_ratio": 0.16667,
+    "engine_version": "fitmatch-ios-vnext-snapshot-v1",
+    "input_snapshot": {
+      "began_at": "2026-09-16T22:54:28.780953+00:00",
+      "client_request": {
+        "manual_explicit": true,
+        "target_product_id": "E620466E-C738-4C0A-B2CF-446357355535",
+        "target_variant_id": "5FF1E4F2-C240-4D35-86D7-3E12B37124E4",
+        "client_comparison_id": "257D64DB-524D-4CED-9251-8F21F000B868",
+        "reference_closet_item_id": "7C3141FD-E458-416C-9D9E-7DC063349F07",
+        "candidate_product_size_ids": [
+          "81CC9738-9D0D-4C8B-A6D8-E99D2BCF2FE0",
+          "3A2C1F12-9B25-4515-AAD0-4787D0C98DC9",
+          "9FDE4562-DF8E-4C3A-A607-C651AA2AC340"
+        ],
+        "personal_override_revision": 0,
+        "authorization_product_size_id": "81CC9738-9D0D-4C8B-A6D8-E99D2BCF2FE0",
+        "candidate_authority_fingerprint": "7b370693647d744754acd3ec8be2f955226ae64ab24147f2d7723227e1bb1c05",
+        "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+        "requested_comparison_group_code": "A"
+      },
+      "candidate_authority_fingerprint": "7b370693647d744754acd3ec8be2f955226ae64ab24147f2d7723227e1bb1c05",
+      "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+      "requested_comparison_group_code": "A",
+      "authorized_candidate_product_size_ids": [
+        "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+        "3a2c1f12-9b25-4515-aad0-4787d0c98dc9",
+        "9fde4562-df8e-4c3a-a607-c651aa2ac340"
+      ]
+    },
+    "comparison_mode": "CANONICAL",
+    "policy_snapshot": {
+      "metrics": [
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "back_length"
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "shoulder_width"
+        },
+        {
+          "weight": 0.8,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "sleeve_length"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.8,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_raglan_neck_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.8,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.8,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.8,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_circumference"
+        },
+        {
+          "weight": 1,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "total_length"
+        }
+      ],
+      "is_active": true,
+      "created_at": "2026-08-02T06:15:54.45449+00:00",
+      "updated_at": "2026-09-02T14:04:30.987021+00:00",
+      "policy_code": "tshirt",
+      "display_name": "티셔츠",
+      "policy_version": "vnext-policy-20260902-adult-any-v1",
+      "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+      "required_any_min": 1,
+      "audience_policy_code": "ADULT_ANY",
+      "allow_manual_extended": true,
+      "native_default_weight": 1,
+      "sleeve_mismatch_policy": "REQUIRE_MATCH",
+      "min_common_measurements": 2,
+      "body_length_mismatch_policy": "IGNORE",
+      "body_mismatch_excluded_codes": [],
+      "lower_length_mismatch_policy": "IGNORE",
+      "lower_mismatch_excluded_codes": [],
+      "sleeve_mismatch_excluded_codes": [
+        "sleeve_length"
+      ]
+    },
+    "result_evidence": {
+      "score": 0,
+      "coverage": 0.16667,
+      "reliability": 2,
+      "engine_version": "fitmatch-ios-vnext-snapshot-v1",
+      "metric_evidence": [
+        {
+          "weight": 1,
+          "difference": 43,
+          "target_value": 104,
+          "product_size_id": "81CC9738-9D0D-4C8B-A6D8-E99D2BCF2FE0",
+          "reference_value": 61,
+          "measurement_code": "back_length",
+          "absolute_difference": 43
+        },
+        {
+          "weight": 1,
+          "difference": 44,
+          "target_value": 105,
+          "product_size_id": "3A2C1F12-9B25-4515-AAD0-4787D0C98DC9",
+          "reference_value": 61,
+          "measurement_code": "back_length",
+          "absolute_difference": 44
+        },
+        {
+          "weight": 1,
+          "difference": 45,
+          "target_value": 106,
+          "product_size_id": "9FDE4562-DF8E-4C3A-A607-C651AA2AC340",
+          "reference_value": 61,
+          "measurement_code": "back_length",
+          "absolute_difference": 45
+        }
+      ],
+      "candidate_size_ranking": [
+        {
+          "rank": 1,
+          "score": 0,
+          "product_size_id": "81CC9738-9D0D-4C8B-A6D8-E99D2BCF2FE0"
+        },
+        {
+          "rank": 2,
+          "score": 0,
+          "product_size_id": "3A2C1F12-9B25-4515-AAD0-4787D0C98DC9"
+        },
+        {
+          "rank": 3,
+          "score": 0,
+          "product_size_id": "9FDE4562-DF8E-4C3A-A607-C651AA2AC340"
+        }
+      ],
+      "recommended_product_size_id": "81CC9738-9D0D-4C8B-A6D8-E99D2BCF2FE0"
+    },
+    "target_snapshot": {
+      "candidates": [
+        {
+          "size_label": "S",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-16T22:54:13.841+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "3c02c965583af9d1651924714fd219c4514227f2da20eab0815db772c5b5eddf"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with server-validated session group",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+            "override_revision": 0,
+            "authorization_version": "fitmatch-vnext-session-group-authorization-v1",
+            "classification_source": "SESSION_USER_SELECTED",
+            "target_comparison_group": {
+              "source": "SESSION_USER_SELECTED",
+              "status": "COMPARABLE",
+              "group_code": "A",
+              "display_name": "상의",
+              "category_code": "tops",
+              "policy_version": "vnext-policy-20260902-adult-any-v1",
+              "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+              "authority_version": "fitmatch-vnext-session-group-context-v1",
+              "garment_type_code": "comparison_group_top",
+              "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+              "comparison_policy_code": "tshirt"
+            },
+            "common_measurement_count": 1,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY",
+            "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7"
+          },
+          "product_size_id": "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 104,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "fbbb92024af455e78f02c66b4e58ad2588b1ebf1c9344e9bec45230d96042735",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "ece9829d-c1ef-4b7d-88a7-b743da095deb"
+              }
+            ],
+            "product_size_id": "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 5,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "SESSION_USER_SELECTED"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 43,
+              "target_value": 104,
+              "reference_value": 61,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 43
+            }
+          ]
+        },
+        {
+          "size_label": "M",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-16T22:54:13.841+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "8b49c79f6b7ddea2429b52d52e1efeb7e9e2ed55c5bfa290e745d2a1c5b26c71"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with server-validated session group",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+            "override_revision": 0,
+            "authorization_version": "fitmatch-vnext-session-group-authorization-v1",
+            "classification_source": "SESSION_USER_SELECTED",
+            "target_comparison_group": {
+              "source": "SESSION_USER_SELECTED",
+              "status": "COMPARABLE",
+              "group_code": "A",
+              "display_name": "상의",
+              "category_code": "tops",
+              "policy_version": "vnext-policy-20260902-adult-any-v1",
+              "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+              "authority_version": "fitmatch-vnext-session-group-context-v1",
+              "garment_type_code": "comparison_group_top",
+              "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+              "comparison_policy_code": "tshirt"
+            },
+            "common_measurement_count": 1,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY",
+            "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7"
+          },
+          "product_size_id": "3a2c1f12-9b25-4515-aad0-4787d0c98dc9",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 105,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "ad0141738c0d9c3c048d97f6088c50504c0dab53106ae386ecfc78b487beea89",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "e3951a36-e527-42f7-a742-f3380bb224fe"
+              }
+            ],
+            "product_size_id": "3a2c1f12-9b25-4515-aad0-4787d0c98dc9",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 5,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "SESSION_USER_SELECTED"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 44,
+              "target_value": 105,
+              "reference_value": 61,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 44
+            }
+          ]
+        },
+        {
+          "size_label": "L",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-16T22:54:13.841+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "6fa44163ccabdb5b6cf3695bbb8337db1996b31890418af9a6cafaba2ba130f4"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with server-validated session group",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+            "override_revision": 0,
+            "authorization_version": "fitmatch-vnext-session-group-authorization-v1",
+            "classification_source": "SESSION_USER_SELECTED",
+            "target_comparison_group": {
+              "source": "SESSION_USER_SELECTED",
+              "status": "COMPARABLE",
+              "group_code": "A",
+              "display_name": "상의",
+              "category_code": "tops",
+              "policy_version": "vnext-policy-20260902-adult-any-v1",
+              "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+              "authority_version": "fitmatch-vnext-session-group-context-v1",
+              "garment_type_code": "comparison_group_top",
+              "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+              "comparison_policy_code": "tshirt"
+            },
+            "common_measurement_count": 1,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY",
+            "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7"
+          },
+          "product_size_id": "9fde4562-df8e-4c3a-a607-c651aa2ac340",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 106,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "25cf3018851fa4e2e31bc7c3bce6062d73d05d2ab9fd822cc89640c637f27bf1",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "48703865-4a1a-4950-b4ab-c9eb76f51554"
+              }
+            ],
+            "product_size_id": "9fde4562-df8e-4c3a-a607-c651aa2ac340",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 5,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "SESSION_USER_SELECTED"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 45,
+              "target_value": 106,
+              "reference_value": 61,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 45
+            }
+          ]
+        }
+      ],
+      "product_id": "e620466e-c738-4c0a-b2cf-446357355535",
+      "variant_id": "5ff1e4f2-c240-4d35-86d7-3e12b37124e4",
+      "source_code": "musinsa",
+      "audience_code": "MEN",
+      "category_code": "tops",
+      "comparison_group": {
+        "source": "SESSION_USER_SELECTED",
+        "status": "COMPARABLE",
+        "group_code": "A",
+        "display_name": "상의",
+        "category_code": "tops",
+        "policy_version": "vnext-policy-20260902-adult-any-v1",
+        "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+        "authority_version": "fitmatch-vnext-session-group-context-v1",
+        "garment_type_code": "comparison_group_top",
+        "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+        "comparison_policy_code": "tshirt"
+      },
+      "garment_type_code": "comparison_group_top",
+      "source_product_key": "6969338",
+      "classification_source": "SESSION_USER_SELECTED",
+      "classification_status": "CONFIRMED",
+      "product_structure_code": "UNKNOWN",
+      "candidate_product_size_ids": [
+        "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+        "3a2c1f12-9b25-4515-aad0-4787d0c98dc9",
+        "9fde4562-df8e-4c3a-a607-c651aa2ac340"
+      ],
+      "classification_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+      "candidate_authority_version": "fitmatch-vnext-session-group-candidates-v1",
+      "candidate_authority_fingerprint": "7b370693647d744754acd3ec8be2f955226ae64ab24147f2d7723227e1bb1c05",
+      "authorized_candidate_product_size_ids": [
+        "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+        "3a2c1f12-9b25-4515-aad0-4787d0c98dc9",
+        "9fde4562-df8e-4c3a-a607-c651aa2ac340"
+      ]
+    },
+    "reliability_level": 2,
+    "target_product_id": "e620466e-c738-4c0a-b2cf-446357355535",
+    "target_variant_id": "5ff1e4f2-c240-4d35-86d7-3e12b37124e4",
+    "authority_snapshot": {
+      "authority_version": "fitmatch-vnext-session-group-context-v1",
+      "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+      "comparison_group_at_begin": {
+        "source": "SESSION_USER_SELECTED",
+        "status": "COMPARABLE",
+        "group_code": "A",
+        "display_name": "상의",
+        "category_code": "tops",
+        "policy_version": "vnext-policy-20260902-adult-any-v1",
+        "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+        "authority_version": "fitmatch-vnext-session-group-context-v1",
+        "garment_type_code": "comparison_group_top",
+        "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+        "comparison_policy_code": "tshirt"
+      },
+      "effective_classification_at_begin": {
+        "state": "SESSION_GROUP_CONFIRMED",
+        "product_id": "e620466e-c738-4c0a-b2cf-446357355535",
+        "audience_code": "MEN",
+        "category_code": "tops",
+        "body_length_code": null,
+        "effective_source": "SESSION_USER_SELECTED",
+        "garment_type_code": "comparison_group_top",
+        "lower_length_code": null,
+        "override_revision": 0,
+        "target_variant_id": "5ff1e4f2-c240-4d35-86d7-3e12b37124e4",
+        "sleeve_length_code": null,
+        "classification_status": "CONFIRMED",
+        "comparison_group_code": "A",
+        "comparison_policy_code": "tshirt",
+        "product_structure_code": "UNKNOWN",
+        "comparison_group_source": "SESSION_USER_SELECTED",
+        "effective_contract_version": "fitmatch-vnext-session-group-context-v1",
+        "comparison_group_policy_version": "vnext-policy-20260902-adult-any-v1",
+        "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+        "requested_comparison_group_code": "A"
+      }
+    },
+    "authorization_mode": "MANUAL_EXTENDED",
+    "reference_snapshot": {
+      "item_name": "M1075 소프트 라운드넥 가디건(4COLORS)",
+      "product_id": "5a010049-4536-406e-b004-1b37c37cbf1c",
+      "size_label": "L",
+      "variant_id": "7bbb4f52-c742-49e2-988e-fc614d2fe318",
+      "source_code": "musinsa",
+      "measurements": [
+        {
+          "value": 61,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": "back_length"
+        },
+        {
+          "value": 63,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "value": 56,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": "shoulder_width"
+        },
+        {
+          "value": 58,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": "sleeve_length"
+        }
+      ],
+      "audience_code": "MEN",
+      "closet_item_id": "7c3141fd-e458-416c-9d9e-7dc063349f07",
+      "product_size_id": "c5cd84fb-18c5-4b95-89fb-68f4e55f155a",
+      "garment_type_code": "comparison_group_outerwear",
+      "source_product_key": "5543646",
+      "classification_source": "BACKEND",
+      "classification_fingerprint": "d262bf02b0a31f41606e5c2d5846535d5da0784e49e0474441a2253f8db6a76a"
+    },
+    "client_comparison_id": "257d64db-524d-4ced-9251-8f21f000b868",
+    "authorization_snapshot": {
+      "mode": "MANUAL_EXTENDED",
+      "reason": "User-selected comparison with server-validated session group",
+      "allowed": true,
+      "decision": "MANUAL_EXTENDED",
+      "policy_code": "tshirt",
+      "reason_code": "USER_SELECTED_REFERENCE",
+      "minimum_common": 1,
+      "policy_version": "vnext-policy-20260902-adult-any-v1",
+      "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+      "override_revision": 0,
+      "authorization_version": "fitmatch-vnext-session-group-authorization-v1",
+      "classification_source": "SESSION_USER_SELECTED",
+      "target_comparison_group": {
+        "source": "SESSION_USER_SELECTED",
+        "status": "COMPARABLE",
+        "group_code": "A",
+        "display_name": "상의",
+        "category_code": "tops",
+        "policy_version": "vnext-policy-20260902-adult-any-v1",
+        "policy_checksum": "7f9ad432607553a54d1eaa9b7f836c45fc5f16d07eed38764ddaba607205b1dc",
+        "authority_version": "fitmatch-vnext-session-group-context-v1",
+        "garment_type_code": "comparison_group_top",
+        "authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7",
+        "comparison_policy_code": "tshirt"
+      },
+      "common_measurement_count": 1,
+      "target_measurement_domain": "UPPER_BODY",
+      "excluded_measurement_codes": [],
+      "required_measurement_codes": [],
+      "excluded_measurement_reasons": [],
+      "reference_measurement_domain": "UPPER_BODY",
+      "effective_authority_fingerprint": "e5d1aaba0b6f845983911e61b994088d8f376c87608948cd63301fea50e0d9c7"
+    },
+    "recommended_size_label": "S",
+    "snapshot_schema_version": 4,
+    "reference_client_item_id": "e8fd4cf5-3d22-43e2-ab8c-708e84e16abd",
+    "reference_closet_item_id": "7c3141fd-e458-416c-9d9e-7dc063349f07",
+    "target_audience_snapshot": "MEN",
+    "target_image_url_snapshot": "https://image.msscdn.net/images/goods_img/20260731/6969338/6969338_17875469731460_500.jpg",
+    "target_source_product_key": "6969338",
+    "excluded_measurement_codes": [],
+    "recommended_product_size_id": "81cc9738-9d0d-4c8b-a6d8-e99d2bcf2fe0",
+    "reference_audience_snapshot": "MEN",
+    "target_body_length_snapshot": null,
+    "target_source_code_snapshot": "musinsa",
+    "reference_item_name_snapshot": "M1075 소프트 라운드넥 가디건(4COLORS)",
+    "target_garment_type_snapshot": "comparison_group_top",
+    "target_lower_length_snapshot": null,
+    "target_product_name_snapshot": "M295 페이드 스트레이트 코튼 팬츠_블랙",
+    "target_sleeve_length_snapshot": null,
+    "reference_body_length_snapshot": null,
+    "reference_source_code_snapshot": "musinsa",
+    "comparison_policy_code_snapshot": "tshirt",
+    "reference_garment_type_snapshot": "comparison_group_outerwear",
+    "reference_lower_length_snapshot": null,
+    "reference_sleeve_length_snapshot": null
+  }
+]

@@ -1,0 +1,810 @@
+{
+  "schema_version": "fitmatch-release-fixture-index-v1",
+  "version": "2026-10-02.v1",
+  "root": "repository",
+  "items": [
+    {
+      "id": "uniqlo-E465185",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E465185.json",
+      "sha256": "fd415aef49816c2757881fbc47c8e99e9e521a6f7165baf80a723b0d775ff99c",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[67]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E469411",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E469411.json",
+      "sha256": "63a687678f8c1c42274f3ff9bba072b911ab4f308ef73082823e93930d9a9051",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[89]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E474175",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E474175.json",
+      "sha256": "f7128cf29c66983af71ea1128aca64c001f1d06cda6c004642e30cd86f280a16",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[128]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E482522",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E482522.json",
+      "sha256": "72700257c779590649fa3e2d3dd1bf664c2876180da450ba441eaaef3c44dfd5",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[275]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E484875",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E484875.json",
+      "sha256": "a3a3a997abff21fc45cc801d10a0cc52fcfd736b378caabf38c93a998829619b",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[400]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E485329",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485329.json",
+      "sha256": "2727e1d66ec5c164becdb90a0bafc17de4108537ac67794a7f0f9965e1913e5f",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[437]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E485340",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485340.json",
+      "sha256": "c008ed1870302d8f8a3c95b64bbb4fe0f8dd3c80b0e8400d11576225cc990f75",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[438]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E485454",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485454.json",
+      "sha256": "8f30933b84705f9b2906922ad9c22067fc17b4dc2b149781ccde44cf08b36079",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[450]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E485616",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E485616.json",
+      "sha256": "9be58acc0d816515e83953cf39f05f6d882cbb4e7267d4f00ae5259a324d79b5",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[461]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E487005",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487005.json",
+      "sha256": "840cc5386d0d422c80d96ea43b7d390dc25da48012c2feca9786420e1c542a88",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[588]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E487220",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487220.json",
+      "sha256": "f2d4fd182791632460139c00314888bfef21eb395a04a29c97918fe123dbef08",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[624]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E487394",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487394.json",
+      "sha256": "4e729e02f1bf37fea1aac911c6467059918adb347ab695ef3f3183ac76cc254a",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[636]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E487517",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487517.json",
+      "sha256": "fd29f10be1c0621d6d953a4135d82829b134d00fddc2c3d48109f18c9b4487e9",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[642]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E487688",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E487688.json",
+      "sha256": "41dea69256cf49d17ed69fc83c64aa8dd9b3e051129a249249aa33089230fa46",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[650]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E488298",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488298.json",
+      "sha256": "b65feff7f1982e905c5c972e3f752d7bad9e96fb9ec46a96823db01fca3e8df6",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[711]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E488397",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488397.json",
+      "sha256": "f2aa7536ce90bcdc955534f08e25cba8641ec011309522a8d27202c7848151cd",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[718]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E488630",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488630.json",
+      "sha256": "102863caa445f41732a08dc9644a98bc071d81c9e9da432feefffd06ad730029",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[727]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E488739",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488739.json",
+      "sha256": "01965f0e91a198758c0e0f1d4aad98d612abfecfaddab9678d1cb62525ec74c8",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[741]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E488743",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E488743.json",
+      "sha256": "d2c7db48880fcc0859cc14b54c9b67c7558c18bc2e06acdfab274859ca4ce276",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[742]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E490470",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E490470.json",
+      "sha256": "5cdfcdee5c6bf48369934545f63897a233ba85db1a8bb11826d1663fffcf066d",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[844]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E491320",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E491320.json",
+      "sha256": "8f369d9585b5062b895d189cd5eada71a598abd70185d0c1c9aa1edf88902833",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[869]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-E492365",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-E492365.json",
+      "sha256": "2a3be3dbdbe1e0100b6e72fa078a3815aeb0547af8be018dc76bfd361157d099",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/CurrentUniqloCatalogInputs.json",
+        "sha256": "11785f6deba44777a37f3777058d4c58018119a52241113930f55d565c0a782d",
+        "selector": "$[877]"
+      },
+      "note": "Archived chart and source facts; stale local product_type fields are not comparison authority.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-missing-E486627-size-chart",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-size-chart.json",
+      "sha256": "9232cb1d8bb38ba0133fc5e84195cb70c7600edb2af9755f13e28b5684b664bc",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/E486627-size-chart.json",
+        "sha256": "9232cb1d8bb38ba0133fc5e84195cb70c7600edb2af9755f13e28b5684b664bc",
+        "selector": null
+      },
+      "note": "Historical missing-product response, not a valid garment table.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-missing-E486627-details",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/uniqlo-missing-E486627-details.json",
+      "sha256": "5754ff3807e225c1402425401db2165a0e5688961a8672033432be4c60c51333",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/SuppliedLinksAudit-20260930/E486627-details.json",
+        "sha256": "5754ff3807e225c1402425401db2165a0e5688961a8672033432be4c60c51333",
+        "selector": null
+      },
+      "note": "Historical missing-product response, not a valid garment table.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "musinsa-6566713",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-6566713.json",
+      "sha256": "cbd3897e86753c7c1575e3632656ce756bc8d4d906bc79c9002767759c4a4897",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/ThreeProductActualSizeFixtures.json",
+        "sha256": "4eef56dde46df224d6ea862bb4cf5a1b2750d533c3149fccdc00fba3e5728a3a",
+        "selector": "$[0]"
+      },
+      "note": "Historical actual-size payload; source unit absent stays absent.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "musinsa-5020093",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-5020093.json",
+      "sha256": "2779ff5e2adf2e37017381abe46d941574f0a1f6f76575096e8b6501628b488e",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/ThreeProductActualSizeFixtures.json",
+        "sha256": "4eef56dde46df224d6ea862bb4cf5a1b2750d533c3149fccdc00fba3e5728a3a",
+        "selector": "$[1]"
+      },
+      "note": "Historical actual-size payload; source unit absent stays absent.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "musinsa-3467384",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-3467384.json",
+      "sha256": "c286a793ce4f0a913ec88d10df2eceaaa2a117cc58fc427c3cd2f9a939a1a788",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "FitMatchTests/ThreeProductActualSizeFixtures.json",
+        "sha256": "4eef56dde46df224d6ea862bb4cf5a1b2750d533c3149fccdc00fba3e5728a3a",
+        "selector": "$[2]"
+      },
+      "note": "Historical actual-size payload; source unit absent stays absent.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "musinsa-7122627",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/musinsa-7122627.json",
+      "sha256": "046eca4e7e7c3f39f59f5a46db2006413c7a5b2027b2c1fc70d960a5b9ba8ebe",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/MusinsaActualSize-7122627/parser-input.json",
+        "sha256": "046eca4e7e7c3f39f59f5a46db2006413c7a5b2027b2c1fc70d960a5b9ba8ebe",
+        "selector": null
+      },
+      "note": null,
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-545410220",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545410220.json",
+      "sha256": "ec7dff9dc6db310933b181e44083fa354c6b935277eced56d78b9797f5795c8d",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/545410220.json",
+        "sha256": "ec7dff9dc6db310933b181e44083fa354c6b935277eced56d78b9797f5795c8d",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-545431375",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545431375.json",
+      "sha256": "70c2bf247948f4901addbd255234641b064f3b394c3474dfc5c0121e5e8be645",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/545431375.json",
+        "sha256": "70c2bf247948f4901addbd255234641b064f3b394c3474dfc5c0121e5e8be645",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-545436534",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545436534.json",
+      "sha256": "8060f8ffa92256892cf51b8d5fbb05f075e921eb8016a072574da89e30d20d6e",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/545436534.json",
+        "sha256": "8060f8ffa92256892cf51b8d5fbb05f075e921eb8016a072574da89e30d20d6e",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-572132324",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-572132324.json",
+      "sha256": "8dcc839f33c725677b21502a01e212727436514b0a3e7ded97166d38f724e2b0",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/572132324.json",
+        "sha256": "8dcc839f33c725677b21502a01e212727436514b0a3e7ded97166d38f724e2b0",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-576232023",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-576232023.json",
+      "sha256": "0a00ec15d5c172c668fb7445c9ec615074f7aa64ecdfb085064c2a4956e3fd47",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/576232023.json",
+        "sha256": "0a00ec15d5c172c668fb7445c9ec615074f7aa64ecdfb085064c2a4956e3fd47",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-545474934",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545474934.json",
+      "sha256": "c62b6ebe5cd471935c5a302728e4458fe65bc9f312de283c3f8d39d695836a8d",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/545474934.json",
+        "sha256": "c62b6ebe5cd471935c5a302728e4458fe65bc9f312de283c3f8d39d695836a8d",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-545485983",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-545485983.json",
+      "sha256": "f78ed3564fc48e0c973dd618cfe50050a91c109ede78b5c89830343e0478b57a",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/545485983.json",
+        "sha256": "f78ed3564fc48e0c973dd618cfe50050a91c109ede78b5c89830343e0478b57a",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-551168862",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168862.json",
+      "sha256": "d32c707f0835cc70e5285d1867e7ea51b73c55b48caf486f88d100dde0f606e3",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/551168862.json",
+        "sha256": "d32c707f0835cc70e5285d1867e7ea51b73c55b48caf486f88d100dde0f606e3",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-551168863",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168863.json",
+      "sha256": "e70bd5b90619d42d0337db6045ced9dd4ad50527a3c31fcdddd2e7786d73d3c2",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/551168863.json",
+        "sha256": "e70bd5b90619d42d0337db6045ced9dd4ad50527a3c31fcdddd2e7786d73d3c2",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-551168864",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-551168864.json",
+      "sha256": "e5d966bcb19373d886534ca2e3e6f196c677016a2dd5720af6e74d90225ddd9c",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/551168864.json",
+        "sha256": "e5d966bcb19373d886534ca2e3e6f196c677016a2dd5720af6e74d90225ddd9c",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-547014734",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547014734.json",
+      "sha256": "eaabbfdaf548768304f275a5481901b77a740a172b4615bd3b5584d7a6faf111",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/547014734.json",
+        "sha256": "eaabbfdaf548768304f275a5481901b77a740a172b4615bd3b5584d7a6faf111",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-547294158",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-547294158.json",
+      "sha256": "cd0deb189647f1f3b454550cc3f166706399c89ecadd8a7841d65f60a0c12c17",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/547294158.json",
+        "sha256": "cd0deb189647f1f3b454550cc3f166706399c89ecadd8a7841d65f60a0c12c17",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-582770476",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770476.json",
+      "sha256": "3bec2f276645d0c8abc1bcd3a71f740cedbade8fc4abb6e3c50250a755114f73",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/582770476.json",
+        "sha256": "3bec2f276645d0c8abc1bcd3a71f740cedbade8fc4abb6e3c50250a755114f73",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-582770478",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770478.json",
+      "sha256": "ed7cd4414c43bc76388c1e716984f176c90ae6676cfda598035e061aa18835a1",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/582770478.json",
+        "sha256": "ed7cd4414c43bc76388c1e716984f176c90ae6676cfda598035e061aa18835a1",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-582770479",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-582770479.json",
+      "sha256": "f1b2458d751a6d7aa6f9671f041b54572e8eb12ae44ef9f66caaf2a63c5a1f78",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/582770479.json",
+        "sha256": "f1b2458d751a6d7aa6f9671f041b54572e8eb12ae44ef9f66caaf2a63c5a1f78",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-550434327",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434327.json",
+      "sha256": "71c0319d7ce43e1df28fd7224b460e3d0d14087c60ccd53b9b0ff64d50093866",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/550434327.json",
+        "sha256": "71c0319d7ce43e1df28fd7224b460e3d0d14087c60ccd53b9b0ff64d50093866",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-550434328",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-550434328.json",
+      "sha256": "89390f1d6f60bf33b46069f046f2c654f7d5279a177a1bb9b999b60247666e8e",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/550434328.json",
+        "sha256": "89390f1d6f60bf33b46069f046f2c654f7d5279a177a1bb9b999b60247666e8e",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-552172712",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172712.json",
+      "sha256": "4689ab976f2cbb2b3b3e9b4f5b33e83c77e80108f5103c3ddd8841e306d81795",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/552172712.json",
+        "sha256": "4689ab976f2cbb2b3b3e9b4f5b33e83c77e80108f5103c3ddd8841e306d81795",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-552172713",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172713.json",
+      "sha256": "524c0b66db24da5d74ad7f4977dd884561e4c8178c8156fdc3030cd991b0b527",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/552172713.json",
+        "sha256": "524c0b66db24da5d74ad7f4977dd884561e4c8178c8156fdc3030cd991b0b527",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-552172714",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552172714.json",
+      "sha256": "ecc1528a62b1d759adf9e4fe27434d331985a1e5edcd8ba55fcb246e0b252a6a",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/552172714.json",
+        "sha256": "ecc1528a62b1d759adf9e4fe27434d331985a1e5edcd8ba55fcb246e0b252a6a",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-552352094",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352094.json",
+      "sha256": "939ac67619573d2934e64580eb88496a5448eb1496129b24ee23d248a5f3ac46",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/552352094.json",
+        "sha256": "939ac67619573d2934e64580eb88496a5448eb1496129b24ee23d248a5f3ac46",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-552352095",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-552352095.json",
+      "sha256": "1a1af70ce42b9502f208da861d9385414eef154499020fbb5a5205ff31eaa6bd",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/552352095.json",
+        "sha256": "1a1af70ce42b9502f208da861d9385414eef154499020fbb5a5205ff31eaa6bd",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. garment_measure",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-553031685",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031685.json",
+      "sha256": "c9f84fdae4c109cea8e6726f7b3a2bbe5427b1836ad6ee630cfcad21e297d44c",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/553031685.json",
+        "sha256": "c9f84fdae4c109cea8e6726f7b3a2bbe5427b1836ad6ee630cfcad21e297d44c",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. body_only",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-553031686",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-553031686.json",
+      "sha256": "cffa54bf2bb71f0fbfc0c67981b9ec6e465c26f5ed096f6a9d2707cddaa5e4c4",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/553031686.json",
+        "sha256": "cffa54bf2bb71f0fbfc0c67981b9ec6e465c26f5ed096f6a9d2707cddaa5e4c4",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. body_only",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-555174282",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/zara-555174282.json",
+      "sha256": "c96b624cdbbd495974db0ede833564edb95640b0b546762dc5fe3e8c69d14f8c",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "ZARAAudit/production_sample_30_cache/555174282.json",
+        "sha256": "c96b624cdbbd495974db0ede833564edb95640b0b546762dc5fe3e8c69d14f8c",
+        "selector": null
+      },
+      "note": "Archived HTTP wrapper; request URL uses exact variant ID. body_only",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "synthetic-zara_malformed_synthetic",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/fixtures/synthetic-zara_malformed_synthetic.json",
+      "sha256": "55a1b6c0db045b89e5c514cc116fa0af61b1aea0946dd11de75455203187a787",
+      "kind": "synthetic_contract_input",
+      "provenance": {
+        "path": "ZARAAudit/fixtures/zara_malformed_synthetic.json",
+        "sha256": "55a1b6c0db045b89e5c514cc116fa0af61b1aea0946dd11de75455203187a787",
+        "selector": null
+      },
+      "note": null,
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "musinsa-http-smoke-20261002",
+      "provider": "musinsa",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/musinsa.body",
+      "sha256": "8e837d5e4bfda77e414ea422783dd09f10ebfaae8ebbf4cfe128fa0492aa6745",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "sha256": "bed00bb515ecfc3da4916f267f673232865d322c8ee769f526919aec01982719",
+        "selector": "results/provider=musinsa"
+      },
+      "note": "New raw HTTP response bytes. Measurement endpoint identity derives from exact historical source URL; current page identity and Swift parser are not verified by this receipt.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "uniqlo-http-smoke-20261002",
+      "provider": "uniqlo",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/uniqlo.body",
+      "sha256": "28d17bc69abb4fc69d4dd0f4950b562ffbd4056cf1d4dbe4be60584fd6c049ac",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "sha256": "bed00bb515ecfc3da4916f267f673232865d322c8ee769f526919aec01982719",
+        "selector": "results/provider=uniqlo"
+      },
+      "note": "New raw HTTP response bytes. Measurement endpoint identity derives from exact historical source URL; current page identity and Swift parser are not verified by this receipt.",
+      "current_replay_status": "NOT RUN"
+    },
+    {
+      "id": "zara-http-smoke-20261002",
+      "provider": "zara",
+      "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/zara.body",
+      "sha256": "83e714214aaf9e1c3e8ee63063b26a34645ba7f6bf49c48e751a0436ec290e46",
+      "kind": "real_retailer_raw",
+      "provenance": {
+        "path": "Docs/QA/ReleasePreparation20261002/data/http-smoke/network-20261002/results.json",
+        "sha256": "bed00bb515ecfc3da4916f267f673232865d322c8ee769f526919aec01982719",
+        "selector": "results/provider=zara"
+      },
+      "note": "New raw HTTP response bytes. Measurement endpoint identity derives from exact historical source URL; current page identity and Swift parser are not verified by this receipt.",
+      "current_replay_status": "NOT RUN"
+    }
+  ],
+  "notes": [
+    "Raw retailer responses and derived Swift observations are separate artifacts.",
+    "Historical synthetic/classification/A-test results are not current server comparison or user journey proof.",
+    "MUSINSA options snapshots are inventory only and not measurement/API replay evidence."
+  ]
+}

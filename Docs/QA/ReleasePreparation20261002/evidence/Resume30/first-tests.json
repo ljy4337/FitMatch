@@ -1,0 +1,321 @@
+{
+  "devices" : [
+    {
+      "architecture" : "x86_64",
+      "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+      "deviceName" : "iPhone 17 Pro",
+      "modelName" : "iPhone 17 Pro",
+      "osBuildNumber" : "23D8133",
+      "osVersion" : "26.3.1",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "FitMatchReleaseMountedSelectionTests.swift:142: Expectation failed: condition(): first mounted result",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "9초",
+                  "durationInSeconds" : 9,
+                  "name" : "alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult()",
+                  "nodeIdentifier" : "FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseMountedSelectionTests/alternateSizeThenAnotherClosetThenAlternateSizeRemountsActualResult()",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "FitMatchReleaseMountedSelectionTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseMountedSelectionTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "1초",
+                  "durationInSeconds" : 1,
+                  "name" : "weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/weightedOracleAgreesWithPreviewDetailAndCompletionPayload()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/partialOracleKeepsConfidenceSeparateFromCoverageAndSourceFacts()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/identicalScoreAndDeltaUseExactUUIDTieBreakIndependentOfInputOrder()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/inconsistentSignedDifferenceCannotProduceAnOracleResult()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/perItemHalfRoundsBeforeWeightedMean()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/weightedMeanHalfRoundsAfterIntegerItemScores()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/scoreEndpointsClampBelowZeroAndPreserveLargeDeltaEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/equalScoreUsesWeightedDeltaBeforeExactUUID()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeIdentifier" : "FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests/negativeAbsoluteEvidenceCannotBecomeAnAboveHundredScore()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchReleasePreparationTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleasePreparationTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".cancelledTransport",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".forbidden403",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".malformed",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".offline",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".rateLimited429",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".server500",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".timeout",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    }
+                  ],
+                  "name" : "linkedSaveHTTPFailureKeepsLocalDataAndRetriesExactWireRequest(_:)",
+                  "nodeIdentifier" : "FitMatchReleaseTransportFaultTests/linkedSaveHTTPFailureKeepsLocalDataAndRetriesExactWireRequest(_:)",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseTransportFaultTests/linkedSaveHTTPFailureKeepsLocalDataAndRetriesExactWireRequest(_:)",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".cancelledTransport",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".forbidden403",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".malformed",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".offline",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".rateLimited429",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".server500",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".timeout",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    }
+                  ],
+                  "name" : "mutationRPCFaultsReachRealHTTPBoundaryAndNeverReturnSuccess(_:)",
+                  "nodeIdentifier" : "FitMatchReleaseTransportFaultTests/mutationRPCFaultsReachRealHTTPBoundaryAndNeverReturnSuccess(_:)",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseTransportFaultTests/mutationRPCFaultsReachRealHTTPBoundaryAndNeverReturnSuccess(_:)",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".cancelledTransport",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".forbidden403",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".malformed",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".offline",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".rateLimited429",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".server500",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "duration" : "0s",
+                      "durationInSeconds" : 0,
+                      "name" : ".timeout",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    }
+                  ],
+                  "name" : "closetDeleteTransportFailurePreservesIntentAndPreventsLocalCommit(_:)",
+                  "nodeIdentifier" : "FitMatchReleaseTransportFaultTests/closetDeleteTransportFailurePreservesIntentAndPreventsLocalCommit(_:)",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseTransportFaultTests/closetDeleteTransportFailurePreservesIntentAndPreventsLocalCommit(_:)",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "successfulDeleteReceiptReachesRealDecoderAndCommitsExactlyOnce()",
+                  "nodeIdentifier" : "FitMatchReleaseTransportFaultTests/successfulDeleteReceiptReachesRealDecoderAndCommitsExactlyOnce()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseTransportFaultTests/successfulDeleteReceiptReachesRealDecoderAndCommitsExactlyOnce()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchReleaseTransportFaultTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchReleaseTransportFaultTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "FitMatchTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "FitMatch-QA",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

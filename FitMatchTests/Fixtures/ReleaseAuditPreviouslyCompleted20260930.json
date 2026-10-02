@@ -1,0 +1,4251 @@
+[
+  {
+    "id": "33e7b3c4-c579-4ac7-8897-c48c2fd962d4",
+    "fit_score": 100,
+    "created_at": "2026-09-29T15:13:59.89838+00:00",
+    "deleted_at": null,
+    "updated_at": "2026-09-29T15:14:00.292144+00:00",
+    "is_favorite": false,
+    "completed_at": "2026-09-29T15:14:00.292144+00:00",
+    "result_status": "COMPLETED",
+    "coverage_ratio": 0.54545,
+    "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+    "input_snapshot": {
+      "began_at": "2026-09-29T15:13:59.89838+00:00",
+      "client_request": {
+        "manual_explicit": true,
+        "target_product_id": "CD77C9CE-5FE0-4C89-8F82-30EF608F3BB8",
+        "target_variant_id": "11F34D73-3296-4E7D-A01C-E238B2EE57F9",
+        "client_comparison_id": "95E3515C-2A48-443C-97BE-07F35E98082D",
+        "reference_closet_item_id": "A24A39C6-4CD7-4C72-BF5C-94BEB991DD58",
+        "candidate_product_size_ids": [
+          "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "BC2EE2DD-0069-425A-913A-45161044138F"
+        ],
+        "personal_override_revision": 0,
+        "authorization_product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+        "candidate_authority_fingerprint": "131fdeb6e0f83ad31db83d37631199b943359a0c1cdec64084ca730303e4f927",
+        "effective_authority_fingerprint": "cbcefd597758ab001d5a7230ffd207c9722e1139e5c6a9c4f48ec16fe5b475c2"
+      },
+      "personal_override_revision": 0,
+      "candidate_authority_fingerprint": "131fdeb6e0f83ad31db83d37631199b943359a0c1cdec64084ca730303e4f927",
+      "effective_authority_fingerprint": "cbcefd597758ab001d5a7230ffd207c9722e1139e5c6a9c4f48ec16fe5b475c2",
+      "authorized_candidate_product_size_ids": [
+        "8932f03a-51de-4014-9d3a-bb72f9f91e4c",
+        "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+        "6dc52835-1b0a-46ef-9ffa-f4462dbc74a8",
+        "bc2ee2dd-0069-425a-913a-45161044138f"
+      ]
+    },
+    "comparison_mode": "CANONICAL",
+    "policy_snapshot": {
+      "metrics": [
+        {
+          "weight": 0.7,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "front_rise"
+        },
+        {
+          "weight": 0.6,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "hem_width"
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "hip_width"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "outseam"
+        },
+        {
+          "weight": 0.9,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "thigh_width"
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "waist_width"
+        },
+        {
+          "weight": 0.7,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.6,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.9,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.7,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.front_rise.front_crotch_to_waist",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.6,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.hem_width.hem_edge_to_edge",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.9,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.thigh_width.thigh_crotch_to_outer",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.7,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "zara.front_rise.front_crotch_to_waist",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "zara.hip_width.hip_at_widest",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "zara.waist_width.waist_edge_to_edge",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 0.6,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "hem_circumference"
+        },
+        {
+          "weight": 1.2,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "hip_circumference"
+        },
+        {
+          "weight": 0.9,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "thigh_circumference"
+        },
+        {
+          "weight": 1,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "total_length"
+        },
+        {
+          "weight": 1.4,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "REQUIRED_ANY",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "waist_circumference"
+        },
+        {
+          "weight": 1.2,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.hip_circumference.garment_hip_circumference",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.4,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.waist_circumference.garment_waist_circumference",
+          "fitmatch_measurement_code": null
+        }
+      ],
+      "is_active": true,
+      "created_at": "2026-08-02T06:15:54.45449+00:00",
+      "updated_at": "2026-09-02T14:04:30.987021+00:00",
+      "policy_code": "standard_pants",
+      "display_name": "일반 바지",
+      "policy_version": "vnext-policy-20260902-adult-any-v1",
+      "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+      "required_any_min": 2,
+      "audience_policy_code": "ADULT_ANY",
+      "allow_manual_extended": true,
+      "native_default_weight": 1,
+      "sleeve_mismatch_policy": "IGNORE",
+      "min_common_measurements": 2,
+      "body_length_mismatch_policy": "IGNORE",
+      "body_mismatch_excluded_codes": [],
+      "lower_length_mismatch_policy": "REQUIRE_MATCH",
+      "lower_mismatch_excluded_codes": [
+        "total_length",
+        "inseam",
+        "outseam",
+        "hem_width",
+        "hem_circumference"
+      ],
+      "sleeve_mismatch_excluded_codes": []
+    },
+    "result_evidence": {
+      "score": 100,
+      "coverage": 0.54545,
+      "reliability": 5,
+      "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+      "metric_evidence": [
+        {
+          "weight": 0.7,
+          "difference": -0.5,
+          "target_value": 29.5,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 30,
+          "measurement_code": "front_rise",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 0.6,
+          "difference": -0.5,
+          "target_value": 28,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 28.5,
+          "measurement_code": "hem_width",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 1.2,
+          "difference": -2,
+          "target_value": 52,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 54,
+          "measurement_code": "hip_width",
+          "absolute_difference": 2
+        },
+        {
+          "weight": 1,
+          "difference": -1,
+          "target_value": 101,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 102,
+          "measurement_code": "outseam",
+          "absolute_difference": 1
+        },
+        {
+          "weight": 0.9,
+          "difference": -2,
+          "target_value": 30,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 32,
+          "measurement_code": "thigh_width",
+          "absolute_difference": 2
+        },
+        {
+          "weight": 1.4,
+          "difference": -2.5,
+          "target_value": 39,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C",
+          "reference_value": 41.5,
+          "measurement_code": "waist_width",
+          "absolute_difference": 2.5
+        },
+        {
+          "weight": 0.7,
+          "difference": 0,
+          "target_value": 30,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 30,
+          "measurement_code": "front_rise",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 0.6,
+          "difference": 0,
+          "target_value": 28.5,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 28.5,
+          "measurement_code": "hem_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1.2,
+          "difference": 0,
+          "target_value": 54,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 54,
+          "measurement_code": "hip_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1,
+          "difference": 0,
+          "target_value": 102,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 102,
+          "measurement_code": "outseam",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 0.9,
+          "difference": 0,
+          "target_value": 32,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 32,
+          "measurement_code": "thigh_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1.4,
+          "difference": 0,
+          "target_value": 41.5,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A",
+          "reference_value": 41.5,
+          "measurement_code": "waist_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 0.7,
+          "difference": 0.5,
+          "target_value": 30.5,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 30,
+          "measurement_code": "front_rise",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 0.6,
+          "difference": 0.5,
+          "target_value": 29,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 28.5,
+          "measurement_code": "hem_width",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 1.2,
+          "difference": 3,
+          "target_value": 57,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 54,
+          "measurement_code": "hip_width",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 1,
+          "difference": 2,
+          "target_value": 104,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 102,
+          "measurement_code": "outseam",
+          "absolute_difference": 2
+        },
+        {
+          "weight": 0.9,
+          "difference": 0.5,
+          "target_value": 32.5,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 32,
+          "measurement_code": "thigh_width",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 1.4,
+          "difference": 1.5,
+          "target_value": 43,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8",
+          "reference_value": 41.5,
+          "measurement_code": "waist_width",
+          "absolute_difference": 1.5
+        },
+        {
+          "weight": 0.7,
+          "difference": 1,
+          "target_value": 31,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 30,
+          "measurement_code": "front_rise",
+          "absolute_difference": 1
+        },
+        {
+          "weight": 0.6,
+          "difference": 1.5,
+          "target_value": 30,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 28.5,
+          "measurement_code": "hem_width",
+          "absolute_difference": 1.5
+        },
+        {
+          "weight": 1.2,
+          "difference": 6,
+          "target_value": 60,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 54,
+          "measurement_code": "hip_width",
+          "absolute_difference": 6
+        },
+        {
+          "weight": 1,
+          "difference": 4,
+          "target_value": 106,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 102,
+          "measurement_code": "outseam",
+          "absolute_difference": 4
+        },
+        {
+          "weight": 0.9,
+          "difference": 3,
+          "target_value": 35,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 32,
+          "measurement_code": "thigh_width",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 1.4,
+          "difference": 5.5,
+          "target_value": 47,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F",
+          "reference_value": 41.5,
+          "measurement_code": "waist_width",
+          "absolute_difference": 5.5
+        }
+      ],
+      "candidate_size_ranking": [
+        {
+          "rank": 1,
+          "score": 100,
+          "product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A"
+        },
+        {
+          "rank": 2,
+          "score": 93,
+          "product_size_id": "6DC52835-1B0A-46EF-9FFA-F4462DBC74A8"
+        },
+        {
+          "rank": 3,
+          "score": 92,
+          "product_size_id": "8932F03A-51DE-4014-9D3A-BB72F9F91E4C"
+        },
+        {
+          "rank": 4,
+          "score": 80,
+          "product_size_id": "BC2EE2DD-0069-425A-913A-45161044138F"
+        }
+      ],
+      "recommended_product_size_id": "C5B6115B-5E06-43AC-9ADE-2C529C1D493A"
+    },
+    "target_snapshot": {
+      "candidates": [
+        {
+          "size_label": "0. S",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:13:50.814+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "e75256949fa2bc9e14963a5212ea1c922c11609986d6a834e54a3eab3e04df0e"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "standard_pants",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+            "required_any_min": 0,
+            "required_any_count": 3,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 2,
+            "used_measurement_codes": [
+              "front_rise",
+              "hem_width",
+              "hip_width",
+              "outseam",
+              "thigh_width",
+              "waist_width"
+            ],
+            "policy_required_any_min": 2,
+            "common_measurement_count": 6,
+            "target_measurement_domain": "LOWER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "LOWER_BODY"
+          },
+          "product_size_id": "8932f03a-51de-4014-9d3a-bb72f9f91e4c",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 29.5,
+                "unit_code": "cm",
+                "basis_code": "front_crotch_to_waist",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+                "raw_evidence_fingerprint": "f040cd3f605b3b5edd182725cfabcb4cf38e5340676514950ed0bbd09d052375",
+                "fitmatch_measurement_code": "front_rise",
+                "product_size_measurement_id": "c3e1a211-cb3a-4e7e-b93d-c03a0f5a8f80"
+              },
+              {
+                "value": 28,
+                "unit_code": "cm",
+                "basis_code": "hem_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+                "raw_evidence_fingerprint": "bd7dadfa9bd946ad14c7a1cf48bbbc21a278c1b099d49875d1adfc396ff13da2",
+                "fitmatch_measurement_code": "hem_width",
+                "product_size_measurement_id": "9a249754-e156-4f3f-bc1c-bb66aebfb00c"
+              },
+              {
+                "value": 52,
+                "unit_code": "cm",
+                "basis_code": "hip_at_widest",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+                "raw_evidence_fingerprint": "77c516b127c4606b6d094fb8f152c6e2ad2c9df3cfc23d9c843d01438eb416e3",
+                "fitmatch_measurement_code": "hip_width",
+                "product_size_measurement_id": "c3ffeb85-c502-4f94-bd99-fde1bb660cf9"
+              },
+              {
+                "value": 101,
+                "unit_code": "cm",
+                "basis_code": "waist_to_outer_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.outseam.waist_to_outer_hem",
+                "raw_evidence_fingerprint": "1f320a1763c2a9c739d83cb02f1b6cc428845c5a963b5958e4348bddf7ab82b8",
+                "fitmatch_measurement_code": "outseam",
+                "product_size_measurement_id": "a66d4a89-50e3-498c-ade3-7d3c3f451403"
+              },
+              {
+                "value": 30,
+                "unit_code": "cm",
+                "basis_code": "thigh_crotch_to_outer",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+                "raw_evidence_fingerprint": "64900ae1f1928447625912ab8518db396f9c2863309f4fceb7b3f1315a843b78",
+                "fitmatch_measurement_code": "thigh_width",
+                "product_size_measurement_id": "aa9c7c56-4ae3-42f2-8994-dcea7692e011"
+              },
+              {
+                "value": 39,
+                "unit_code": "cm",
+                "basis_code": "waist_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+                "raw_evidence_fingerprint": "fb215d92fd85f4fe0b9568db226b297b59924b8053f7be8c4f642a40e01687be",
+                "fitmatch_measurement_code": "waist_width",
+                "product_size_measurement_id": "c4d858d6-2d60-42b1-afda-3c9d52b342c5"
+              }
+            ],
+            "product_size_id": "8932f03a-51de-4014-9d3a-bb72f9f91e4c",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 0.7,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "front_crotch_to_waist",
+              "difference": -0.5,
+              "target_value": 29.5,
+              "reference_value": 30,
+              "measurement_code": "front_rise",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            },
+            {
+              "weight": 0.6,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hem_edge_to_edge",
+              "difference": -0.5,
+              "target_value": 28,
+              "reference_value": 28.5,
+              "measurement_code": "hem_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            },
+            {
+              "weight": 1.2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hip_at_widest",
+              "difference": -2,
+              "target_value": 52,
+              "reference_value": 54,
+              "measurement_code": "hip_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 2
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_to_outer_hem",
+              "difference": -1,
+              "target_value": 101,
+              "reference_value": 102,
+              "measurement_code": "outseam",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1
+            },
+            {
+              "weight": 0.9,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "thigh_crotch_to_outer",
+              "difference": -2,
+              "target_value": 30,
+              "reference_value": 32,
+              "measurement_code": "thigh_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 2
+            },
+            {
+              "weight": 1.4,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_edge_to_edge",
+              "difference": -2.5,
+              "target_value": 39,
+              "reference_value": 41.5,
+              "measurement_code": "waist_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 2.5
+            }
+          ]
+        },
+        {
+          "size_label": "1. M",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:13:50.814+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "952fbd98bbb2d6ba3544e3dff9373c6c145c15bedf403fdc099b65438c5cf048"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "standard_pants",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+            "required_any_min": 0,
+            "required_any_count": 3,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 2,
+            "used_measurement_codes": [
+              "front_rise",
+              "hem_width",
+              "hip_width",
+              "outseam",
+              "thigh_width",
+              "waist_width"
+            ],
+            "policy_required_any_min": 2,
+            "common_measurement_count": 6,
+            "target_measurement_domain": "LOWER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "LOWER_BODY"
+          },
+          "product_size_id": "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 30,
+                "unit_code": "cm",
+                "basis_code": "front_crotch_to_waist",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+                "raw_evidence_fingerprint": "b461664683877900c979754a68a6e83b6676eae593b4b282c1737071ae068fb1",
+                "fitmatch_measurement_code": "front_rise",
+                "product_size_measurement_id": "fb0ec45d-aaad-4092-8832-70c12663bf11"
+              },
+              {
+                "value": 28.5,
+                "unit_code": "cm",
+                "basis_code": "hem_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+                "raw_evidence_fingerprint": "ea7ccf1f4cafe45dea13b6dd517553b03bd6a32820261e11581433b3d72a545d",
+                "fitmatch_measurement_code": "hem_width",
+                "product_size_measurement_id": "2fbb4911-8777-47c8-876b-7f80f4be5b0e"
+              },
+              {
+                "value": 54,
+                "unit_code": "cm",
+                "basis_code": "hip_at_widest",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+                "raw_evidence_fingerprint": "a3821843f6b831f1510fa115235928d5d6d14c2f4a1ed5558dac872c93dd8fae",
+                "fitmatch_measurement_code": "hip_width",
+                "product_size_measurement_id": "aa7137a7-d03f-4baf-baa1-91af4ff557af"
+              },
+              {
+                "value": 102,
+                "unit_code": "cm",
+                "basis_code": "waist_to_outer_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.outseam.waist_to_outer_hem",
+                "raw_evidence_fingerprint": "4556bcdf84e188a739fd14f98134361ef74b2d0c7f53f5e703929a0ac98be16c",
+                "fitmatch_measurement_code": "outseam",
+                "product_size_measurement_id": "e934ba17-e3b5-47dc-93bf-feccfa5c5c03"
+              },
+              {
+                "value": 32,
+                "unit_code": "cm",
+                "basis_code": "thigh_crotch_to_outer",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+                "raw_evidence_fingerprint": "512a6e5e7c5144af77ba30da0df120009c167c037a729399786aab09a65907f3",
+                "fitmatch_measurement_code": "thigh_width",
+                "product_size_measurement_id": "1a126a93-1f4f-4f97-a328-d382ec8952f0"
+              },
+              {
+                "value": 41.5,
+                "unit_code": "cm",
+                "basis_code": "waist_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+                "raw_evidence_fingerprint": "c8660f374806e2a03d7ab16893ee0fc771606218a1d10113295bb3beb95dc9d4",
+                "fitmatch_measurement_code": "waist_width",
+                "product_size_measurement_id": "095d10de-dc8e-4773-898b-8ade28610a6c"
+              }
+            ],
+            "product_size_id": "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 0.7,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "front_crotch_to_waist",
+              "difference": 0,
+              "target_value": 30,
+              "reference_value": 30,
+              "measurement_code": "front_rise",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 0.6,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hem_edge_to_edge",
+              "difference": 0,
+              "target_value": 28.5,
+              "reference_value": 28.5,
+              "measurement_code": "hem_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1.2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hip_at_widest",
+              "difference": 0,
+              "target_value": 54,
+              "reference_value": 54,
+              "measurement_code": "hip_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_to_outer_hem",
+              "difference": 0,
+              "target_value": 102,
+              "reference_value": 102,
+              "measurement_code": "outseam",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 0.9,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "thigh_crotch_to_outer",
+              "difference": 0,
+              "target_value": 32,
+              "reference_value": 32,
+              "measurement_code": "thigh_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1.4,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_edge_to_edge",
+              "difference": 0,
+              "target_value": 41.5,
+              "reference_value": 41.5,
+              "measurement_code": "waist_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 0
+            }
+          ]
+        },
+        {
+          "size_label": "2. L",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:13:50.814+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "3f8eb3e317a9a9baa9789c2c48be5e1036094745d9d5c83e1f1cfe628240af9e"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "standard_pants",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+            "required_any_min": 0,
+            "required_any_count": 3,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 2,
+            "used_measurement_codes": [
+              "front_rise",
+              "hem_width",
+              "hip_width",
+              "outseam",
+              "thigh_width",
+              "waist_width"
+            ],
+            "policy_required_any_min": 2,
+            "common_measurement_count": 6,
+            "target_measurement_domain": "LOWER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "LOWER_BODY"
+          },
+          "product_size_id": "6dc52835-1b0a-46ef-9ffa-f4462dbc74a8",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 30.5,
+                "unit_code": "cm",
+                "basis_code": "front_crotch_to_waist",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+                "raw_evidence_fingerprint": "52beef9dfe617fe44f11c233f9ada87cc48c9652fefe5cbc84a1e8cec15fbe67",
+                "fitmatch_measurement_code": "front_rise",
+                "product_size_measurement_id": "4a05b152-2fbc-48de-9658-79a520d5fbe5"
+              },
+              {
+                "value": 29,
+                "unit_code": "cm",
+                "basis_code": "hem_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+                "raw_evidence_fingerprint": "e8bef7cf66b4425f5598b32d9c0d62c9a684cac8edf2c75a905669f9d9c4c39f",
+                "fitmatch_measurement_code": "hem_width",
+                "product_size_measurement_id": "25e10fe3-4852-4b12-8515-1947928f3f49"
+              },
+              {
+                "value": 57,
+                "unit_code": "cm",
+                "basis_code": "hip_at_widest",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+                "raw_evidence_fingerprint": "9c06236a3825bebb27808782b3f928f49dd86589894d24e8d3ee0043dabd715e",
+                "fitmatch_measurement_code": "hip_width",
+                "product_size_measurement_id": "a2765cbb-c1b4-4481-a928-8458c907403f"
+              },
+              {
+                "value": 104,
+                "unit_code": "cm",
+                "basis_code": "waist_to_outer_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.outseam.waist_to_outer_hem",
+                "raw_evidence_fingerprint": "69cd1d37850deace002ce1b3199758ec20be0414917d5b85bc230b7caf7e3f1c",
+                "fitmatch_measurement_code": "outseam",
+                "product_size_measurement_id": "5b5432e8-5fb9-49aa-8cb6-25dd0f1bdca5"
+              },
+              {
+                "value": 32.5,
+                "unit_code": "cm",
+                "basis_code": "thigh_crotch_to_outer",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+                "raw_evidence_fingerprint": "0fe62b7cb59d214741060d71871f2dfef9b91006713a19fee5215e3b31d1827a",
+                "fitmatch_measurement_code": "thigh_width",
+                "product_size_measurement_id": "cd016517-5618-4554-8032-c5194953b22e"
+              },
+              {
+                "value": 43,
+                "unit_code": "cm",
+                "basis_code": "waist_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+                "raw_evidence_fingerprint": "b606a954e5dc674bb5ca2877e87de2df6b1324759b210bd7d93af057a431b166",
+                "fitmatch_measurement_code": "waist_width",
+                "product_size_measurement_id": "3ba04cb2-86a9-483e-9183-a7272b6d9881"
+              }
+            ],
+            "product_size_id": "6dc52835-1b0a-46ef-9ffa-f4462dbc74a8",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 0.7,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "front_crotch_to_waist",
+              "difference": 0.5,
+              "target_value": 30.5,
+              "reference_value": 30,
+              "measurement_code": "front_rise",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            },
+            {
+              "weight": 0.6,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hem_edge_to_edge",
+              "difference": 0.5,
+              "target_value": 29,
+              "reference_value": 28.5,
+              "measurement_code": "hem_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            },
+            {
+              "weight": 1.2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hip_at_widest",
+              "difference": 3,
+              "target_value": 57,
+              "reference_value": 54,
+              "measurement_code": "hip_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_to_outer_hem",
+              "difference": 2,
+              "target_value": 104,
+              "reference_value": 102,
+              "measurement_code": "outseam",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 2
+            },
+            {
+              "weight": 0.9,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "thigh_crotch_to_outer",
+              "difference": 0.5,
+              "target_value": 32.5,
+              "reference_value": 32,
+              "measurement_code": "thigh_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 0.5
+            },
+            {
+              "weight": 1.4,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_edge_to_edge",
+              "difference": 1.5,
+              "target_value": 43,
+              "reference_value": 41.5,
+              "measurement_code": "waist_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 1.5
+            }
+          ]
+        },
+        {
+          "size_label": "3. XL",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:13:50.814+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "c7e713a61d2f332f2d81b751799005d9f961d2c6c08e89b6cbcbdbdd569e8d22"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "standard_pants",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260902-adult-any-v1",
+            "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+            "required_any_min": 0,
+            "required_any_count": 3,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 2,
+            "used_measurement_codes": [
+              "front_rise",
+              "hem_width",
+              "hip_width",
+              "outseam",
+              "thigh_width",
+              "waist_width"
+            ],
+            "policy_required_any_min": 2,
+            "common_measurement_count": 6,
+            "target_measurement_domain": "LOWER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "LOWER_BODY"
+          },
+          "product_size_id": "bc2ee2dd-0069-425a-913a-45161044138f",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 31,
+                "unit_code": "cm",
+                "basis_code": "front_crotch_to_waist",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.front_rise.front_crotch_to_waist",
+                "raw_evidence_fingerprint": "9ca4b6faf83cf391c8f649221ffe0de6676acf5e3cc0b30ffedf9bebb8a0d239",
+                "fitmatch_measurement_code": "front_rise",
+                "product_size_measurement_id": "149d51b2-8a58-4c12-974a-8856970f8c25"
+              },
+              {
+                "value": 30,
+                "unit_code": "cm",
+                "basis_code": "hem_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hem_width.hem_edge_to_edge",
+                "raw_evidence_fingerprint": "f1f393d52c9cbd69db75aaac6a48910f16a019f1c908b2095a03f7ee6bd190ce",
+                "fitmatch_measurement_code": "hem_width",
+                "product_size_measurement_id": "f1e4fe13-c4d9-48b4-b4f4-ddf7cd38bae6"
+              },
+              {
+                "value": 60,
+                "unit_code": "cm",
+                "basis_code": "hip_at_widest",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.hip_width.hip_at_widest",
+                "raw_evidence_fingerprint": "aecca89a42671397ddba6c81d0ab58e16735ff6463b2a1dd2c2e209451f094d7",
+                "fitmatch_measurement_code": "hip_width",
+                "product_size_measurement_id": "901a63b6-29b4-45c0-87b6-3957cd32867a"
+              },
+              {
+                "value": 106,
+                "unit_code": "cm",
+                "basis_code": "waist_to_outer_hem",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.outseam.waist_to_outer_hem",
+                "raw_evidence_fingerprint": "69249d9614e6a1294c9573e4f3d9d2563c0e037bc860530282451b2ff6a0b94d",
+                "fitmatch_measurement_code": "outseam",
+                "product_size_measurement_id": "cdebb623-20d9-465d-98c2-86e871cd5f54"
+              },
+              {
+                "value": 35,
+                "unit_code": "cm",
+                "basis_code": "thigh_crotch_to_outer",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.thigh_width.thigh_crotch_to_outer",
+                "raw_evidence_fingerprint": "821050922eb263c4585ebc7fda6a8a9ab36f396a0e7106cfdbe8217b99a9fe9b",
+                "fitmatch_measurement_code": "thigh_width",
+                "product_size_measurement_id": "b398149f-c112-4bc4-acf2-7c299c482059"
+              },
+              {
+                "value": 47,
+                "unit_code": "cm",
+                "basis_code": "waist_edge_to_edge",
+                "resolution_path": "ALIAS_LABEL",
+                "source_measurement_code": "musinsa.waist_width.waist_edge_to_edge",
+                "raw_evidence_fingerprint": "50654ffdd5f84be19c685959644c46784607f31a4152a7ce3d607feb164f1cb1",
+                "fitmatch_measurement_code": "waist_width",
+                "product_size_measurement_id": "a6baa6cb-3004-4f92-bd75-21877df79f79"
+              }
+            ],
+            "product_size_id": "bc2ee2dd-0069-425a-913a-45161044138f",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 6,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 0.7,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "front_crotch_to_waist",
+              "difference": 1,
+              "target_value": 31,
+              "reference_value": 30,
+              "measurement_code": "front_rise",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1
+            },
+            {
+              "weight": 0.6,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hem_edge_to_edge",
+              "difference": 1.5,
+              "target_value": 30,
+              "reference_value": 28.5,
+              "measurement_code": "hem_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1.5
+            },
+            {
+              "weight": 1.2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "hip_at_widest",
+              "difference": 6,
+              "target_value": 60,
+              "reference_value": 54,
+              "measurement_code": "hip_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 6
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_to_outer_hem",
+              "difference": 4,
+              "target_value": 106,
+              "reference_value": 102,
+              "measurement_code": "outseam",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 4
+            },
+            {
+              "weight": 0.9,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "thigh_crotch_to_outer",
+              "difference": 3,
+              "target_value": 35,
+              "reference_value": 32,
+              "measurement_code": "thigh_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 1.4,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "waist_edge_to_edge",
+              "difference": 5.5,
+              "target_value": 47,
+              "reference_value": 41.5,
+              "measurement_code": "waist_width",
+              "requirement_mode": "REQUIRED_ANY",
+              "absolute_difference": 5.5
+            }
+          ]
+        }
+      ],
+      "product_id": "cd77c9ce-5fe0-4c89-8f82-30ef608f3bb8",
+      "variant_id": "11f34d73-3296-4e7d-a01c-e238b2ee57f9",
+      "source_code": "musinsa",
+      "audience_code": "MEN",
+      "body_length_code": null,
+      "resolver_version": "fitmatch-vnext-retailer-api-20260909-r3",
+      "garment_type_code": "comparison_group_bottom",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "5328103",
+      "classification_source": "CATEGORY_GROUP",
+      "classification_status": "CONFIRMED",
+      "product_structure_code": "UNKNOWN",
+      "candidate_product_size_ids": [
+        "8932f03a-51de-4014-9d3a-bb72f9f91e4c",
+        "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+        "6dc52835-1b0a-46ef-9ffa-f4462dbc74a8",
+        "bc2ee2dd-0069-425a-913a-45161044138f"
+      ],
+      "classification_fingerprint": "cbcefd597758ab001d5a7230ffd207c9722e1139e5c6a9c4f48ec16fe5b475c2",
+      "candidate_authority_version": "fitmatch-vnext-candidates-20260908-effective-v1",
+      "ingestion_evidence_fingerprint": "1dbbaaa47b327aef667554eea0e1c3a3cceca314c9f5e838fdec69a56e9fa3a4",
+      "candidate_authority_fingerprint": "131fdeb6e0f83ad31db83d37631199b943359a0c1cdec64084ca730303e4f927",
+      "global_classification_fingerprint": "812764e9e9165af977acad46b90857e1a6037e1f2b02532c095f318718b75ea4",
+      "classification_evidence_fingerprint": "31807be06910f2b1bf8b3a2f7abad138d2b667d1d20f266b7ee34292fd9d07a9",
+      "authorized_candidate_product_size_ids": [
+        "8932f03a-51de-4014-9d3a-bb72f9f91e4c",
+        "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+        "6dc52835-1b0a-46ef-9ffa-f4462dbc74a8",
+        "bc2ee2dd-0069-425a-913a-45161044138f"
+      ]
+    },
+    "reliability_level": 5,
+    "target_product_id": "cd77c9ce-5fe0-4c89-8f82-30ef608f3bb8",
+    "target_variant_id": "11f34d73-3296-4e7d-a01c-e238b2ee57f9",
+    "authority_snapshot": {
+      "taxonomy_checksum": "1221b322fc436ec70bfbb52f29b4f1c28eebac084685177fc328d655b64622f6",
+      "taxonomy_schema_version": "fitmatch-vnext-taxonomy-v1",
+      "selected_mapping_version": null,
+      "classification_mapping_id": null,
+      "selected_mapping_checksum": null,
+      "classification_fingerprint": "812764e9e9165af977acad46b90857e1a6037e1f2b02532c095f318718b75ea4",
+      "manual_cross_rule_at_begin": null,
+      "mapping_authority_checksum": "cef96b58bda0181dd6da051f42edc9c7dca2e88356f433cbd8ca9e78713ec868",
+      "personal_projection_at_begin": null,
+      "global_classification_at_begin": null,
+      "ingestion_evidence_fingerprint": "1dbbaaa47b327aef667554eea0e1c3a3cceca314c9f5e838fdec69a56e9fa3a4",
+      "classification_resolver_version": "fitmatch-vnext-retailer-api-20260909-r3",
+      "effective_classification_at_begin": {
+        "state": "CATEGORY_GROUP_CONFIRMED",
+        "source": "CATEGORY_GROUP",
+        "audience_code": "MEN",
+        "category_code": "bottoms",
+        "garment_type_code": "comparison_group_bottom",
+        "comparison_policy_code": "standard_pants",
+        "effective_authority_fingerprint": "cbcefd597758ab001d5a7230ffd207c9722e1139e5c6a9c4f48ec16fe5b475c2"
+      },
+      "classification_evidence_fingerprint": "31807be06910f2b1bf8b3a2f7abad138d2b667d1d20f266b7ee34292fd9d07a9"
+    },
+    "authorization_mode": "MANUAL_EXTENDED",
+    "reference_snapshot": {
+      "item_name": "원턱 와이드 슬랙스 (사계절,여름-8컬러)",
+      "product_id": "cd77c9ce-5fe0-4c89-8f82-30ef608f3bb8",
+      "size_label": "1. M",
+      "variant_id": "11f34d73-3296-4e7d-a01c-e238b2ee57f9",
+      "source_code": "musinsa",
+      "measurements": [
+        {
+          "value": 30,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.front_rise.front_crotch_to_waist",
+          "fitmatch_measurement_code": "front_rise"
+        },
+        {
+          "value": 28.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.hem_width.hem_edge_to_edge",
+          "fitmatch_measurement_code": "hem_width"
+        },
+        {
+          "value": 54,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.hip_width.hip_at_widest",
+          "fitmatch_measurement_code": "hip_width"
+        },
+        {
+          "value": 102,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.outseam.waist_to_outer_hem",
+          "fitmatch_measurement_code": "outseam"
+        },
+        {
+          "value": 32,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.thigh_width.thigh_crotch_to_outer",
+          "fitmatch_measurement_code": "thigh_width"
+        },
+        {
+          "value": 41.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "musinsa.waist_width.waist_edge_to_edge",
+          "fitmatch_measurement_code": "waist_width"
+        }
+      ],
+      "audience_code": "MEN",
+      "closet_item_id": "a24a39c6-4cd7-4c72-bf5c-94beb991dd58",
+      "product_size_id": "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+      "body_length_code": null,
+      "garment_type_code": "comparison_group_bottom",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "5328103",
+      "classification_source": "BACKEND",
+      "classification_fingerprint": "9870cbb7b108c9080926c0d9bc20b3bbd705bb40113e62bce45514fe04b0878a",
+      "classification_resolver_version": "comparison-group-v3"
+    },
+    "client_comparison_id": "95e3515c-2a48-443c-97be-07f35e98082d",
+    "authorization_snapshot": {
+      "mode": "MANUAL_EXTENDED",
+      "reason": "User-selected comparison with at least one common canonical measurement",
+      "allowed": true,
+      "decision": "MANUAL_EXTENDED",
+      "policy_code": "standard_pants",
+      "reason_code": "USER_SELECTED_REFERENCE",
+      "minimum_common": 1,
+      "policy_version": "vnext-policy-20260902-adult-any-v1",
+      "policy_checksum": "6d5fc9d920a003e87715b8354aa9b67c64866c214f7ec41f21e798370950b67f",
+      "required_any_min": 0,
+      "required_any_count": 3,
+      "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+      "policy_minimum_common": 2,
+      "used_measurement_codes": [
+        "front_rise",
+        "hem_width",
+        "hip_width",
+        "outseam",
+        "thigh_width",
+        "waist_width"
+      ],
+      "policy_required_any_min": 2,
+      "common_measurement_count": 6,
+      "target_measurement_domain": "LOWER_BODY",
+      "excluded_measurement_codes": [],
+      "required_measurement_codes": [],
+      "excluded_measurement_reasons": [],
+      "reference_measurement_domain": "LOWER_BODY"
+    },
+    "recommended_size_label": "1. M",
+    "snapshot_schema_version": 4,
+    "reference_client_item_id": "49fadf3d-0708-4695-b8d2-03ded78a1bd4",
+    "reference_closet_item_id": "a24a39c6-4cd7-4c72-bf5c-94beb991dd58",
+    "target_audience_snapshot": "MEN",
+    "target_image_url_snapshot": "https://image.msscdn.net/images/goods_img/20250817/5328103/5328103_17582663204502_500.jpg",
+    "target_source_product_key": "5328103",
+    "excluded_measurement_codes": [],
+    "recommended_product_size_id": "c5b6115b-5e06-43ac-9ade-2c529c1d493a",
+    "reference_audience_snapshot": "MEN",
+    "target_body_length_snapshot": null,
+    "target_source_code_snapshot": "musinsa",
+    "reference_item_name_snapshot": "원턱 와이드 슬랙스 (사계절,여름-8컬러)",
+    "target_garment_type_snapshot": "comparison_group_bottom",
+    "target_lower_length_snapshot": null,
+    "target_product_name_snapshot": "원턱 와이드 슬랙스 (사계절,여름-8컬러)",
+    "target_sleeve_length_snapshot": null,
+    "reference_body_length_snapshot": null,
+    "reference_source_code_snapshot": "musinsa",
+    "comparison_policy_code_snapshot": "standard_pants",
+    "reference_garment_type_snapshot": "comparison_group_bottom",
+    "reference_lower_length_snapshot": null,
+    "reference_sleeve_length_snapshot": null
+  },
+  {
+    "id": "405d46bf-7c9a-49dd-addc-9c915ec60019",
+    "fit_score": 100,
+    "created_at": "2026-09-29T15:17:54.412186+00:00",
+    "deleted_at": null,
+    "updated_at": "2026-09-29T15:17:54.796594+00:00",
+    "is_favorite": false,
+    "completed_at": "2026-09-29T15:17:54.796594+00:00",
+    "result_status": "COMPLETED",
+    "coverage_ratio": 0.66667,
+    "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+    "input_snapshot": {
+      "began_at": "2026-09-29T15:17:54.412186+00:00",
+      "client_request": {
+        "manual_explicit": true,
+        "target_product_id": "47C096FB-9DD3-4FC5-957D-312D6C528ED0",
+        "target_variant_id": "9FADD646-B693-4821-A338-738E97FBE8CE",
+        "client_comparison_id": "11F200B7-F38F-4D11-B2EF-C62D5E548EC1",
+        "reference_closet_item_id": "8BB2F250-A1ED-42FB-AE32-220BB844EA85",
+        "candidate_product_size_ids": [
+          "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+          "274CF1CA-3F0E-42F6-BBEC-607742B262E7",
+          "76741430-70C2-4BC0-B151-B7873BADFAF5",
+          "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7",
+          "148F2050-229B-46DF-8479-E7D296135745",
+          "8C8020E6-97AC-4061-AA79-925EAA5E6CC0",
+          "4323117C-2303-41FD-AB6F-47BDB01B63C6",
+          "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D"
+        ],
+        "personal_override_revision": 0,
+        "authorization_product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+        "candidate_authority_fingerprint": "fdc520a6f4ea7c44f075846c8c444ea1fb602d9f5fee73e1e23f099ce56573ae",
+        "effective_authority_fingerprint": "30778800b4c4378a53af6aea46fbf1bed5353e313268905dd64f8e2a77ead3de"
+      },
+      "personal_override_revision": 0,
+      "candidate_authority_fingerprint": "fdc520a6f4ea7c44f075846c8c444ea1fb602d9f5fee73e1e23f099ce56573ae",
+      "effective_authority_fingerprint": "30778800b4c4378a53af6aea46fbf1bed5353e313268905dd64f8e2a77ead3de",
+      "authorized_candidate_product_size_ids": [
+        "3ba3c178-49eb-4967-820f-779ecdf16eaa",
+        "274cf1ca-3f0e-42f6-bbec-607742b262e7",
+        "76741430-70c2-4bc0-b151-b7873badfaf5",
+        "14574aa7-6bc6-44fd-a3db-1a9f5d5e1df7",
+        "148f2050-229b-46df-8479-e7d296135745",
+        "8c8020e6-97ac-4061-aa79-925eaa5e6cc0",
+        "4323117c-2303-41fd-ab6f-47bdb01b63c6",
+        "f0dc54ad-c2dd-4e5d-aac2-1ed6b70ac87d"
+      ]
+    },
+    "comparison_mode": "CANONICAL",
+    "policy_snapshot": {
+      "metrics": [
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "back_length"
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "shoulder_width"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "sleeve_length"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_raglan_neck_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_circumference"
+        },
+        {
+          "weight": 1,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "total_length"
+        }
+      ],
+      "is_active": true,
+      "created_at": "2026-08-02T06:15:54.45449+00:00",
+      "updated_at": "2026-09-28T04:24:04.242011+00:00",
+      "policy_code": "tshirt",
+      "display_name": "티셔츠",
+      "policy_version": "vnext-policy-20260928-top-one-common-v1",
+      "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+      "required_any_min": 0,
+      "audience_policy_code": "ADULT_ANY",
+      "allow_manual_extended": true,
+      "native_default_weight": 1,
+      "sleeve_mismatch_policy": "REQUIRE_MATCH",
+      "min_common_measurements": 1,
+      "body_length_mismatch_policy": "IGNORE",
+      "body_mismatch_excluded_codes": [],
+      "lower_length_mismatch_policy": "IGNORE",
+      "lower_mismatch_excluded_codes": [],
+      "sleeve_mismatch_excluded_codes": [
+        "sleeve_length"
+      ]
+    },
+    "result_evidence": {
+      "score": 100,
+      "coverage": 0.66667,
+      "reliability": 4,
+      "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+      "metric_evidence": [
+        {
+          "weight": 1,
+          "difference": -5,
+          "target_value": 64,
+          "product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 5
+        },
+        {
+          "weight": 2,
+          "difference": -6,
+          "target_value": 49.5,
+          "product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 6
+        },
+        {
+          "weight": 1.5,
+          "difference": -3,
+          "target_value": 47.5,
+          "product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 1,
+          "difference": -4,
+          "target_value": 78.5,
+          "product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 4
+        },
+        {
+          "weight": 1,
+          "difference": -3,
+          "target_value": 66,
+          "product_size_id": "274CF1CA-3F0E-42F6-BBEC-607742B262E7",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 2,
+          "difference": -3,
+          "target_value": 52.5,
+          "product_size_id": "274CF1CA-3F0E-42F6-BBEC-607742B262E7",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 1.5,
+          "difference": -1.5,
+          "target_value": 49,
+          "product_size_id": "274CF1CA-3F0E-42F6-BBEC-607742B262E7",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 1.5
+        },
+        {
+          "weight": 1,
+          "difference": -2.5,
+          "target_value": 80,
+          "product_size_id": "274CF1CA-3F0E-42F6-BBEC-607742B262E7",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 2.5
+        },
+        {
+          "weight": 1,
+          "difference": 0,
+          "target_value": 69,
+          "product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 2,
+          "difference": 0,
+          "target_value": 55.5,
+          "product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1.5,
+          "difference": 0,
+          "target_value": 50.5,
+          "product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1,
+          "difference": 0,
+          "target_value": 82.5,
+          "product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1,
+          "difference": 3,
+          "target_value": 72,
+          "product_size_id": "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 2,
+          "difference": 3,
+          "target_value": 58.5,
+          "product_size_id": "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 3
+        },
+        {
+          "weight": 1.5,
+          "difference": 1.5,
+          "target_value": 52,
+          "product_size_id": "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 1.5
+        },
+        {
+          "weight": 1,
+          "difference": 2.5,
+          "target_value": 85,
+          "product_size_id": "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 2.5
+        },
+        {
+          "weight": 1,
+          "difference": 6,
+          "target_value": 75,
+          "product_size_id": "148F2050-229B-46DF-8479-E7D296135745",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 6
+        },
+        {
+          "weight": 2,
+          "difference": 7,
+          "target_value": 62.5,
+          "product_size_id": "148F2050-229B-46DF-8479-E7D296135745",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 7
+        },
+        {
+          "weight": 1.5,
+          "difference": 3.5,
+          "target_value": 54,
+          "product_size_id": "148F2050-229B-46DF-8479-E7D296135745",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 3.5
+        },
+        {
+          "weight": 1,
+          "difference": 5,
+          "target_value": 87.5,
+          "product_size_id": "148F2050-229B-46DF-8479-E7D296135745",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 5
+        },
+        {
+          "weight": 1,
+          "difference": 8,
+          "target_value": 77,
+          "product_size_id": "8C8020E6-97AC-4061-AA79-925EAA5E6CC0",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 8
+        },
+        {
+          "weight": 2,
+          "difference": 11,
+          "target_value": 66.5,
+          "product_size_id": "8C8020E6-97AC-4061-AA79-925EAA5E6CC0",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 11
+        },
+        {
+          "weight": 1.5,
+          "difference": 5.5,
+          "target_value": 56,
+          "product_size_id": "8C8020E6-97AC-4061-AA79-925EAA5E6CC0",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 5.5
+        },
+        {
+          "weight": 1,
+          "difference": 6,
+          "target_value": 88.5,
+          "product_size_id": "8C8020E6-97AC-4061-AA79-925EAA5E6CC0",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 6
+        },
+        {
+          "weight": 1,
+          "difference": 8,
+          "target_value": 77,
+          "product_size_id": "4323117C-2303-41FD-AB6F-47BDB01B63C6",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 8
+        },
+        {
+          "weight": 2,
+          "difference": 15,
+          "target_value": 70.5,
+          "product_size_id": "4323117C-2303-41FD-AB6F-47BDB01B63C6",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 15
+        },
+        {
+          "weight": 1.5,
+          "difference": 7.5,
+          "target_value": 58,
+          "product_size_id": "4323117C-2303-41FD-AB6F-47BDB01B63C6",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 7.5
+        },
+        {
+          "weight": 1,
+          "difference": 7,
+          "target_value": 89.5,
+          "product_size_id": "4323117C-2303-41FD-AB6F-47BDB01B63C6",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 7
+        },
+        {
+          "weight": 1,
+          "difference": 8.5,
+          "target_value": 77.5,
+          "product_size_id": "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D",
+          "reference_value": 69,
+          "measurement_code": "back_length",
+          "absolute_difference": 8.5
+        },
+        {
+          "weight": 2,
+          "difference": 19,
+          "target_value": 74.5,
+          "product_size_id": "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D",
+          "reference_value": 55.5,
+          "measurement_code": "chest_width",
+          "absolute_difference": 19
+        },
+        {
+          "weight": 1.5,
+          "difference": 9.5,
+          "target_value": 60,
+          "product_size_id": "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D",
+          "reference_value": 50.5,
+          "measurement_code": "shoulder_width",
+          "absolute_difference": 9.5
+        },
+        {
+          "weight": 1,
+          "difference": 8,
+          "target_value": 90.5,
+          "product_size_id": "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D",
+          "reference_value": 82.5,
+          "measurement_code": "sleeve_center_back_length",
+          "absolute_difference": 8
+        }
+      ],
+      "candidate_size_ranking": [
+        {
+          "rank": 1,
+          "score": 100,
+          "product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5"
+        },
+        {
+          "rank": 2,
+          "score": 88,
+          "product_size_id": "14574AA7-6BC6-44FD-A3DB-1A9F5D5E1DF7"
+        },
+        {
+          "rank": 3,
+          "score": 88,
+          "product_size_id": "274CF1CA-3F0E-42F6-BBEC-607742B262E7"
+        },
+        {
+          "rank": 4,
+          "score": 77,
+          "product_size_id": "3BA3C178-49EB-4967-820F-779ECDF16EAA"
+        },
+        {
+          "rank": 5,
+          "score": 73,
+          "product_size_id": "148F2050-229B-46DF-8479-E7D296135745"
+        },
+        {
+          "rank": 6,
+          "score": 60,
+          "product_size_id": "8C8020E6-97AC-4061-AA79-925EAA5E6CC0"
+        },
+        {
+          "rank": 7,
+          "score": 49,
+          "product_size_id": "4323117C-2303-41FD-AB6F-47BDB01B63C6"
+        },
+        {
+          "rank": 8,
+          "score": 38,
+          "product_size_id": "F0DC54AD-C2DD-4E5D-AAC2-1ED6B70AC87D"
+        }
+      ],
+      "recommended_product_size_id": "76741430-70C2-4BC0-B151-B7873BADFAF5"
+    },
+    "target_snapshot": {
+      "candidates": [
+        {
+          "size_label": "XS",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "95e0a76a00c30b0ec072ac7ee0bcbb1891b82de34b43340ffe9782dedcd4d9af"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "3ba3c178-49eb-4967-820f-779ecdf16eaa",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 64,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "75d5dca13ae667d146b660d7a836417106a0b985fe8974e2b6683baad8be9a1f",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "0f8edfe6-cda2-472a-999d-6a46bc4a4752"
+              },
+              {
+                "value": 49.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "ebe652f8fa3c91fe4a240b538e3695cc230015f5e3d643eb91d63980c473151c",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "1d50439a-1346-477d-8ed0-218617587ad3"
+              },
+              {
+                "value": 47.5,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "54761a50a0bee99012fdcbe4633d4a2af6f4d1f05e25f5792912591efbeb3e38",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "69a4a469-56c8-4cfd-a36d-3df708408b3c"
+              },
+              {
+                "value": 78.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "1460fe825ca4ac17c4fb1b8d7ef5206dec6b7d0321137e84ac7eed8f12dff252",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "000bd165-48ae-4841-ac64-049d35acf5d0"
+              }
+            ],
+            "product_size_id": "3ba3c178-49eb-4967-820f-779ecdf16eaa",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": -5,
+              "target_value": 64,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 5
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": -6,
+              "target_value": 49.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 6
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": -3,
+              "target_value": 47.5,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": -4,
+              "target_value": 78.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 4
+            }
+          ]
+        },
+        {
+          "size_label": "S",
+          "availability": {
+            "status": "AVAILABLE",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": "2026-09-29T15:32:37.091+00:00",
+            "evidence_fingerprint": "f9809d97b7f3386fcd5c71630178abc9a7bbe29466cb1b9caf664ea4611fe7ab"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "274cf1ca-3f0e-42f6-bbec-607742b262e7",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 66,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "d465ff1d7702e1ca26eed219518d9fe5c47c39aa072f9fa66cdf67c60ec33905",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "c3b0ead7-2006-4234-a7ca-f0c008a9dc13"
+              },
+              {
+                "value": 52.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "461b4ff51db657595accff8d31fbb5442ef33d21db78db3166ea2c071b7a4e2d",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "b2bba89e-07be-434c-ac2f-759251d2deeb"
+              },
+              {
+                "value": 49,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "cbb870bff8f70e44653eab16a65aebcb50193f1fcdd7701399975c8a588382a2",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "e973be41-94ca-4291-9486-323b03e362dd"
+              },
+              {
+                "value": 80,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "a2fa1024a9992a9cf7ae1b70af18ea9f62c25e8a45409ad87661557f03e5e6ca",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "bdce2160-4895-4984-aeea-479873a33639"
+              }
+            ],
+            "product_size_id": "274cf1ca-3f0e-42f6-bbec-607742b262e7",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": -3,
+              "target_value": 66,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": -3,
+              "target_value": 52.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": -1.5,
+              "target_value": 49,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": -2.5,
+              "target_value": 80,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 2.5
+            }
+          ]
+        },
+        {
+          "size_label": "M",
+          "availability": {
+            "status": "SOLD_OUT",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": "2026-09-29T15:32:37.091+00:00",
+            "evidence_fingerprint": "7ac0d5ce1ec5331ad92d34d18db25367f48e3db35b1004d42c366365f40e63d4"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "76741430-70c2-4bc0-b151-b7873badfaf5",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 69,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "d9effa5de2368773395f0264c0c8033f5a8654018753421ba9aedb78c66b3561",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "140fb249-a86f-43e4-9863-25dd70a309c9"
+              },
+              {
+                "value": 55.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "3292a900dbfc5779c6c68b64738d8eb74b6f5c7c0eacb580ce900afea6cbfea8",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "16d4aead-3e23-4eac-917d-9d4779e1a474"
+              },
+              {
+                "value": 50.5,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "7166595f6ca2b37390c2c550b9b8fe4269d07a6c9e13640fdb7ffb1a7db377dc",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "e6e3de12-7259-4980-9de5-e5305b3b370f"
+              },
+              {
+                "value": 82.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "54a01d337026054d947b05d9920cb42eeea577fde6776594f933d3a7967c93e1",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "df71e4a5-8db2-4573-84ca-ae6c93871a17"
+              }
+            ],
+            "product_size_id": "76741430-70c2-4bc0-b151-b7873badfaf5",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 0,
+              "target_value": 69,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 0,
+              "target_value": 55.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 0,
+              "target_value": 50.5,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 0,
+              "target_value": 82.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            }
+          ]
+        },
+        {
+          "size_label": "L",
+          "availability": {
+            "status": "AVAILABLE",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": "2026-09-29T15:32:37.091+00:00",
+            "evidence_fingerprint": "6a7ebaca5d4f489746fd533e4549a584500279147b4e1da9dc759ff599a513d6"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "14574aa7-6bc6-44fd-a3db-1a9f5d5e1df7",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 72,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "908e580b7c217f39ef7421b282daa5b82bb4347ab4fc4b3c3389a4b5cf7373fa",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "ad06626e-1794-4199-9e26-e7002789b654"
+              },
+              {
+                "value": 58.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "13a43e1da9f82350a1ecdc8b30035ba3634827c88e6eba7affb7ebc9fdf38493",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "4ba6772a-d67e-4a44-8f34-56029bd0f46d"
+              },
+              {
+                "value": 52,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "1861582283c779f2c122e92ed7f89c776be888261efa782bd6615e63fd1f781b",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "2c11b432-d86f-49c8-86bd-520224e92b51"
+              },
+              {
+                "value": 85,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "ec59d5317cc8a72f35d8a31b697e088267b1f27a4d130f5268d887bb2ea5d18d",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "1d881403-a7cf-46db-9f0c-9b7f7dd52fd9"
+              }
+            ],
+            "product_size_id": "14574aa7-6bc6-44fd-a3db-1a9f5d5e1df7",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 3,
+              "target_value": 72,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 3,
+              "target_value": 58.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 1.5,
+              "target_value": 52,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 2.5,
+              "target_value": 85,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 2.5
+            }
+          ]
+        },
+        {
+          "size_label": "XL",
+          "availability": {
+            "status": "AVAILABLE",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": "2026-09-29T15:32:37.091+00:00",
+            "evidence_fingerprint": "14cc9d859c5bba586b8f0b9c335ed3228fa4dad5111187cfe8991dad72a2940f"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "148f2050-229b-46df-8479-e7d296135745",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 75,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "73fb981608b5dd3ab9eaf2d928a99d9451a1da397ff5ca3aec363b6b35e26d88",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "55a79877-742d-4560-bb6f-33181934c46c"
+              },
+              {
+                "value": 62.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "7b47517a1bd1699c04c2562a19ea4e92448779f4d53d5970f6a2369e7a077b4f",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "cc41e8c8-91c7-4de6-81a0-022a5ded713d"
+              },
+              {
+                "value": 54,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "fe93bc6f87983836218a4fafd7765013cab9e81310e3b0eecc49849479397fe6",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "f882f70f-40f2-412a-9ad9-fcb5862a771d"
+              },
+              {
+                "value": 87.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "045cbba6e9a9952db5a3674d45d273041f813ad062f7e270503fc81da7cb5d0e",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "18bc17bd-4554-4b05-9eef-a9a2b04c4c57"
+              }
+            ],
+            "product_size_id": "148f2050-229b-46df-8479-e7d296135745",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 6,
+              "target_value": 75,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 6
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 7,
+              "target_value": 62.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 7
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 3.5,
+              "target_value": 54,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 3.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 5,
+              "target_value": 87.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 5
+            }
+          ]
+        },
+        {
+          "size_label": "XXL",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "18be76fda053fde2123277d0d65b9508263dca723b7c08896f3e8c2b48df414b"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "8c8020e6-97ac-4061-aa79-925eaa5e6cc0",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 77,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "c34bd8a1fc1364fd2ab51ca2b186bfcea998d50b71273979b50c678bdf628b8f",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "7238240d-92a6-49d6-a247-065d234e5e42"
+              },
+              {
+                "value": 66.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "f33a7b86566bf718657886fdaba97562c9ad894f54a3800d6e55383aec0ead0c",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "53addc0e-8918-4511-8c3c-d8f58416969c"
+              },
+              {
+                "value": 56,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "978ceb9ad4277a3e9898582670bc0234a26f95684d42bf6856b5930b6a2573fc",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "2518e6d3-2d1c-42e5-9bc2-4c29f264d6e4"
+              },
+              {
+                "value": 88.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "70d8f8ab4e4aa0c5646495403b835b34c28edafb65fa69d9b8cd090aeacfe35c",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "799018bc-0d83-4a67-a7d1-96e576cabbe0"
+              }
+            ],
+            "product_size_id": "8c8020e6-97ac-4061-aa79-925eaa5e6cc0",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 8,
+              "target_value": 77,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 8
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 11,
+              "target_value": 66.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 11
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 5.5,
+              "target_value": 56,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 5.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 6,
+              "target_value": 88.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 6
+            }
+          ]
+        },
+        {
+          "size_label": "3XL",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "57eea5116e4a0c709a3d0ac92aab12e2900f6a1cad71737136d3826c5b396b5c"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "4323117c-2303-41fd-ab6f-47bdb01b63c6",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 77,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "4b3b88cb27782aad418c9903cb4868de0907710a54f46f724843089fce86d598",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "2950f70c-dd54-49ef-837e-06023b0f4d03"
+              },
+              {
+                "value": 70.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "5e8a8eb8ecd6be721a41cca75c5ae732052682229fe242a2210b8ac036234689",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "69333e84-9e31-440f-b3b2-2e43134695a9"
+              },
+              {
+                "value": 58,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "83c0b6a290e013df735090b793d3f73897f221e138b914bbab49c225accd85b6",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "5e4eb268-5b5c-48b5-9ebf-fe7f27dbd895"
+              },
+              {
+                "value": 89.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "8496fc56b5cb73660400af549973e2abfced8eea521d6f3e02b0b4d8507b3ef9",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "ba55c37f-840d-48a9-b5b6-d035a8f14e97"
+              }
+            ],
+            "product_size_id": "4323117c-2303-41fd-ab6f-47bdb01b63c6",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 8,
+              "target_value": 77,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 8
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 15,
+              "target_value": 70.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 15
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 7.5,
+              "target_value": 58,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 7.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 7,
+              "target_value": 89.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 7
+            }
+          ]
+        },
+        {
+          "size_label": "4XL",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T15:17:37.095+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "cf7e9152e25a21c66a73a4a1de9cbbfd7ba51d12672a753fb68021af8a184d00"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "back_length",
+              "chest_width",
+              "shoulder_width",
+              "sleeve_center_back_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 4,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "f0dc54ad-c2dd-4e5d-aac2-1ed6b70ac87d",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 77.5,
+                "unit_code": "cm",
+                "basis_code": "back_neck_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+                "raw_evidence_fingerprint": "a43ef759e39641ed275f9aa1e38002dee433f0941495b93c70e9e2a6a4ace3fd",
+                "fitmatch_measurement_code": "back_length",
+                "product_size_measurement_id": "90673da9-ecaf-4240-b76a-dcda468e04b3"
+              },
+              {
+                "value": 74.5,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "b066d8146360c8afca8eb5fb2bd442cdd072054436e515a832488996d8cba4a7",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "2a0c98a6-b2f3-47ac-b229-7d2c0bcf7e05"
+              },
+              {
+                "value": 60,
+                "unit_code": "cm",
+                "basis_code": "shoulder_seam_to_seam",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+                "raw_evidence_fingerprint": "e424cc9c6e4fd6ff65aab74a6add26e1b03b828f208531897f638dc863751c60",
+                "fitmatch_measurement_code": "shoulder_width",
+                "product_size_measurement_id": "00b6f0cc-aa22-4e43-9efb-f810559545b0"
+              },
+              {
+                "value": 90.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_center_back_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+                "raw_evidence_fingerprint": "afe2f047a456791b4caca3da4e7f0618423de79a88e5a16dafaafc0578d67da2",
+                "fitmatch_measurement_code": "sleeve_center_back_length",
+                "product_size_measurement_id": "4f4bdcdc-3d56-467b-b5ab-f1aa8f34e3c2"
+              }
+            ],
+            "product_size_id": "f0dc54ad-c2dd-4e5d-aac2-1ed6b70ac87d",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 4,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "back_neck_to_hem",
+              "difference": 8.5,
+              "target_value": 77.5,
+              "reference_value": 69,
+              "measurement_code": "back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 8.5
+            },
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 19,
+              "target_value": 74.5,
+              "reference_value": 55.5,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 19
+            },
+            {
+              "weight": 1.5,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "shoulder_seam_to_seam",
+              "difference": 9.5,
+              "target_value": 60,
+              "reference_value": 50.5,
+              "measurement_code": "shoulder_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 9.5
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_center_back_to_cuff",
+              "difference": 8,
+              "target_value": 90.5,
+              "reference_value": 82.5,
+              "measurement_code": "sleeve_center_back_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 8
+            }
+          ]
+        }
+      ],
+      "product_id": "47c096fb-9dd3-4fc5-957d-312d6c528ed0",
+      "variant_id": "9fadd646-b693-4821-a338-738e97fbe8ce",
+      "source_code": "uniqlo",
+      "audience_code": "MEN",
+      "body_length_code": null,
+      "resolver_version": "fitmatch-vnext-resolver-v4-classification-only-uniqlo-deepest-category",
+      "garment_type_code": "comparison_group_top",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "E484080",
+      "classification_source": "CATEGORY_GROUP",
+      "classification_status": "CONFIRMED",
+      "product_structure_code": "UNKNOWN",
+      "candidate_product_size_ids": [
+        "3ba3c178-49eb-4967-820f-779ecdf16eaa",
+        "274cf1ca-3f0e-42f6-bbec-607742b262e7",
+        "76741430-70c2-4bc0-b151-b7873badfaf5",
+        "14574aa7-6bc6-44fd-a3db-1a9f5d5e1df7",
+        "148f2050-229b-46df-8479-e7d296135745",
+        "8c8020e6-97ac-4061-aa79-925eaa5e6cc0",
+        "4323117c-2303-41fd-ab6f-47bdb01b63c6",
+        "f0dc54ad-c2dd-4e5d-aac2-1ed6b70ac87d"
+      ],
+      "classification_fingerprint": "30778800b4c4378a53af6aea46fbf1bed5353e313268905dd64f8e2a77ead3de",
+      "candidate_authority_version": "fitmatch-vnext-candidates-20260908-effective-v1",
+      "ingestion_evidence_fingerprint": "7827c208bd1eda82c44d7c685cbf75737a3ea11273f207b9d9fa9e3c4ecab135",
+      "candidate_authority_fingerprint": "fdc520a6f4ea7c44f075846c8c444ea1fb602d9f5fee73e1e23f099ce56573ae",
+      "global_classification_fingerprint": "9a3d1ad3c8342acc41925db4331b525de942fb22be02f36399b1a04a69d8427a",
+      "classification_evidence_fingerprint": "70603c326eb988e2679813081074a1b387e9bf01cf962b3067adcd74a604e6d3",
+      "authorized_candidate_product_size_ids": [
+        "3ba3c178-49eb-4967-820f-779ecdf16eaa",
+        "274cf1ca-3f0e-42f6-bbec-607742b262e7",
+        "76741430-70c2-4bc0-b151-b7873badfaf5",
+        "14574aa7-6bc6-44fd-a3db-1a9f5d5e1df7",
+        "148f2050-229b-46df-8479-e7d296135745",
+        "8c8020e6-97ac-4061-aa79-925eaa5e6cc0",
+        "4323117c-2303-41fd-ab6f-47bdb01b63c6",
+        "f0dc54ad-c2dd-4e5d-aac2-1ed6b70ac87d"
+      ]
+    },
+    "reliability_level": 4,
+    "target_product_id": "47c096fb-9dd3-4fc5-957d-312d6c528ed0",
+    "target_variant_id": "9fadd646-b693-4821-a338-738e97fbe8ce",
+    "authority_snapshot": {
+      "taxonomy_checksum": "1221b322fc436ec70bfbb52f29b4f1c28eebac084685177fc328d655b64622f6",
+      "taxonomy_schema_version": "fitmatch-vnext-taxonomy-v1",
+      "selected_mapping_version": "vnext-mapping-v1",
+      "classification_mapping_id": "91cd4418-cae2-4217-bec4-abf4bdf4439c",
+      "selected_mapping_checksum": "a3b1b98c6112cd86d23dd3a5c1e4509cb0967f1fe4ce12e9d4955606aedc9f05",
+      "classification_fingerprint": "9a3d1ad3c8342acc41925db4331b525de942fb22be02f36399b1a04a69d8427a",
+      "manual_cross_rule_at_begin": null,
+      "mapping_authority_checksum": "cef96b58bda0181dd6da051f42edc9c7dca2e88356f433cbd8ca9e78713ec868",
+      "personal_projection_at_begin": null,
+      "global_classification_at_begin": null,
+      "ingestion_evidence_fingerprint": "7827c208bd1eda82c44d7c685cbf75737a3ea11273f207b9d9fa9e3c4ecab135",
+      "classification_resolver_version": "fitmatch-vnext-resolver-v4-classification-only-uniqlo-deepest-category",
+      "effective_classification_at_begin": {
+        "state": "CATEGORY_GROUP_CONFIRMED",
+        "source": "CATEGORY_GROUP",
+        "audience_code": "MEN",
+        "category_code": "tops",
+        "garment_type_code": "comparison_group_top",
+        "comparison_policy_code": "tshirt",
+        "effective_authority_fingerprint": "30778800b4c4378a53af6aea46fbf1bed5353e313268905dd64f8e2a77ead3de"
+      },
+      "classification_evidence_fingerprint": "70603c326eb988e2679813081074a1b387e9bf01cf962b3067adcd74a604e6d3"
+    },
+    "authorization_mode": "MANUAL_EXTENDED",
+    "reference_snapshot": {
+      "item_name": "워시코튼크루넥T(긴팔)",
+      "product_id": "47c096fb-9dd3-4fc5-957d-312d6c528ed0",
+      "size_label": "M",
+      "variant_id": "9fadd646-b693-4821-a338-738e97fbe8ce",
+      "source_code": "uniqlo",
+      "measurements": [
+        {
+          "value": 69,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "uniqlo.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": "back_length"
+        },
+        {
+          "value": 55.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "uniqlo.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "value": 50.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": "shoulder_width"
+        },
+        {
+          "value": 82.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+          "fitmatch_measurement_code": "sleeve_center_back_length"
+        }
+      ],
+      "audience_code": "MEN",
+      "closet_item_id": "8bb2f250-a1ed-42fb-ae32-220bb844ea85",
+      "product_size_id": "76741430-70c2-4bc0-b151-b7873badfaf5",
+      "body_length_code": null,
+      "garment_type_code": "comparison_group_top",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "E484080",
+      "classification_source": "BACKEND",
+      "classification_fingerprint": "29537d83b7a6aeb9b5883a1fc8131afc6c6239a11a5ffe34ae14255ff1f73002",
+      "classification_resolver_version": "comparison-group-v3"
+    },
+    "client_comparison_id": "11f200b7-f38f-4d11-b2ef-c62d5e548ec1",
+    "authorization_snapshot": {
+      "mode": "MANUAL_EXTENDED",
+      "reason": "User-selected comparison with at least one common canonical measurement",
+      "allowed": true,
+      "decision": "MANUAL_EXTENDED",
+      "policy_code": "tshirt",
+      "reason_code": "USER_SELECTED_REFERENCE",
+      "minimum_common": 1,
+      "policy_version": "vnext-policy-20260928-top-one-common-v1",
+      "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+      "required_any_min": 0,
+      "required_any_count": 0,
+      "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+      "policy_minimum_common": 1,
+      "used_measurement_codes": [
+        "back_length",
+        "chest_width",
+        "shoulder_width",
+        "sleeve_center_back_length"
+      ],
+      "policy_required_any_min": 0,
+      "common_measurement_count": 4,
+      "target_measurement_domain": "UPPER_BODY",
+      "excluded_measurement_codes": [],
+      "required_measurement_codes": [],
+      "excluded_measurement_reasons": [],
+      "reference_measurement_domain": "UPPER_BODY"
+    },
+    "recommended_size_label": "M",
+    "snapshot_schema_version": 4,
+    "reference_client_item_id": "c903cf20-1152-4029-bdb6-ec7033641e7e",
+    "reference_closet_item_id": "8bb2f250-a1ed-42fb-ae32-220bb844ea85",
+    "target_audience_snapshot": "MEN",
+    "target_image_url_snapshot": "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/484080/item/krgoods_07_484080_3x4.jpg?width=400",
+    "target_source_product_key": "E484080",
+    "excluded_measurement_codes": [],
+    "recommended_product_size_id": "76741430-70c2-4bc0-b151-b7873badfaf5",
+    "reference_audience_snapshot": "MEN",
+    "target_body_length_snapshot": null,
+    "target_source_code_snapshot": "uniqlo",
+    "reference_item_name_snapshot": "워시코튼크루넥T(긴팔)",
+    "target_garment_type_snapshot": "comparison_group_top",
+    "target_lower_length_snapshot": null,
+    "target_product_name_snapshot": "워시코튼크루넥T(긴팔)",
+    "target_sleeve_length_snapshot": null,
+    "reference_body_length_snapshot": null,
+    "reference_source_code_snapshot": "uniqlo",
+    "comparison_policy_code_snapshot": "tshirt",
+    "reference_garment_type_snapshot": "comparison_group_top",
+    "reference_lower_length_snapshot": null,
+    "reference_sleeve_length_snapshot": null
+  },
+  {
+    "id": "036a8e35-765f-4e7d-8077-53e57e16c676",
+    "fit_score": 100,
+    "created_at": "2026-09-29T16:16:40.644244+00:00",
+    "deleted_at": null,
+    "updated_at": "2026-09-29T16:16:41.038774+00:00",
+    "is_favorite": false,
+    "completed_at": "2026-09-29T16:16:41.038774+00:00",
+    "result_status": "COMPLETED",
+    "coverage_ratio": 0.33333,
+    "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+    "input_snapshot": {
+      "began_at": "2026-09-29T16:16:40.644244+00:00",
+      "client_request": {
+        "manual_explicit": true,
+        "target_product_id": "E20D50A3-62DC-4635-B764-BABDC9FE4072",
+        "target_variant_id": "7F1A5D67-BF87-4D4A-8164-8D0427D38056",
+        "client_comparison_id": "02BECCDD-102B-46AB-9817-A710E84AFE6E",
+        "reference_closet_item_id": "F5881CD5-2A1C-424B-8D46-CE4501933B5B",
+        "candidate_product_size_ids": [
+          "2E9CAD97-1AB2-40A9-B8D6-7D31DEA8067A",
+          "AA3ECB75-2480-4376-8731-AD0FEF03D846",
+          "699154A2-42FC-408A-AF00-6A6C53CAFF57",
+          "2E3319AC-EA08-40EE-A893-9920B150D5A5"
+        ],
+        "personal_override_revision": 0,
+        "authorization_product_size_id": "2E9CAD97-1AB2-40A9-B8D6-7D31DEA8067A",
+        "candidate_authority_fingerprint": "3b3a02988b48f99c01862ac1fd7c11561507e586581fe9bf05c69daa5b6c97bd",
+        "effective_authority_fingerprint": "62263d7fa507fe91386520fd69b72e3eef004caaa3f98d31fa32c8a676c408e0"
+      },
+      "personal_override_revision": 0,
+      "candidate_authority_fingerprint": "3b3a02988b48f99c01862ac1fd7c11561507e586581fe9bf05c69daa5b6c97bd",
+      "effective_authority_fingerprint": "62263d7fa507fe91386520fd69b72e3eef004caaa3f98d31fa32c8a676c408e0",
+      "authorized_candidate_product_size_ids": [
+        "2e9cad97-1ab2-40a9-b8d6-7d31dea8067a",
+        "aa3ecb75-2480-4376-8731-ad0fef03d846",
+        "699154a2-42fc-408a-af00-6a6c53caff57",
+        "2e3319ac-ea08-40ee-a893-9920b150d5a5"
+      ]
+    },
+    "comparison_mode": "CANONICAL",
+    "policy_snapshot": {
+      "metrics": [
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "back_length"
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "shoulder_width"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "sleeve_length"
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_raglan_neck_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "musinsa.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.back_length.back_neck_to_hem",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1.5,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.shoulder_width.shoulder_seam_to_seam",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_center_back_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 1,
+          "priority": 0,
+          "is_active": true,
+          "metric_mode": "SOURCE_NATIVE_OVERRIDE",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": "uniqlo.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": null
+        },
+        {
+          "weight": 2,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "chest_circumference"
+        },
+        {
+          "weight": 1,
+          "priority": 1,
+          "is_active": true,
+          "metric_mode": "CANONICAL",
+          "requirement_mode": "OPTIONAL",
+          "source_measurement_code": null,
+          "fitmatch_measurement_code": "total_length"
+        }
+      ],
+      "is_active": true,
+      "created_at": "2026-08-02T06:15:54.45449+00:00",
+      "updated_at": "2026-09-28T04:24:04.242011+00:00",
+      "policy_code": "tshirt",
+      "display_name": "티셔츠",
+      "policy_version": "vnext-policy-20260928-top-one-common-v1",
+      "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+      "required_any_min": 0,
+      "audience_policy_code": "ADULT_ANY",
+      "allow_manual_extended": true,
+      "native_default_weight": 1,
+      "sleeve_mismatch_policy": "REQUIRE_MATCH",
+      "min_common_measurements": 1,
+      "body_length_mismatch_policy": "IGNORE",
+      "body_mismatch_excluded_codes": [],
+      "lower_length_mismatch_policy": "IGNORE",
+      "lower_mismatch_excluded_codes": [],
+      "sleeve_mismatch_excluded_codes": [
+        "sleeve_length"
+      ]
+    },
+    "result_evidence": {
+      "score": 100,
+      "coverage": 0.33333,
+      "reliability": 2,
+      "engine_version": "fitmatch-ios-vnext-snapshot-v2",
+      "metric_evidence": [
+        {
+          "weight": 2,
+          "difference": -4,
+          "target_value": 52,
+          "product_size_id": "2E9CAD97-1AB2-40A9-B8D6-7D31DEA8067A",
+          "reference_value": 56,
+          "measurement_code": "chest_width",
+          "absolute_difference": 4
+        },
+        {
+          "weight": 1,
+          "difference": -0.5,
+          "target_value": 62,
+          "product_size_id": "2E9CAD97-1AB2-40A9-B8D6-7D31DEA8067A",
+          "reference_value": 62.5,
+          "measurement_code": "sleeve_length",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 2,
+          "difference": 0,
+          "target_value": 56,
+          "product_size_id": "AA3ECB75-2480-4376-8731-AD0FEF03D846",
+          "reference_value": 56,
+          "measurement_code": "chest_width",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 1,
+          "difference": 0,
+          "target_value": 62.5,
+          "product_size_id": "AA3ECB75-2480-4376-8731-AD0FEF03D846",
+          "reference_value": 62.5,
+          "measurement_code": "sleeve_length",
+          "absolute_difference": 0
+        },
+        {
+          "weight": 2,
+          "difference": 4,
+          "target_value": 60,
+          "product_size_id": "699154A2-42FC-408A-AF00-6A6C53CAFF57",
+          "reference_value": 56,
+          "measurement_code": "chest_width",
+          "absolute_difference": 4
+        },
+        {
+          "weight": 1,
+          "difference": 0.5,
+          "target_value": 63,
+          "product_size_id": "699154A2-42FC-408A-AF00-6A6C53CAFF57",
+          "reference_value": 62.5,
+          "measurement_code": "sleeve_length",
+          "absolute_difference": 0.5
+        },
+        {
+          "weight": 2,
+          "difference": 8,
+          "target_value": 64,
+          "product_size_id": "2E3319AC-EA08-40EE-A893-9920B150D5A5",
+          "reference_value": 56,
+          "measurement_code": "chest_width",
+          "absolute_difference": 8
+        },
+        {
+          "weight": 1,
+          "difference": 1,
+          "target_value": 63.5,
+          "product_size_id": "2E3319AC-EA08-40EE-A893-9920B150D5A5",
+          "reference_value": 62.5,
+          "measurement_code": "sleeve_length",
+          "absolute_difference": 1
+        }
+      ],
+      "candidate_size_ranking": [
+        {
+          "rank": 1,
+          "score": 100,
+          "product_size_id": "AA3ECB75-2480-4376-8731-AD0FEF03D846"
+        },
+        {
+          "rank": 2,
+          "score": 86,
+          "product_size_id": "2E9CAD97-1AB2-40A9-B8D6-7D31DEA8067A"
+        },
+        {
+          "rank": 3,
+          "score": 86,
+          "product_size_id": "699154A2-42FC-408A-AF00-6A6C53CAFF57"
+        },
+        {
+          "rank": 4,
+          "score": 72,
+          "product_size_id": "2E3319AC-EA08-40EE-A893-9920B150D5A5"
+        }
+      ],
+      "recommended_product_size_id": "AA3ECB75-2480-4376-8731-AD0FEF03D846"
+    },
+    "target_snapshot": {
+      "candidates": [
+        {
+          "size_label": "S (KR 90)",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T16:16:22.96+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "bff0ab0102fbbfcc166572536c8598b288b7b3d526fdb9514b227708384c1744"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "chest_width",
+              "sleeve_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 2,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "2e9cad97-1ab2-40a9-b8d6-7d31dea8067a",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 46,
+                "unit_code": "cm",
+                "basis_code": "back_armhole_to_armhole",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.back_width.back_armhole_to_armhole",
+                "raw_evidence_fingerprint": "5caa457c612266ee20a5beaa80934407de396e7860d87f7fdcced084db0c0744",
+                "fitmatch_measurement_code": "back_width",
+                "product_size_measurement_id": "0f5244be-f742-499f-997d-c4c37d5be7cd"
+              },
+              {
+                "value": 52,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "c2ef1bdb2c00596e0a67170d266e3300cade8968f439e8870b0d5c132352be54",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "4eba410c-8d5f-4312-8964-d84875ff1d5c"
+              },
+              {
+                "value": 66.5,
+                "unit_code": "cm",
+                "basis_code": "front_shoulder_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.front_length.front_shoulder_to_hem",
+                "raw_evidence_fingerprint": "3226d1253289502797e114ce30a42ca95fa91bcdcfa75f9c7e06f47be0740f7d",
+                "fitmatch_measurement_code": "front_length_shoulder_to_hem",
+                "product_size_measurement_id": "77b8ce2c-b36b-4c93-965b-a22114896e3d"
+              },
+              {
+                "value": 62,
+                "unit_code": "cm",
+                "basis_code": "sleeve_shoulder_seam_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+                "raw_evidence_fingerprint": "81a0dd4b035c38b6ea99ffc2c7079f7800a0894abfe06481c3b104298a58eb7f",
+                "fitmatch_measurement_code": "sleeve_length",
+                "product_size_measurement_id": "c5e37595-9263-4ee0-bf73-112d8771fae2"
+              },
+              {
+                "value": 19.5,
+                "unit_code": "cm",
+                "basis_code": "upper_arm_edge_to_edge",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.upper_arm_width.upper_arm_edge_to_edge",
+                "raw_evidence_fingerprint": "88f85ec55536a2806a83f589bba27b61c315dcb255e353ffb11b736107db6c71",
+                "fitmatch_measurement_code": "upper_arm_width",
+                "product_size_measurement_id": "81a51b62-83f0-43bf-9ecc-232d2c828f3c"
+              }
+            ],
+            "product_size_id": "2e9cad97-1ab2-40a9-b8d6-7d31dea8067a",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 5,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": -4,
+              "target_value": 52,
+              "reference_value": 56,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 4
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_shoulder_seam_to_cuff",
+              "difference": -0.5,
+              "target_value": 62,
+              "reference_value": 62.5,
+              "measurement_code": "sleeve_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            }
+          ]
+        },
+        {
+          "size_label": "M (KR 95-100)",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T16:16:22.96+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "a3733c16e820622a2ed1bed1ac4007e552d7149a4af9732814fa7adaf651f1d2"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "chest_width",
+              "sleeve_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 2,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "aa3ecb75-2480-4376-8731-ad0fef03d846",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 50,
+                "unit_code": "cm",
+                "basis_code": "back_armhole_to_armhole",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.back_width.back_armhole_to_armhole",
+                "raw_evidence_fingerprint": "bf4d48db9744df099259fd36b86cf6d18f0d81f27e4dc2b682e60870ed6992f0",
+                "fitmatch_measurement_code": "back_width",
+                "product_size_measurement_id": "0bd88fab-8ea9-43a4-8dc7-866dedafa94e"
+              },
+              {
+                "value": 56,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "419ac2248b6dc9f4ffe86faaf995f94cec21dc1c521858e517ed291ed0173a62",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "c70fbba5-477a-484b-8c17-ac5406328612"
+              },
+              {
+                "value": 67.5,
+                "unit_code": "cm",
+                "basis_code": "front_shoulder_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.front_length.front_shoulder_to_hem",
+                "raw_evidence_fingerprint": "c63f1048c172caf8f62f7931b0f55e98f6115a33fbd7eb4930369df238c7feae",
+                "fitmatch_measurement_code": "front_length_shoulder_to_hem",
+                "product_size_measurement_id": "695cc6ff-9b84-4f5d-b077-9e023387aa95"
+              },
+              {
+                "value": 62.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_shoulder_seam_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+                "raw_evidence_fingerprint": "d7c55a3711826d4ea66cab509126f09c4be0a7df73466c7d2a5e3d0d9cf1efc5",
+                "fitmatch_measurement_code": "sleeve_length",
+                "product_size_measurement_id": "5a1d99f4-45a8-4332-b051-292c8a68fabb"
+              },
+              {
+                "value": 21.5,
+                "unit_code": "cm",
+                "basis_code": "upper_arm_edge_to_edge",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.upper_arm_width.upper_arm_edge_to_edge",
+                "raw_evidence_fingerprint": "34d77685ae6afd35569f91658a29121be7991c7f6fe8caaffcc4528693b33e4c",
+                "fitmatch_measurement_code": "upper_arm_width",
+                "product_size_measurement_id": "0d9b0735-9cc0-4727-8a79-0733e703cd33"
+              }
+            ],
+            "product_size_id": "aa3ecb75-2480-4376-8731-ad0fef03d846",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 5,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 0,
+              "target_value": 56,
+              "reference_value": 56,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_shoulder_seam_to_cuff",
+              "difference": 0,
+              "target_value": 62.5,
+              "reference_value": 62.5,
+              "measurement_code": "sleeve_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0
+            }
+          ]
+        },
+        {
+          "size_label": "L (KR 100-105)",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T16:16:22.96+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "5173e306f50fa6ce30c6a1a67f6e66b3f74ed625fb49eeadc2227fb55dfefaa3"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "chest_width",
+              "sleeve_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 2,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "699154a2-42fc-408a-af00-6a6c53caff57",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 54,
+                "unit_code": "cm",
+                "basis_code": "back_armhole_to_armhole",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.back_width.back_armhole_to_armhole",
+                "raw_evidence_fingerprint": "e034bce716a20a1eef4a20df5cc91d1bb704d21fe4e13edc1f9ed7af1c65bf5c",
+                "fitmatch_measurement_code": "back_width",
+                "product_size_measurement_id": "a1793128-5317-49e4-8a35-fa33a46a9d3b"
+              },
+              {
+                "value": 60,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "d5470cedbfddaa418d6c2998039451836777533f85e699127e9285473807d25c",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "4830dcad-3856-42e7-942a-a83f0521f75b"
+              },
+              {
+                "value": 68.5,
+                "unit_code": "cm",
+                "basis_code": "front_shoulder_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.front_length.front_shoulder_to_hem",
+                "raw_evidence_fingerprint": "ae03d6d1ea39b622e6953b325be1da24e51eb9e9a7ff874e66d2beec25c582eb",
+                "fitmatch_measurement_code": "front_length_shoulder_to_hem",
+                "product_size_measurement_id": "58cf3bc9-0863-49f0-a926-666fc548c997"
+              },
+              {
+                "value": 63,
+                "unit_code": "cm",
+                "basis_code": "sleeve_shoulder_seam_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+                "raw_evidence_fingerprint": "a1ebd446d391a40945dd20fa1fee200046839483d47e0f1e09c634dd39df7173",
+                "fitmatch_measurement_code": "sleeve_length",
+                "product_size_measurement_id": "403ec34e-9661-4aa7-97a7-870f36baaf57"
+              },
+              {
+                "value": 23.5,
+                "unit_code": "cm",
+                "basis_code": "upper_arm_edge_to_edge",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.upper_arm_width.upper_arm_edge_to_edge",
+                "raw_evidence_fingerprint": "7240e98b91bf9e6a21cc3512d9f733ec381d05158d108feed31786cf28631b4f",
+                "fitmatch_measurement_code": "upper_arm_width",
+                "product_size_measurement_id": "5349e360-dc2b-44eb-8f52-b5cd3e6efd46"
+              }
+            ],
+            "product_size_id": "699154a2-42fc-408a-af00-6a6c53caff57",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 5,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 4,
+              "target_value": 60,
+              "reference_value": 56,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 4
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_shoulder_seam_to_cuff",
+              "difference": 0.5,
+              "target_value": 63,
+              "reference_value": 62.5,
+              "measurement_code": "sleeve_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 0.5
+            }
+          ]
+        },
+        {
+          "size_label": "XL (KR 105-110)",
+          "availability": {
+            "status": "UNKNOWN",
+            "observed_at": "2026-09-29T16:16:22.96+00:00",
+            "valid_until": null,
+            "evidence_fingerprint": "2c3fce897a6f58dd3f88102da32146e220e129a143c19464a1a5140e4dd6a504"
+          },
+          "authorization": {
+            "mode": "MANUAL_EXTENDED",
+            "reason": "User-selected comparison with at least one common canonical measurement",
+            "allowed": true,
+            "decision": "MANUAL_EXTENDED",
+            "policy_code": "tshirt",
+            "reason_code": "USER_SELECTED_REFERENCE",
+            "minimum_common": 1,
+            "policy_version": "vnext-policy-20260928-top-one-common-v1",
+            "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+            "required_any_min": 0,
+            "required_any_count": 0,
+            "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+            "policy_minimum_common": 1,
+            "used_measurement_codes": [
+              "chest_width",
+              "sleeve_length"
+            ],
+            "policy_required_any_min": 0,
+            "common_measurement_count": 2,
+            "target_measurement_domain": "UPPER_BODY",
+            "excluded_measurement_codes": [],
+            "required_measurement_codes": [],
+            "excluded_measurement_reasons": [],
+            "reference_measurement_domain": "UPPER_BODY"
+          },
+          "product_size_id": "2e3319ac-ea08-40ee-a893-9920b150d5a5",
+          "canonical_measurements": {
+            "measurements": [
+              {
+                "value": 58,
+                "unit_code": "cm",
+                "basis_code": "back_armhole_to_armhole",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.back_width.back_armhole_to_armhole",
+                "raw_evidence_fingerprint": "b18d6f72892b849db5431668dddf32fac2af8959b39c3f399039175dcd27daf2",
+                "fitmatch_measurement_code": "back_width",
+                "product_size_measurement_id": "f89318bc-feb7-4617-b489-8a6af9d374fa"
+              },
+              {
+                "value": 64,
+                "unit_code": "cm",
+                "basis_code": "chest_pit_to_pit",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.chest_width.chest_pit_to_pit",
+                "raw_evidence_fingerprint": "1b57592535450c6acff3b1d47db5e1cc9dc90ca11a3475ffa06567568143ce5c",
+                "fitmatch_measurement_code": "chest_width",
+                "product_size_measurement_id": "cc3d4e01-99ee-42db-b42a-4e8a0beef7c4"
+              },
+              {
+                "value": 69.5,
+                "unit_code": "cm",
+                "basis_code": "front_shoulder_to_hem",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.front_length.front_shoulder_to_hem",
+                "raw_evidence_fingerprint": "a71535fc093f314012ef7d6366473a38725933c8e9cef5676c76112d807e474d",
+                "fitmatch_measurement_code": "front_length_shoulder_to_hem",
+                "product_size_measurement_id": "df09e81b-9236-4c00-908f-41290da4c322"
+              },
+              {
+                "value": 63.5,
+                "unit_code": "cm",
+                "basis_code": "sleeve_shoulder_seam_to_cuff",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+                "raw_evidence_fingerprint": "be17800c03051c4727a8d382c3e96998e233246775782b7b601558071b87e9d7",
+                "fitmatch_measurement_code": "sleeve_length",
+                "product_size_measurement_id": "6ee0cd7d-0e9f-42f1-80f9-6f10c77572ea"
+              },
+              {
+                "value": 25.5,
+                "unit_code": "cm",
+                "basis_code": "upper_arm_edge_to_edge",
+                "resolution_path": "ALIAS_CODE",
+                "source_measurement_code": "zara.upper_arm_width.upper_arm_edge_to_edge",
+                "raw_evidence_fingerprint": "f79bd50a30e1ef848a1c40c14af77a08bcc56176c0f0a7ce916bdb8164c279d9",
+                "fitmatch_measurement_code": "upper_arm_width",
+                "product_size_measurement_id": "5b711fda-087b-4963-ad1a-bc8dc73cd7fa"
+              }
+            ],
+            "product_size_id": "2e3319ac-ea08-40ee-a893-9920b150d5a5",
+            "resolver_version": "fitmatch-vnext-measurement-resolver-v1",
+            "unresolved_count": 0,
+            "raw_measurement_count": 5,
+            "semantic_conflict_count": 0,
+            "classification_context_source": "CATEGORY_GROUP"
+          },
+          "comparison_measurements": [
+            {
+              "weight": 2,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "chest_pit_to_pit",
+              "difference": 8,
+              "target_value": 64,
+              "reference_value": 56,
+              "measurement_code": "chest_width",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 8
+            },
+            {
+              "weight": 1,
+              "priority": 0,
+              "unit_code": "cm",
+              "basis_code": "sleeve_shoulder_seam_to_cuff",
+              "difference": 1,
+              "target_value": 63.5,
+              "reference_value": 62.5,
+              "measurement_code": "sleeve_length",
+              "requirement_mode": "OPTIONAL",
+              "absolute_difference": 1
+            }
+          ]
+        }
+      ],
+      "product_id": "e20d50a3-62dc-4635-b764-babdc9fe4072",
+      "variant_id": "7f1a5d67-bf87-4d4a-8164-8d0427d38056",
+      "source_code": "zara",
+      "audience_code": "MEN",
+      "body_length_code": null,
+      "resolver_version": "fitmatch-vnext-retailer-api-20260909-r3",
+      "garment_type_code": "comparison_group_top",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "564222870",
+      "classification_source": "CATEGORY_GROUP",
+      "classification_status": "CONFIRMED",
+      "product_structure_code": "UNKNOWN",
+      "candidate_product_size_ids": [
+        "2e9cad97-1ab2-40a9-b8d6-7d31dea8067a",
+        "aa3ecb75-2480-4376-8731-ad0fef03d846",
+        "699154a2-42fc-408a-af00-6a6c53caff57",
+        "2e3319ac-ea08-40ee-a893-9920b150d5a5"
+      ],
+      "classification_fingerprint": "62263d7fa507fe91386520fd69b72e3eef004caaa3f98d31fa32c8a676c408e0",
+      "candidate_authority_version": "fitmatch-vnext-candidates-20260908-effective-v1",
+      "ingestion_evidence_fingerprint": "7585c438917b8e35d610358dc087873a3dda29a073b756046e57373b3b750e7a",
+      "candidate_authority_fingerprint": "3b3a02988b48f99c01862ac1fd7c11561507e586581fe9bf05c69daa5b6c97bd",
+      "global_classification_fingerprint": "680187a9e3f28cecc2fff08b6940c683cae89498ff38f0a770801ceb7c25bda9",
+      "classification_evidence_fingerprint": "23e12bac8d4662c7c4bc297219ce9fb801da86ffed11deafc3a999e161bedb8f",
+      "authorized_candidate_product_size_ids": [
+        "2e9cad97-1ab2-40a9-b8d6-7d31dea8067a",
+        "aa3ecb75-2480-4376-8731-ad0fef03d846",
+        "699154a2-42fc-408a-af00-6a6c53caff57",
+        "2e3319ac-ea08-40ee-a893-9920b150d5a5"
+      ]
+    },
+    "reliability_level": 2,
+    "target_product_id": "e20d50a3-62dc-4635-b764-babdc9fe4072",
+    "target_variant_id": "7f1a5d67-bf87-4d4a-8164-8d0427d38056",
+    "authority_snapshot": {
+      "taxonomy_checksum": "1221b322fc436ec70bfbb52f29b4f1c28eebac084685177fc328d655b64622f6",
+      "taxonomy_schema_version": "fitmatch-vnext-taxonomy-v1",
+      "selected_mapping_version": null,
+      "classification_mapping_id": null,
+      "selected_mapping_checksum": null,
+      "classification_fingerprint": "680187a9e3f28cecc2fff08b6940c683cae89498ff38f0a770801ceb7c25bda9",
+      "manual_cross_rule_at_begin": null,
+      "mapping_authority_checksum": "cef96b58bda0181dd6da051f42edc9c7dca2e88356f433cbd8ca9e78713ec868",
+      "personal_projection_at_begin": null,
+      "global_classification_at_begin": null,
+      "ingestion_evidence_fingerprint": "7585c438917b8e35d610358dc087873a3dda29a073b756046e57373b3b750e7a",
+      "classification_resolver_version": "fitmatch-vnext-retailer-api-20260909-r3",
+      "effective_classification_at_begin": {
+        "state": "CATEGORY_GROUP_CONFIRMED",
+        "source": "CATEGORY_GROUP",
+        "audience_code": "MEN",
+        "category_code": "tops",
+        "garment_type_code": "comparison_group_top",
+        "comparison_policy_code": "tshirt",
+        "effective_authority_fingerprint": "62263d7fa507fe91386520fd69b72e3eef004caaa3f98d31fa32c8a676c408e0"
+      },
+      "classification_evidence_fingerprint": "23e12bac8d4662c7c4bc297219ce9fb801da86ffed11deafc3a999e161bedb8f"
+    },
+    "authorization_mode": "MANUAL_EXTENDED",
+    "reference_snapshot": {
+      "item_name": "Fruit of the Loom™ 워싱 텍스트 스웨트셔츠",
+      "product_id": "e20d50a3-62dc-4635-b764-babdc9fe4072",
+      "size_label": "M (KR 95-100)",
+      "variant_id": "7f1a5d67-bf87-4d4a-8164-8d0427d38056",
+      "source_code": "zara",
+      "measurements": [
+        {
+          "value": 50,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "zara.back_width.back_armhole_to_armhole",
+          "fitmatch_measurement_code": "back_width"
+        },
+        {
+          "value": 56,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "zara.chest_width.chest_pit_to_pit",
+          "fitmatch_measurement_code": "chest_width"
+        },
+        {
+          "value": 67.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "zara.front_length.front_shoulder_to_hem",
+          "fitmatch_measurement_code": "front_length_shoulder_to_hem"
+        },
+        {
+          "value": 62.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "zara.sleeve_length.sleeve_shoulder_seam_to_cuff",
+          "fitmatch_measurement_code": "sleeve_length"
+        },
+        {
+          "value": 21.5,
+          "unit_code": "cm",
+          "value_source": "RETAILER_SNAPSHOT",
+          "raw_label_snapshot": "zara.upper_arm_width.upper_arm_edge_to_edge",
+          "fitmatch_measurement_code": "upper_arm_width"
+        }
+      ],
+      "audience_code": "MEN",
+      "closet_item_id": "f5881cd5-2a1c-424b-8d46-ce4501933b5b",
+      "product_size_id": "aa3ecb75-2480-4376-8731-ad0fef03d846",
+      "body_length_code": null,
+      "garment_type_code": "comparison_group_top",
+      "lower_length_code": null,
+      "sleeve_length_code": null,
+      "source_product_key": "564222870",
+      "classification_source": "BACKEND",
+      "classification_fingerprint": "29537d83b7a6aeb9b5883a1fc8131afc6c6239a11a5ffe34ae14255ff1f73002",
+      "classification_resolver_version": "comparison-group-v3"
+    },
+    "client_comparison_id": "02beccdd-102b-46ab-9817-a710e84afe6e",
+    "authorization_snapshot": {
+      "mode": "MANUAL_EXTENDED",
+      "reason": "User-selected comparison with at least one common canonical measurement",
+      "allowed": true,
+      "decision": "MANUAL_EXTENDED",
+      "policy_code": "tshirt",
+      "reason_code": "USER_SELECTED_REFERENCE",
+      "minimum_common": 1,
+      "policy_version": "vnext-policy-20260928-top-one-common-v1",
+      "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+      "required_any_min": 0,
+      "required_any_count": 0,
+      "authorization_version": "fitmatch-vnext-authorization-20260908-user-policy-v1",
+      "policy_minimum_common": 1,
+      "used_measurement_codes": [
+        "chest_width",
+        "sleeve_length"
+      ],
+      "policy_required_any_min": 0,
+      "common_measurement_count": 2,
+      "target_measurement_domain": "UPPER_BODY",
+      "excluded_measurement_codes": [],
+      "required_measurement_codes": [],
+      "excluded_measurement_reasons": [],
+      "reference_measurement_domain": "UPPER_BODY"
+    },
+    "recommended_size_label": "M (KR 95-100)",
+    "snapshot_schema_version": 4,
+    "reference_client_item_id": "9fde4f5f-2cbc-47a8-bbd9-489781a16f17",
+    "reference_closet_item_id": "f5881cd5-2a1c-424b-8d46-ce4501933b5b",
+    "target_audience_snapshot": "MEN",
+    "target_image_url_snapshot": "https://static.zara.net/assets/public/a3d1/955d/1b49418bbf4e/2a2e03e654b7/03443415629-p/03443415629-p.jpg?ts=1788792285979&w=560",
+    "target_source_product_key": "564222870",
+    "excluded_measurement_codes": [],
+    "recommended_product_size_id": "aa3ecb75-2480-4376-8731-ad0fef03d846",
+    "reference_audience_snapshot": "MEN",
+    "target_body_length_snapshot": null,
+    "target_source_code_snapshot": "zara",
+    "reference_item_name_snapshot": "Fruit of the Loom™ 워싱 텍스트 스웨트셔츠",
+    "target_garment_type_snapshot": "comparison_group_top",
+    "target_lower_length_snapshot": null,
+    "target_product_name_snapshot": "Fruit of the Loom™ 워싱 텍스트 스웨트셔츠",
+    "target_sleeve_length_snapshot": null,
+    "reference_body_length_snapshot": null,
+    "reference_source_code_snapshot": "zara",
+    "comparison_policy_code_snapshot": "tshirt",
+    "reference_garment_type_snapshot": "comparison_group_top",
+    "reference_lower_length_snapshot": null,
+    "reference_sleeve_length_snapshot": null
+  }
+]

@@ -1,0 +1,274 @@
+[
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E469292",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:57958:57991:98251"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E482522",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "F",
+      "display_name": "이너웨어",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57970:58061:58506"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E484875",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "C",
+      "display_name": "바지",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57968:58046:100085"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E486129",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:57959:57995:58142"
+    }
+  },
+  {
+    "source_code": "zara",
+    "source_product_key": "549829596",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "zara:2:78:12467"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E487214",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "C",
+      "display_name": "바지",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57968:58047:98360"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E482766",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:57959:57995:58142"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E486610",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:95356:95359:95431"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E486587",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:95356:95359:95431"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E484610",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57966:58035:98331"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488793",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:95356:95359:95431"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488298",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:57959:57995:58142"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488828",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57966:58035:98331"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E487688",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57966:58035:98331"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E484249",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57966:58035:58371"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488829",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "B",
+      "display_name": "아우터",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57966:58035:98331"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E484080",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:57959:57995:58142"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E465185",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57893:57967:58039:58390"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E453754",
+    "group_result": {
+      "status": "COMPARABLE",
+      "group_code": "A",
+      "display_name": "상의",
+      "mapping_source": "RETAILER_CATEGORY",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911",
+      "source_category_key": "uniqlo:57892:95353:95361:95376"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488397",
+    "group_result": {
+      "status": "REVIEW",
+      "group_code": null,
+      "display_name": null,
+      "mapping_source": "UNMAPPED",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E488630",
+    "group_result": {
+      "status": "REVIEW",
+      "group_code": null,
+      "display_name": null,
+      "mapping_source": "UNMAPPED",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E491294",
+    "group_result": {
+      "status": "REVIEW",
+      "group_code": null,
+      "display_name": null,
+      "mapping_source": "UNMAPPED",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+    }
+  },
+  {
+    "source_code": "uniqlo",
+    "source_product_key": "E491297",
+    "group_result": {
+      "status": "REVIEW",
+      "group_code": null,
+      "display_name": null,
+      "mapping_source": "UNMAPPED",
+      "policy_version": "retailer-comparison-groups-v3-seven-20260911"
+    }
+  }
+]

@@ -1,0 +1,456 @@
+{
+  "product_id": "E491320",
+  "product_name": "KIDS PEANUTS코치재킷",
+  "canonical_url": "https://www.uniqlo.com/kr/ko/products/E491320-000/00",
+  "observed_ids": [
+    "E491320-000",
+    "E491320-001",
+    "E491320-002"
+  ],
+  "source_path": "티셔츠 & UT > 그래픽티셔츠 > PEANUTS",
+  "source_depth_names": [
+    "티셔츠 & UT",
+    "그래픽티셔츠",
+    "PEANUTS"
+  ],
+  "source_depth_codes": [
+    "57974",
+    "58081",
+    "136168"
+  ],
+  "audience": "KIDS",
+  "gender_name": "kids",
+  "gender_category": "KIDS",
+  "product_type": "unknown",
+  "product_type_kr": "",
+  "size_chart_payload": {
+    "result": [
+      {
+        "productId": "E491320-000",
+        "sizeChart": [
+          {
+            "sizeCode": "CMC130",
+            "displayCode": "130",
+            "name": "130(8-9세)",
+            "sizeParts": [
+              {
+                "code": "body-length",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "50.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "20",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "38",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "47.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "18 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "63",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "24 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC140",
+            "displayCode": "140",
+            "name": "140(10-11세)",
+            "sizeParts": [
+              {
+                "code": "body-length",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "54.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "21 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "39.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "15 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "49.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "19 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "68",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "26 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC150",
+            "displayCode": "150",
+            "name": "150(12-13세)",
+            "sizeParts": [
+              {
+                "code": "body-length",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "58.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "23",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "41.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "16 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "52.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "20 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "73",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC160",
+            "displayCode": "160",
+            "name": "160(13세-)",
+            "sizeParts": [
+              {
+                "code": "body-length",
+                "name": "전체 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "62.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "24 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "shoulder-width",
+                "name": "어깨너비(솔기에서 솔기까지)",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "43",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "17",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "body-width",
+                "name": "가슴너비",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "54.5",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "21 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "sleeve-length-cb",
+                "name": "등 중심부터 소매까지 길이",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "78",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30 3/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bodyMeasurements": [
+          {
+            "sizeCode": "CMC130",
+            "displayCode": "130",
+            "name": "130(8-9세)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "125-135",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "49 1/4-53 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-chest",
+                "name": "가슴",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "61-67",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "24-26 1/2",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC140",
+            "displayCode": "140",
+            "name": "140(10-11세)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "135-145",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "53 1/4-57",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-chest",
+                "name": "가슴",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "65-71",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "25 1/2-28",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC150",
+            "displayCode": "150",
+            "name": "150(12-13세)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "145-155",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "57-61",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-chest",
+                "name": "가슴",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "71-77",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "28-30 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "sizeCode": "CMC160",
+            "displayCode": "160",
+            "name": "160(13세-)",
+            "sizeParts": [
+              {
+                "code": "nude-height",
+                "name": "키",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "155-165",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "61-65",
+                    "unit": "inch"
+                  }
+                ]
+              },
+              {
+                "code": "nude-chest",
+                "name": "가슴",
+                "info": "",
+                "measurements": [
+                  {
+                    "value": "76-82",
+                    "unit": "cm"
+                  },
+                  {
+                    "value": "30-32 1/4",
+                    "unit": "inch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imageUrl": "https://image.uniqlo.com/UQ/ST3/kr/imagesgoods/491320/item/krgoods_15_491320_3x4.jpg",
+        "colorCode": ""
+      }
+    ]
+  },
+  "size_count_official": 4
+}

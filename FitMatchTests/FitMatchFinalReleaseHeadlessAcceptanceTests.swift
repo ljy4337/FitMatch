@@ -2042,6 +2042,62 @@ struct FitMatchFinalReleaseHeadlessAcceptanceTests {
         #expect(await remote.upsertClientItemIDs() == [clientItemID, clientItemID])
     }
 
+    /// Release sequence 9. The injected transport records acceptance before
+    /// losing its first response. This verifies the real client recovery;
+    /// the in-memory accepted-ID set is not deployed DB idempotency evidence.
+    @Test func committedClosetResponseLostThenRetryReusesExactRequestAndReadback() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let clientItemID = UUID()
+        let userID = UUID()
+        let serverItemID = UUID()
+        let submission = try FitMatchComparedProductClosetRegistration
+            .prepareServerFirstSubmission(serverFirstRegistrationRequest(clientItemID: clientItemID))
+        let receipt = serverFirstReceipt(
+            request: submission.remoteRequest, closetItemID: serverItemID,
+            chest: 54, unknownMeasurementCode: "future_metric_v2"
+        )
+        let remote = ServerFirstClosetRemote(
+            upsertResults: [.commitThenTimeout, .success], readBackItems: [receipt]
+        )
+        let coordinator = FitMatchClosetSyncCoordinator()
+        let action = FitMatchComparedProductClosetSubmissionAction(remote: remote)
+        func submit() async -> FitMatchComparedProductClosetSubmissionAction.Outcome {
+            await action.submitServerFirst(
+                submission, in: context, submissionUserID: userID,
+                currentUserID: { userID },
+                projectAuthoritativeReceipt: { record, request, acceptedID, context in
+                    try coordinator.projectAuthoritativeRegistration(
+                        record, expected: request, acceptedClosetItemID: acceptedID,
+                        modelContext: context
+                    )
+                }
+            )
+        }
+        let first = await submit()
+        guard case .completed(.serverRejected(_)) = first else {
+            Issue.record("Lost response must remain an ambiguous failure")
+            return
+        }
+        #expect(await remote.hasAccepted(clientItemID: clientItemID))
+        #expect(action.recovery == .retrySameRequest)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 0)
+        #expect(await remote.singleItemRequestIDs().isEmpty)
+
+        let retried = await submit()
+        guard case .completed(.saved(let item)) = retried else {
+            Issue.record("Same immutable request must recover via authoritative read-back")
+            return
+        }
+        #expect(item.id == clientItemID)
+        #expect(item.chest == 54)
+        #expect(try context.fetchCount(FetchDescriptor<UserFit>()) == 1)
+        #expect(await remote.upsertClientItemIDs() == [clientItemID, clientItemID])
+        #expect(await remote.acceptedItemCount() == 1)
+        #expect(await remote.upsertRequests() == [submission.remoteRequest, submission.remoteRequest])
+        #expect(await remote.singleItemRequestIDs() == [serverItemID])
+    }
+
     @Test func serverFirstClosetSubmissionReusesClientItemIDAfterLocalFailure() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)
@@ -2802,6 +2858,7 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
         case canonicalMeasurementRejected
         case deterministicReject
         case timeout
+        case commitThenTimeout
     }
 
     enum ReferenceResult: Sendable, Equatable {
@@ -2815,6 +2872,7 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
     private let readBackItems: [FitMatchClosetItemRecord]
     private var acceptedClientItemIDs = Set<UUID>()
     private var submittedClientItemIDs: [UUID] = []
+    private var submittedRequests: [FitMatchUpsertClosetItemRequest] = []
     private var submittedReferenceCount = 0
     private var submittedListCount = 0
     private var requestedSingleItemIDs: [UUID] = []
@@ -2844,6 +2902,7 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
     func upsertClosetItem(_ request: FitMatchUpsertClosetItemRequest) async throws
         -> FitMatchUpsertClosetItemResponse {
         submittedClientItemIDs.append(request.clientItemID)
+        submittedRequests.append(request)
         let result = upsertResults.count > 1
             ? upsertResults.removeFirst()
             : (upsertResults.first ?? .failure)
@@ -2858,6 +2917,10 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
                 )
             }
             if result == .timeout {
+                throw URLError(.timedOut)
+            }
+            if result == .commitThenTimeout {
+                acceptedClientItemIDs.insert(request.clientItemID)
                 throw URLError(.timedOut)
             }
             throw ServerFirstSubmissionTestError.upsertRejected
@@ -2911,6 +2974,8 @@ private actor ServerFirstClosetRemote: FitMatchClosetRegistrationRemoteServicing
     func hasAccepted(clientItemID: UUID) -> Bool {
         acceptedClientItemIDs.contains(clientItemID)
     }
+    func acceptedItemCount() -> Int { acceptedClientItemIDs.count }
+    func upsertRequests() -> [FitMatchUpsertClosetItemRequest] { submittedRequests }
 }
 
 private struct AtomicEffectiveTupleFixture: Sendable {

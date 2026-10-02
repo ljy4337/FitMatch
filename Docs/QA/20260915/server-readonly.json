@@ -1,0 +1,331 @@
+{
+  "checkedAt": "2026-09-15",
+  "project": "hnkplvyegonlhumlejst",
+  "preflight": [
+    {
+      "audit": {
+        "functions": [
+          {
+            "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+            "name": "comparison_target_context",
+            "schema": "fitmatch_vnext"
+          },
+          {
+            "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+            "name": "fitmatch_vnext_eligible_candidate_sizes",
+            "schema": "public"
+          },
+          {
+            "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+            "name": "fitmatch_vnext_eligible_candidate_sizes",
+            "schema": "public"
+          },
+          {
+            "args": "p_target_product_id uuid, p_target_variant_id uuid",
+            "name": "fitmatch_vnext_find_reference_candidates",
+            "schema": "public"
+          },
+          {
+            "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+            "name": "fitmatch_vnext_find_reference_candidates",
+            "schema": "public"
+          }
+        ],
+        "bfg_policies": [
+          {
+            "code": "generic_underwear",
+            "active": true,
+            "audience": "ADULT_ANY",
+            "min_common": 1
+          },
+          {
+            "code": "homewear_set",
+            "active": true,
+            "audience": "ADULT_ANY",
+            "min_common": 1
+          },
+          {
+            "code": "unclassified_outerwear",
+            "active": true,
+            "audience": "ADULT_ANY",
+            "min_common": 1
+          }
+        ],
+        "slacks_mapping": 0,
+        "legacy_axis_requirement": true
+      }
+    }
+  ],
+  "products": [
+    {
+      "source": "musinsa",
+      "key": "3346165",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "4341120",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "4818151",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "4971043",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "5746363",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "5922490",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "6590793",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "6595807",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "musinsa",
+      "key": "6948481",
+      "group": "A",
+      "status": "READY",
+      "reason": "Comparison group and measurement evidence are ready",
+      "readySizeCount": 3,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E450543",
+      "group": "A",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 14,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E453754",
+      "group": "A",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 14,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E465185",
+      "group": "A",
+      "status": "READY",
+      "reason": "Comparison group and measurement evidence are ready",
+      "readySizeCount": 24,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E483512",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E484080",
+      "group": "A",
+      "status": "READY",
+      "reason": "Comparison group and measurement evidence are ready",
+      "readySizeCount": 32,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E486117",
+      "group": "A",
+      "status": "READY",
+      "reason": "Comparison group and measurement evidence are ready",
+      "readySizeCount": 16,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E487929",
+      "group": "A",
+      "status": "READY",
+      "reason": "Comparison group and measurement evidence are ready",
+      "readySizeCount": 8,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E488397",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E488630",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E488684",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E489563",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E491086",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E491294",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E491297",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E491380",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "uniqlo",
+      "key": "E492123",
+      "group": null,
+      "status": "CLASSIFICATION_REQUIRED",
+      "reason": "Comparison group is required",
+      "readySizeCount": 0,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "zara",
+      "key": "548577264",
+      "group": "C",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 15,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "zara",
+      "key": "555162424",
+      "group": "C",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 4,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "zara",
+      "key": "556139700",
+      "group": "C",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 5,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "zara",
+      "key": "560347128",
+      "group": "C",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 10,
+      "inventoryIgnored": true
+    },
+    {
+      "source": "zara",
+      "key": "561264931",
+      "group": "C",
+      "status": "NOT_APPLICABLE",
+      "reason": "STRUCTURE_OR_MEASUREMENT_CONTRACT_UNVERIFIED",
+      "readySizeCount": 4,
+      "inventoryIgnored": true
+    }
+  ]
+}

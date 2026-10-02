@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "mode": "preflight",
+  "project": "hnkplvyegonlhumlejst",
+  "timestamp": "2026-10-02T13:09:01.040268+00:00",
+  "status": "BLOCKED",
+  "evidence_kind": "authenticated_http_rpc_contract",
+  "swift_owner_proof": false,
+  "cases": [],
+  "request_count": 0,
+  "reason": "Missing environment: FITMATCH_QA_DB_URL, FITMATCH_QA_DB_PUBLIC_KEY, FITMATCH_QA_DB_DEDICATED_USERS, FITMATCH_QA_DB_USER_A_TOKEN, FITMATCH_QA_DB_USER_A_ID, FITMATCH_QA_DB_USER_B_TOKEN, FITMATCH_QA_DB_USER_B_ID",
+  "real_db_case_count": 0,
+  "mock_case_count": 0
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "qa-20261002T102500Z-1b70221c",
+  "mode": "cleanup",
+  "started_at": "2026-10-02T10:25:00.305894+00:00",
+  "results": [
+    {
+      "id": "db.swift_cleanup",
+      "status": "BLOCKED",
+      "detail": "Explicit Swift ledger and dedicated sessions required; no request started"
+    }
+  ],
+  "overall": "BLOCKED",
+  "finished_at": "2026-10-02T10:25:00.306015+00:00"
+}

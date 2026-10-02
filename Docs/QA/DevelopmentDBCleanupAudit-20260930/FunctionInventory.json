@@ -1,0 +1,1284 @@
+[
+  {
+    "schema": "fitmatch_catalog",
+    "name": "runtime_infer_body_length_code",
+    "args": "p_category_code text, p_product_name text, p_source_category_path text",
+    "sha256": "55b1131f6bb6fd42694cef8c8ce078a01d8999aa48679ba9088a8bf99987f312",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_catalog",
+    "name": "sync_product_body_length",
+    "args": "",
+    "sha256": "53082906744e783b3e1c0d0faa08dbccf385ea10f5bbce370eae48e79b7bb87d",
+    "calls": [
+      "fitmatch_catalog.runtime_infer_body_length_code"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "advance_comparison_result_head",
+    "args": "",
+    "sha256": "dea73b6d599722e322a6619c6e6d989764d3473902c3f9f6b5fea308413635c5",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "apply_closet_comparison_group",
+    "args": "p_closet_item_id uuid, p_requested_group_code text, p_explicit boolean",
+    "sha256": "8621b94f3b656b0405b734a76d2bfddeec532a6d79464c06268e13957b7be9c6",
+    "calls": [
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "apply_linked_closet_snapshot_for_swift",
+    "args": "p_request jsonb, p_existing_closet_item_id uuid",
+    "sha256": "9202a345980b897cfbe58f091ab3ef9554c3fb0eb18ea82fd8eca8796026276a",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "authorize_comparison_with_context",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+    "sha256": "87a3e1d6d9420691afc568448989ca8ed5721bc5646af448f5808cedda0b4aed",
+    "calls": [
+      "fitmatch_vnext.authorize_comparison_with_context_v1",
+      "fitmatch_vnext.product_comparison_unit_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "authorize_comparison_with_context",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+    "sha256": "b3f40088bbdd8a0fce923f527a64a09c33da053b999b4624bc55c84a9fe48163",
+    "calls": [
+      "fitmatch_vnext.authorize_comparison_with_context_v1"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "authorize_comparison_with_context_v1",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+    "sha256": "c5b8f5dadea20829f4a4bd977b1b15ad2d8edaa654f4f701ab2ce357082778df",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.comparison_domain_20260908",
+      "fitmatch_vnext.comparison_evidence_20260908",
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.product_comparison_unit_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "authorize_comparison_with_context_v1",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+    "sha256": "05087840bf384c9b66a5cf46533d364860241d22c027e03ac2822eccdb03585d",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_session_group",
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.comparison_domain_20260908",
+      "fitmatch_vnext.comparison_evidence_20260908",
+      "fitmatch_vnext.comparison_target_context",
+      "fitmatch_vnext.product_comparison_unit_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "begin_comparison",
+    "args": "p_request jsonb",
+    "sha256": "79367375d853cdda4475c6ecd4ef80f0c7dd2dd89fbe33293840a21122845117",
+    "calls": [
+      "fitmatch_vnext.begin_comparison_legacy_20260914",
+      "fitmatch_vnext.comparison_target_context",
+      "fitmatch_vnext.eligible_candidate_sizes"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "begin_comparison_legacy_20260914",
+    "args": "p_request jsonb",
+    "sha256": "976dcd8d603d927f54002a68a3375d2dbd9efa30158743304e17efef754f94ff",
+    "calls": [
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.eligible_candidate_sizes"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "canonical_measurements_for_session_group",
+    "args": "p_product_size_id uuid, p_effective_classification jsonb",
+    "sha256": "d3c80a090606c034b63a517ef75d32a97ebc3cadd1c63e976ba5f5b885d9d2b9",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "canonical_measurements_for_size",
+    "args": "p_product_size_id uuid",
+    "sha256": "ef9f71873a79dd1ff1d1c406d6038761b8ffd2299ace6e0ceacf9ef2c6f23cfc",
+    "calls": [
+      "fitmatch_vnext.resolve_measurement"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "canonical_measurements_for_size_with_context",
+    "args": "p_product_size_id uuid, p_effective_classification jsonb",
+    "sha256": "9432d5e66cbb837c2365f1c2f120b2de502f011cd82b8acc5b111ea5ca55cddf",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size",
+      "fitmatch_vnext.resolve_measurement"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "classification_decision",
+    "args": "p_source_code text, p_source_product_key text",
+    "sha256": "bbfba033261834e3dc9b0d8986a9a5516e58e4536c497d782f5c912998f47fa7",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation",
+      "fitmatch_vnext.product_comparison_unit_decision",
+      "fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "classification_recovery_options",
+    "args": "p_product_id uuid",
+    "sha256": "df50f62e97b3e64c9f1bd556fa731e48a21a3ded412dd1e6f23e88edbc7c0795",
+    "calls": [
+      "fitmatch_vnext.classification_decision",
+      "fitmatch_vnext.classification_recovery_options_v7_pre_explicit_core",
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "classification_recovery_options_v6_core",
+    "args": "p_product_id uuid",
+    "sha256": "bccf9bcd309e557d0bf512a91b870501500a773c0aea55d3921a16458a454c5d",
+    "calls": [
+      "fitmatch_vnext.classification_decision",
+      "fitmatch_vnext.classification_tuple_validation",
+      "fitmatch_vnext.exact_product_authority_recovery_options"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "classification_recovery_options_v7_pre_explicit_core",
+    "args": "p_product_id uuid",
+    "sha256": "61fca870c58fc814d5d311a4ec9c9dcd2dcf0590b037301c726a222fc49cf8e4",
+    "calls": [
+      "fitmatch_vnext.classification_decision",
+      "fitmatch_vnext.classification_recovery_options_v6_core"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "classification_tuple_validation",
+    "args": "p_garment_type_code text, p_product_structure_code text, p_audience_code text, p_sleeve_length_code text, p_lower_length_code text, p_body_length_code text",
+    "sha256": "e9d2af543cc1293a53c176c77b14e48ff1476bcc8a9d98cdc9d57a69aafd5310",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "clear_closet_classification_override",
+    "args": "p_closet_item_id uuid",
+    "sha256": "ab6d14f15a553229eca80539df88e7c7bf99c2b1fcd41dccc61871ac89828345",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "clear_user_product_classification",
+    "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+    "sha256": "a72f4888df82eef1968a54de4a98b502f9417c3a005743431564b49865f41f1a",
+    "calls": [
+      "fitmatch_vnext.effective_target_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "closet_comparison_group",
+    "args": "p_closet_item_id uuid",
+    "sha256": "d657a3c51bb587fd74edc4ad544edfea86fb344a6d89f8153d0bcb8c4333340c",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_domain_20260908",
+    "args": "p_policy text",
+    "sha256": "54bc9ca77eecef6c005753a32225ce87984ae2015a5a467e73f647428ef3fb28",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_evidence_20260908",
+    "args": "p_reference_closet_item_id uuid, p_policy text, p_canonical jsonb",
+    "sha256": "f0564f10c971a975ec54f6bc39e3447b1fe443af76022b4b943c809292647df5",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_group_tuple",
+    "args": "p_product_id uuid, p_requested_group_code text",
+    "sha256": "da271bf2905dd80764df060d3561ab024e742bdc3a9eaf732e150631552144f9",
+    "calls": [
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_history",
+    "args": "",
+    "sha256": "4c5576d57dc08ef1e789928433276bc69998c0015ee18e383acecfbee312c18c",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_history_sync",
+    "args": "",
+    "sha256": "b0b238bac92c27385b91f13c195f3b5c5dbe0cb4ba339110067d19c66812a59e",
+    "calls": [
+      "fitmatch_vnext.comparison_history"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "comparison_target_context",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "sha256": "ce3abfb390cd3b45d584c36edf223aff3bc7bef4690e498dde12981d40be4157",
+    "calls": [
+      "fitmatch_vnext.comparison_group_tuple",
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.product_comparison_group",
+      "fitmatch_vnext.product_comparison_unit_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "complete_comparison",
+    "args": "p_comparison_id uuid, p_result jsonb",
+    "sha256": "ac68b0c20f3fe074b68a65ca1ce8118c486b05d9c79c29c83c5667468b24da24",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "effective_product_readiness",
+    "args": "p_product_id uuid",
+    "sha256": "8ae283b59057f84b5fcc9c678ca5d5a007e52469e0e04f713505e84fb595ac01",
+    "calls": [
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.product_readiness",
+      "fitmatch_vnext.product_readiness_with_context"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "effective_target_classification",
+    "args": "p_product_id uuid",
+    "sha256": "c7290307b9c80a5fe06bb2a2b1e2f6f6099e5e29d3b713dd47dcf97926ffda88",
+    "calls": [
+      "fitmatch_vnext.comparison_group_tuple",
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "eligible_candidate_sizes",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+    "sha256": "aee168ee6cd24ddb83fdcbe33b8f1992c6134d8dc4eed12ae5ce272c92222e1d",
+    "calls": [
+      "fitmatch_vnext.authorize_comparison_with_context",
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.comparison_evidence_20260908",
+      "fitmatch_vnext.effective_target_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "eligible_candidate_sizes",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+    "sha256": "6932a7ab71ebfada165ae5af3bea8fba101d6761fec0785fdeca48c538d3059e",
+    "calls": [
+      "fitmatch_vnext.authorize_comparison_with_context",
+      "fitmatch_vnext.canonical_measurements_for_session_group",
+      "fitmatch_vnext.comparison_evidence_20260908",
+      "fitmatch_vnext.comparison_target_context",
+      "fitmatch_vnext.eligible_candidate_sizes"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "enforce_uniqlo_generic_category_leaf_inactive",
+    "args": "",
+    "sha256": "5aff0e2dec4a9be4777e4d5da526b554dc3649ba46f22df0cd3aa4700f2d01ca",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "exact_product_authority_recovery_options",
+    "args": "p_product_id uuid",
+    "sha256": "53f1f9ae1abe2f1c2b6d2cfa2b75bf285a697003f1f59422c2df8433eb65a7be",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "find_reference_candidates",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid",
+    "sha256": "bf8004a8a74e5afd38b6968efdaf6941c8d493e7ee21df9851bc06925b44bb4b",
+    "calls": [
+      "fitmatch_vnext.find_reference_candidates_filtered"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "find_reference_candidates",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "sha256": "d365b75e0673cca591b509ef4dafe9a2c49f41b3c9f14e380d92544bc58929c5",
+    "calls": [
+      "fitmatch_vnext.find_reference_candidates_filtered"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "find_reference_candidates_filtered",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid",
+    "sha256": "d5dc9f673ea106ef59d70631d3e9811d9b6f731d4ac00f6b839a8aa1242468a3",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.eligible_candidate_sizes",
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "find_reference_candidates_filtered",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text, p_reference_closet_item_id uuid",
+    "sha256": "7150f98180ab1e86482ca25e99647aa7edeadad70bd5127d4f23bd3380c23725",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.comparison_target_context",
+      "fitmatch_vnext.eligible_candidate_sizes",
+      "fitmatch_vnext.find_reference_candidates_filtered"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "get_product_runtime",
+    "args": "p_source_code text, p_source_product_key text",
+    "sha256": "23957dfec8161d42cc40256693b70a42afd87e2b23e19dc787eb715d47b87a22",
+    "calls": [
+      "fitmatch_vnext.get_product_runtime_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "get_product_runtime_base",
+    "args": "p_source_code text, p_source_product_key text, p_include_derived boolean",
+    "sha256": "3767c6814ec13e446b257783939ea1ca3a1c33faca89591447d0589ee968a2ec",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size",
+      "fitmatch_vnext.product_readiness"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "get_product_runtime_for_swift",
+    "args": "p_source_code text, p_source_product_key text",
+    "sha256": "5a33ce3991e4b7aecb6716ee1b64dd1468edcf6e1243b1da575864ad8d375876",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.effective_product_readiness",
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.get_product_runtime_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "hide_comparison_history",
+    "args": "p_client_comparison_ids uuid[]",
+    "sha256": "d091aca8c780da0768d4adb2f83bbc375f723d197660acbe86aeb8c5744744b9",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "ingest_product_observation",
+    "args": "p_payload jsonb, p_actor_id uuid",
+    "sha256": "7930b6cd674b112690a9d0e4623d25375bf71f9c10bcc5d8bf4c19199e0c53f7",
+    "calls": [
+      "fitmatch_vnext.ingest_product_observation_v2"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "ingest_product_observation_v2",
+    "args": "p_payload jsonb, p_actor_id uuid",
+    "sha256": "146bc9130f107b656a97dcc07fa3f7173ea4204ab0ea3c41eaee77f529388f83",
+    "calls": [
+      "fitmatch_vnext.get_product_runtime",
+      "fitmatch_vnext.product_readiness",
+      "fitmatch_vnext.promote_uniqlo_audience_invariant_category_mapping",
+      "fitmatch_vnext.record_size_availability",
+      "fitmatch_vnext.resolve_product_classification",
+      "fitmatch_vnext.revalidate_uniqlo_auto_promoted_mappings",
+      "fitmatch_vnext.uniqlo_category_parent_chain_safe"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items",
+    "args": "",
+    "sha256": "9d0b76b2cf88409529a0c07eeed1fbe56f33152089168957832267a4e1488e25",
+    "calls": [
+      "fitmatch_vnext.list_closet_items"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items",
+    "args": "p_closet_item_id uuid",
+    "sha256": "3439da6e0bb411cac6ba88407109ecf6aa5287883e098c3302c0ffaeb4215695",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_detail_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_detail_snapshot_base",
+    "args": "",
+    "sha256": "c343c4b33d2fa4a3557711a52e46a641c29991c07d375890c99c2c9c9b6341c2",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_detail_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_detail_snapshot_base",
+    "args": "p_closet_item_id uuid",
+    "sha256": "64c99a1ad50d2f2628708198a0bd7cf402c2a373304d04d0dbc208160f1cbf75",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_snapshot_receipt_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_snapshot_base",
+    "args": "",
+    "sha256": "8f930812b26f70c30ce37c17f19811c595c11ba1107bb3affa8b12984eb05379",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_snapshot_base",
+    "args": "p_closet_item_id uuid",
+    "sha256": "7fc3f2644d43efe236ecb567483a402fb682381c8be523ccc64b44ac489a91ac",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_snapshot_receipt_base",
+    "args": "",
+    "sha256": "339ca5a940591248f8db553f6e39c1ab0caa18ed93ded3623b28076ac7bd243d",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_snapshot_receipt_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "list_closet_items_snapshot_receipt_base",
+    "args": "p_closet_item_id uuid",
+    "sha256": "969597183444e8e4143c8af18c332ec77653ccfae96541a88279d1031edd2ca0",
+    "calls": [
+      "fitmatch_vnext.list_closet_items_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "normalize_measurement_label",
+    "args": "p_label text",
+    "sha256": "2a8c5acb2ad72f6dbddbe6b817219c5552bb6b92b30f697580d89efaa9d60eb4",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_comparison_group",
+    "args": "p_product_id uuid",
+    "sha256": "1adc35ea63d4d7d6b602574da2e8bde269b4dc742ede049d1d5e356482b7643e",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_comparison_unit_decision",
+    "args": "p_product_id uuid",
+    "sha256": "134e0cda3f831fcbf65bb7de71a7ffba544e6f197d05a59edc27c77ffa672b66",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_measurement_readiness",
+    "args": "p_product_id uuid, p_effective_classification jsonb",
+    "sha256": "d7bd3932a0cfe5801dfd190dc9160c9de43476af70884ddd434e6fe810f65459",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.product_comparison_unit_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_readiness",
+    "args": "p_product_id uuid",
+    "sha256": "924a7f09968645211cab69999222cb2dbbe59f29b82e100d1a73f5c5e8ea560d",
+    "calls": [
+      "fitmatch_vnext.effective_target_classification",
+      "fitmatch_vnext.product_measurement_readiness"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_readiness_with_context",
+    "args": "p_product_id uuid, p_effective_classification jsonb",
+    "sha256": "8077de3396eee9e71cd700d471d2d7de7591d7d6f6c50faa9044d89ab7e789fe",
+    "calls": [
+      "fitmatch_vnext.product_comparison_unit_decision",
+      "fitmatch_vnext.product_measurement_readiness"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "product_readiness_with_context_v1",
+    "args": "p_product_id uuid, p_effective_classification jsonb",
+    "sha256": "3f785d86654d4ebe6b799d19a76e4d3df736b6aebcdf146aad25c9bdd3739a0d",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "삭제 후보 / 검증 전 유지"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "promote_uniqlo_audience_invariant_category_mapping",
+    "args": "p_target_signal_id uuid",
+    "sha256": "90d42c6076785fb53e4d6729bc067f5969a86604b5f96a1dfaf1689130015a31",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation",
+      "fitmatch_vnext.uniqlo_category_parent_chain_safe",
+      "fitmatch_vnext.uniqlo_complete_observed_category_path"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "protect_completed_comparison",
+    "args": "",
+    "sha256": "c57b02e1c350d8f406c74c2798721615e87ff6f73f6c1e7ce775104dacab7b68",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "protect_fitmatch_measurement_semantics",
+    "args": "",
+    "sha256": "d270ad84521d1ac8f232c0a2ecfbdaff7907ce8b7f6ae96910b8fcdf3a53aa81",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "protect_product_ingestion_receipt",
+    "args": "",
+    "sha256": "8383c2a842086e4a5fe6237ab4860c02b734266e084f7044bfef90634e42b255",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "protect_source_measurement_semantics",
+    "args": "",
+    "sha256": "cb5de86ffdc5ca844ccb4538db254142a08878827228930f286527426c8790d9",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "protect_user_classification_feedback_evidence",
+    "args": "",
+    "sha256": "86ca374cab39fce23c6d7eee1cafecf9d90647a992e321391780d0012b996a06",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "record_size_availability",
+    "args": "p_product_size_id uuid, p_availability_status text, p_evidence_kind text, p_evidence_payload jsonb, p_observed_at timestamp with time zone, p_valid_until timestamp with time zone",
+    "sha256": "aee8658de50e00dd3cc79d9972469d42984a2589eb108a5d7781657f807b4b0a",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "resolve_measurement",
+    "args": "p_source_code text, p_parser_code text, p_raw_measurement_code text, p_raw_label text, p_garment_type_code text, p_fitmatch_category_code text, p_raw_value numeric",
+    "sha256": "bb9043ded0e2121e327cb38582ce3d02a02d4fe5433a0222cd9401f35d7e6a1a",
+    "calls": [
+      "fitmatch_vnext.normalize_measurement_label"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "resolve_product_classification",
+    "args": "p_source_code text, p_source_product_key text, p_apply boolean",
+    "sha256": "7b14709399ba1b6f2f38db16d0e30cf007211b480e5474d404927d398c9a3413",
+    "calls": [
+      "fitmatch_vnext.classification_decision"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "revalidate_uniqlo_auto_promoted_mappings",
+    "args": "p_external_key text",
+    "sha256": "84574bc51f62aecd2f1cd7084f628ff0d3580c47805f1897e76b5acfb7b24b32",
+    "calls": [
+      "fitmatch_vnext.uniqlo_auto_promoted_mapping_is_current"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "set_closet_classification_override",
+    "args": "p_closet_item_id uuid, p_override jsonb",
+    "sha256": "e7c1c97d622fbf2b47b499eaf461708837eae7d9149fddd8e843131f00a93ade",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "set_closet_detail_snapshot_for_swift",
+    "args": "p_closet_item_id uuid, p_request jsonb",
+    "sha256": "9f8a9699dd8e96236358da7260193384e6c5ed161fafd43cd00c650395292f96",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "set_closet_reference",
+    "args": "p_closet_item_id uuid",
+    "sha256": "84a8bbe49729378fa74356202eee3499b2fabc5dfa0e34dabf17090c915e630c",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "폐기 검토 보류 / 공개호환 확인 필요"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "set_updated_at",
+    "args": "",
+    "sha256": "5d4c52cd3009a91c797d1a85a15580acc3ddfabd04115568680315f5acdc5a7c",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "set_user_product_classification",
+    "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+    "sha256": "1fcc462a4bf44a6538cfaa3da2b004b0bb6c30236ef46f8f1093f4f401368f8f",
+    "calls": [
+      "fitmatch_vnext.classification_recovery_options",
+      "fitmatch_vnext.effective_target_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "soft_delete_closet_item",
+    "args": "p_closet_item_id uuid",
+    "sha256": "67caf0e76cf714ca21cd817116cd0f4991c09863858849c6fe1d1dd0f469cc59",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "uniqlo_auto_promoted_mapping_is_current",
+    "args": "p_mapping_id uuid",
+    "sha256": "495230aaf7c6915768665415d3d36cc15dbaed1281bd0faeda2fc06799351ccf",
+    "calls": [
+      "fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path",
+      "fitmatch_vnext.uniqlo_complete_observed_category_path"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "uniqlo_category_parent_chain_matches_observed_path",
+    "args": "p_signal_id uuid, p_path text[]",
+    "sha256": "113ec900894a2e416cb5c64d883088c1a9a53b939b9b41bda663dd7f396b9efa",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "uniqlo_category_parent_chain_safe",
+    "args": "p_signal_id uuid",
+    "sha256": "d5e88109ac2a6157c4b492a4bdc3f68887d66fc6e4694aaade5dcc77038c01b8",
+    "calls": [
+      "fitmatch_vnext.uniqlo_category_parent_chain_matches_observed_path",
+      "fitmatch_vnext.uniqlo_complete_observed_category_path"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "uniqlo_complete_observed_category_path",
+    "args": "p_signal_id uuid",
+    "sha256": "2f2953f9aacc306909962185f566c5e2b29d9499ff4342eb2e5c20aee0f803b2",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "unset_closet_reference",
+    "args": "p_closet_item_id uuid",
+    "sha256": "e782c48fb5c7fd87c5cd85d0db4ceefe8c33f60955e8611064c296dc0dbacf68",
+    "calls": [],
+    "status": "폐기 검토 보류 / 공개호환 확인 필요"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "update_closet_item",
+    "args": "p_closet_item_id uuid, p_request jsonb",
+    "sha256": "9e93cad59ea37ac3bc3712e08774b30cb55dfaa38363d6d55d3e3f0d077da85c",
+    "calls": [
+      "fitmatch_vnext.resolve_measurement",
+      "fitmatch_vnext.update_closet_item_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "update_closet_item_snapshot_base",
+    "args": "p_closet_item_id uuid, p_request jsonb",
+    "sha256": "388a669cafb0c451e4b8a2df4928fdf83f2400ccb060988ef42139f9945fa07b",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.classification_tuple_validation",
+      "fitmatch_vnext.effective_target_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "update_closet_item_with_group_for_swift",
+    "args": "p_closet_item_id uuid, p_request jsonb",
+    "sha256": "d9537be7aa4558203189956eaf5e9e783dc5ba68718191ee424c18aa18494872",
+    "calls": [
+      "fitmatch_vnext.apply_closet_comparison_group",
+      "fitmatch_vnext.apply_linked_closet_snapshot_for_swift",
+      "fitmatch_vnext.comparison_group_tuple",
+      "fitmatch_vnext.set_closet_detail_snapshot_for_swift",
+      "fitmatch_vnext.update_closet_item"
+    ],
+    "status": "삭제 후보 / 검증 전 유지"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "upsert_closet_item",
+    "args": "p_request jsonb",
+    "sha256": "f67e5674a1ae4c8b47f8b5bba983d08fc7e4e1069b2cf49c5f55db0050d8f3af",
+    "calls": [
+      "fitmatch_vnext.canonical_measurements_for_size_with_context",
+      "fitmatch_vnext.classification_tuple_validation",
+      "fitmatch_vnext.effective_target_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "upsert_closet_item_for_swift",
+    "args": "p_request jsonb",
+    "sha256": "df509edaa4ed8b8d50b547680e2d555c70bc3c1f6f8659e716adad0fbb4a5c82",
+    "calls": [
+      "fitmatch_vnext.upsert_closet_item"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "upsert_closet_item_with_group_for_swift",
+    "args": "p_request jsonb",
+    "sha256": "8d66199522f4b9ca6e5abd0cf0c8327e027b984babba9e361df55000df1d838a",
+    "calls": [
+      "fitmatch_vnext.resolve_measurement",
+      "fitmatch_vnext.upsert_closet_item_with_group_for_swift_snapshot_base"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "upsert_closet_item_with_group_for_swift_snapshot_base",
+    "args": "p_request jsonb",
+    "sha256": "7c6e38c1e69fb8005bc8e905d75aaba82bcabcd0ca1c9e163428eec7f9a4102e",
+    "calls": [
+      "fitmatch_vnext.apply_closet_comparison_group",
+      "fitmatch_vnext.apply_linked_closet_snapshot_for_swift",
+      "fitmatch_vnext.comparison_group_tuple",
+      "fitmatch_vnext.set_closet_detail_snapshot_for_swift",
+      "fitmatch_vnext.upsert_closet_item_for_swift"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_classification_mapping",
+    "args": "",
+    "sha256": "2135aeafb601df5a42cb9c4ed2cafdf242d704db259371cb16b249ffdffc6242",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_closet_measurement_mode",
+    "args": "",
+    "sha256": "ed447348b00489fd87abb5729108be8adeb21f01716e4ef0c7428b8593ca33dc",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_closet_measurement_source_snapshot",
+    "args": "",
+    "sha256": "7f4ed1372f81941d0ab0c7b266e3757df5df4997f4a2a9b51cd1aa9d44fadba5",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_closet_product_hierarchy",
+    "args": "",
+    "sha256": "a64cb9c7db36e59fa888e79a6e4f2a3fbae6bed57dbb5eb61dc3ae79516de91f",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_comparison_completion_payload",
+    "args": "",
+    "sha256": "5c99516752f5484ada73b1e5c0a053f47546a31370a56c283a6ad7ff42ac9785",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_comparison_ownership_and_target",
+    "args": "",
+    "sha256": "e58a7a4bee30e9e24facd9714c5a79ec62675f855457c3464557140d9077ac04",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_garment_axis_values",
+    "args": "",
+    "sha256": "c4b4b280c786cdcb0c1f47f1cc73ed110a4784d7f8a525e62e34e22d540080ac",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_ingestion_receipt_facts",
+    "args": "",
+    "sha256": "f1679299d9c232e32aaf60aaa499d00c08cf775fdfd8a67fef70950bba23ab4e",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_product_signal_source",
+    "args": "",
+    "sha256": "faa0307918b7d85805851415394151f48721c73031d64efa97c0d7636d7dc7c7",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_size_availability_observation",
+    "args": "",
+    "sha256": "8935d42c4b9d3d7db47b91066fa79f88c2856bd3423b0790f1662a10b6b04143",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_source_identifier_owner",
+    "args": "",
+    "sha256": "ce52baef798f53c6268e4ba917a12edf1bef48d3e17a966c8d218f95c8296784",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_source_measurement_alias_source",
+    "args": "",
+    "sha256": "464da6255dc0cfb2a1b69949d60c9f763499aead65e674ea430890559eb396ff",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_source_signal_parent",
+    "args": "",
+    "sha256": "5817dee77c6ae6eaf123020da07b4f47717acea0c00a2ad67bcbfd659f3c54f9",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "fitmatch_vnext",
+    "name": "validate_user_product_classification_override",
+    "args": "",
+    "sha256": "196d7542bc4908ee3945f8e7cae51a15b7296661665110eebcce46fb0da55759",
+    "calls": [
+      "fitmatch_vnext.classification_tuple_validation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_begin_comparison",
+    "args": "p_request jsonb",
+    "sha256": "79b15b656e4d829993668c5759cb5379034bb4ddffda7f350c4ebe159fff667c",
+    "calls": [
+      "fitmatch_vnext.begin_comparison"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_clear_closet_classification_override",
+    "args": "p_closet_item_id uuid",
+    "sha256": "55e4ddf897ef5dd18e59ceb6bd04440defd393cd91cc70c3f6c411a4501f9d6b",
+    "calls": [
+      "fitmatch_vnext.clear_closet_classification_override"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_clear_user_product_classification",
+    "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+    "sha256": "cf77ed7478481ca4e0cc32d927e8e11ce047115dc83297d267b7736c8ef2595e",
+    "calls": [
+      "fitmatch_vnext.clear_user_product_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_comparison_history",
+    "args": "",
+    "sha256": "221dc9258d7e737ed7ac56273b778d30b24ae4bd6f6e8a5508d495a36f51ef15",
+    "calls": [
+      "fitmatch_vnext.comparison_history"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_comparison_history_sync",
+    "args": "",
+    "sha256": "1975c017ef4a1725e64113cf16d368d1f84db4885d7df25eea2c35e57977f883",
+    "calls": [
+      "fitmatch_vnext.comparison_history_sync"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_complete_comparison",
+    "args": "p_comparison_id uuid, p_result jsonb",
+    "sha256": "ad6a58ea6a7c348cd33aa439d5244da16a4f8bf08e92b81bd17586f8ac2b2438",
+    "calls": [
+      "fitmatch_vnext.complete_comparison"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_delete_closet_item",
+    "args": "p_closet_item_id uuid",
+    "sha256": "05df2509194da62b308c6cfbf1fe0f02281a7c5b1982ca3977d56febdee4f609",
+    "calls": [
+      "fitmatch_vnext.soft_delete_closet_item"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_eligible_candidate_sizes",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+    "sha256": "64c32ed2444a1b9839d6727ec7780fcdfe7f6c9c3639d12c4e71fc142b7f3b3a",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.eligible_candidate_sizes",
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_eligible_candidate_sizes",
+    "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+    "sha256": "e2acc6d754f50bb51d84688b5a2aaeeb9f5e0597ad5b89e6f9627ddfc9d02d60",
+    "calls": [
+      "fitmatch_vnext.eligible_candidate_sizes"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_find_reference_candidates",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid",
+    "sha256": "dff993aebcea9e63125a08a395a5a0bb980c467c33c1022fa7002268d235e030",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.find_reference_candidates",
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_find_reference_candidates",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "sha256": "90d6649a4cc4a6a9d6ea17c247d860c5d288d2934262b56a5f327ff3aab6a72f",
+    "calls": [
+      "fitmatch_vnext.find_reference_candidates"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_find_selected_reference_candidate",
+    "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text",
+    "sha256": "3b3631599323f64104227745c3180e098e5bb3c90a5dcf12ff1fd4a466533915",
+    "calls": [
+      "fitmatch_vnext.find_reference_candidates_filtered"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_get_classification_recovery_options",
+    "args": "p_product_id uuid",
+    "sha256": "000e9b25ae99d8d2d41c1726b84cc55b933c5d1aae37f6d880445e843d7874bf",
+    "calls": [
+      "fitmatch_vnext.classification_recovery_options"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_get_closet_item",
+    "args": "p_closet_item_id uuid",
+    "sha256": "f64a1094604536d0d749f2afdcbb00fef9fa2138ef131624f4bd4a08189e95d7",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.list_closet_items"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_get_product_runtime",
+    "args": "p_source_code text, p_source_product_key text",
+    "sha256": "6798203ab156ec1437f12b3299fa46338e87070e5e18d550b3d8df1a57e4f36a",
+    "calls": [
+      "fitmatch_vnext.get_product_runtime_for_swift",
+      "fitmatch_vnext.product_comparison_group"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_hide_comparison_history",
+    "args": "p_client_comparison_ids uuid[]",
+    "sha256": "44fa4dbea149b164e4733fe62064e66b47860758c09c7fb95a938ad5c61802c1",
+    "calls": [
+      "fitmatch_vnext.hide_comparison_history"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_ingest_product_observation",
+    "args": "p_payload jsonb, p_actor_id uuid",
+    "sha256": "a16ca0aced8214cb0a1813dfe5c58d22d0a53469adbfabd08ff6426925d77b19",
+    "calls": [
+      "fitmatch_vnext.ingest_product_observation"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_list_closet_items",
+    "args": "",
+    "sha256": "99972b2cbebf96930b50ed122c8e530060bc8fa010549b42fba7116a8b1af343",
+    "calls": [
+      "fitmatch_vnext.closet_comparison_group",
+      "fitmatch_vnext.list_closet_items"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_set_closet_classification_override",
+    "args": "p_closet_item_id uuid, p_override jsonb",
+    "sha256": "90e707c0ac77c90df40e1916ace501c467c3b592233f8f37262a0a419db20bf7",
+    "calls": [
+      "fitmatch_vnext.set_closet_classification_override"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_set_closet_reference",
+    "args": "p_closet_item_id uuid",
+    "sha256": "bc4723a2de430e7e9761fdb3e90c1085e28abbab891e6c1ce6e5c8fb9dec2b2e",
+    "calls": [
+      "fitmatch_vnext.set_closet_reference"
+    ],
+    "status": "폐기 검토 보류 / 공개호환 확인 필요"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_set_user_product_classification",
+    "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+    "sha256": "b6883ef9a9ab99b4d2626f73c7b542dc387778301fd0d21957153485affebe07",
+    "calls": [
+      "fitmatch_vnext.set_user_product_classification"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_unset_closet_reference",
+    "args": "p_closet_item_id uuid",
+    "sha256": "83f3ee8f6bd662f61b323439960dfc6a3d66c9808a575da49d86f6cb36db3279",
+    "calls": [
+      "fitmatch_vnext.unset_closet_reference"
+    ],
+    "status": "폐기 검토 보류 / 공개호환 확인 필요"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_update_closet_item",
+    "args": "p_closet_item_id uuid, p_request jsonb",
+    "sha256": "aaa8aabf41132e20b20fa7cf22695088bcba7576116cf930216c8f1a9cae7973",
+    "calls": [
+      "fitmatch_vnext.apply_closet_comparison_group",
+      "fitmatch_vnext.apply_linked_closet_snapshot_for_swift",
+      "fitmatch_vnext.comparison_group_tuple",
+      "fitmatch_vnext.set_closet_detail_snapshot_for_swift",
+      "fitmatch_vnext.update_closet_item"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "fitmatch_vnext_upsert_closet_item",
+    "args": "p_request jsonb",
+    "sha256": "92db034f2168dcc73740e5aa2bb7915de103594c5603d171bfb3be34fdd244ac",
+    "calls": [
+      "fitmatch_vnext.upsert_closet_item_with_group_for_swift"
+    ],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "handle_new_user",
+    "args": "",
+    "sha256": "19aec14e30ea54a0ba31e87aed0a4e0eefe2b2000b4b1d801ccc6e24cc1de9ef",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  },
+  {
+    "schema": "public",
+    "name": "set_updated_at",
+    "args": "",
+    "sha256": "0c57996cea08936cb25da37e276ef4932c788cfb1f2bffca8e5a03e076c47b52",
+    "calls": [],
+    "status": "유지 / 현재 참조 또는 계약"
+  }
+]

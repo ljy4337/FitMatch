@@ -1,0 +1,26 @@
+# Optional local build configuration. No secrets belong in this file.
+# FITMATCH_QA_SIMULATOR_ID
+# FITMATCH_QA_DERIVED_DATA
+
+# All required for opt-in authenticated development DB smoke.
+# Set through your local secret/environment mechanism, not a tracked file.
+# FITMATCH_QA_DB_URL
+# FITMATCH_QA_DB_PUBLIC_KEY
+# FITMATCH_QA_DB_DEDICATED_USERS
+# FITMATCH_QA_DB_USER_A_TOKEN
+# FITMATCH_QA_DB_USER_A_ID
+# FITMATCH_QA_DB_USER_B_TOKEN
+# FITMATCH_QA_DB_USER_B_ID
+# Additional normal session tokens for the real Swift SDK integration.
+# FITMATCH_QA_DB_USER_A_REFRESH_TOKEN
+# FITMATCH_QA_DB_USER_B_REFRESH_TOKEN
+# Full authenticated domain cases require verified exact development seeds.
+# FITMATCH_QA_DB_CASE_MANIFEST
+# Runner supplies FITMATCH_QA_AUTH_RUN_ID / FITMATCH_QA_AUTH_OUTPUT per execution.
+# Only the exact hnkplvyegonlhumlejst.supabase.co HTTPS host is accepted.
+# DEDICATED_USERS must explicitly attest 1; both users must be disposable QA accounts.
+
+# Standalone Swift interrupted-run cleanup only. Never put credentials in this file.
+# FITMATCH_QA_AUTH_LEDGER=<absolute original Swift ledger path>
+# FITMATCH_QA_AUTH_RUN_ID=<original ledger UUID; runner reads it for cleanup>
+# Use: python3 scripts/release_qa.py cleanup --ledger <path> --output <new-directory>

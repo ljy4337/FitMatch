@@ -1,0 +1,99 @@
+{
+  "errors" : [
+    "FitMatch (54979) encountered an error. (Underlying Error: Early unexpected exit, operation never finished bootstrapping - no restart will be attempted. (Underlying Error: Test crashed with signal ill before establishing connection.))"
+  ],
+  "values" : [
+    {
+      "disabledTests" : [
+
+      ],
+      "enabledTests" : [
+        {
+          "identifier" : "FitMatchTests"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchAuthenticatedRegistrationUITests/testSlacksRegistrationThenExplicitClosetComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveClosetRegistrationAndDirectURLComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveClosetRegistrationAndSafariShareComparison()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveDeleteMissingReferenceAndReregisterRecovery()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveTenUserJourneysThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveThirtyBalancedPairsThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveThirtyRetailerClosetRegistrations()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchLiveUserJourneyUITests/testLiveTwoHundredUserJourneysThroughAppUI()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test02MusinsaFactsStayVisibleWithoutServerRegistrationAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test03UniqloFactsStayVisibleWithoutServerRegistrationAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test04ManualRegistrationRemainsAvailableAfterGuide()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test05NextPersistsOnboardingCompletionAcrossRelaunch()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test06UnownedSeedDataDoesNotLeakIntoTheTestAccount()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test07RepeatedLoadCannotReportSaveWithoutServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/test08SignedOutRootShowsLoginBeforeOnboarding()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchOnboardingUITests/testFourGuidePagesHaveOnlyNextAndFinish()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentOnboardingNextReachHome()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentTabsAndPrivacySupportNavigation()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testLinkedClosetEmptyInputCannotLoadOrAdvance()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testMalformedComparisonLinkShowsActionableMessage()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testLaunchPerformance()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testLocalCategoryFixtureCannotBypassServerAuthority()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testNewTaskOpensComparisonInput()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testPrimaryTabsOpenExpectedEmptyStates()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testPrivacyPolicyAndSupportAreReachableFromMyPage()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITests/testUnsupportedURLIsRejectedBeforeNetworkRequest()"
+        },
+        {
+          "identifier" : "FitMatchUITests/FitMatchUITestsLaunchTests/testFreshInstallShowsOnboarding()"
+        }
+      ],
+      "testPlan" : "FitMatch-QA"
+    }
+  ]
+}

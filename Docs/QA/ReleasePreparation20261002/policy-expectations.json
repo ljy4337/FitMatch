@@ -1,0 +1,77 @@
+{
+  "expectations": [
+    {
+      "id": "closet-persistence",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §3.6; AGENTS.md Persistence",
+      "expectation": "Success follows authoritative persistence and exact read-back; identity-preserving retry."
+    },
+    {
+      "id": "exact-identity",
+      "status": "RESOLVED",
+      "basis": "AGENTS.md Architecture; MeasurementPolicy §4.3",
+      "expectation": "Exact product, variant, size, Closet and source observation identities; no labels/order fallback."
+    },
+    {
+      "id": "comparison-authority",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.0–4.3",
+      "expectation": "Same approved A–G group, explicit candidate selection, fresh begin, approved evidence only."
+    },
+    {
+      "id": "raw-versus-scoring",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §3–5",
+      "expectation": "All source facts preserved separately; source structure/semantic and canonical restrictions govern comparison."
+    },
+    {
+      "id": "top-weights",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.3",
+      "expectation": "Chest2.0, shoulder1.5, total length1.0, sleeve1.0; server snapshot overrides embedded fallback."
+    },
+    {
+      "id": "reliability",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.3; VNextCompletedReplayPolicy",
+      "expectation": "Count of scored approved metrics is separate from coverage; v2 fixture uses counts2 and4."
+    },
+    {
+      "id": "score-formula",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §4.4; 2026-10-02 user delegated algorithm decision, agent selected behavior-preserving release rule",
+      "expectation": "Approved cm evidence: per-item clamp(round(100-5*absoluteDelta),0,100), then weighted mean of integer item scores using server weights only."
+    },
+    {
+      "id": "rounding",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §4.4; 2026-10-02 user delegated algorithm decision, agent selected behavior-preserving release rule",
+      "expectation": "Round each item and then final weighted mean to nearest integer; exact halves away from zero. Invalid/missing evidence must not become a default score."
+    },
+    {
+      "id": "tie-break",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §4.4; 2026-10-02 user delegated algorithm decision, agent selected behavior-preserving release rule",
+      "expectation": "Descending final integer score; ascending weighted absolute delta; ascending exact productSizeID.uuidString. Last tie is deterministic, not a fit preference."
+    },
+    {
+      "id": "history-immutability",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §5; Behavior Map FLOW-RESULT/HISTORY",
+      "expectation": "Past approved snapshots remain immutable; latest completed exact-product head controls visible history."
+    },
+    {
+      "id": "alternate-selection",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §3.1, §4.3; latest explicit user requirement F/G/H",
+      "expectation": "Alternate size needs approved batch/exact completed replay; other Closet choice needs fresh comparison authority."
+    },
+    {
+      "id": "source-proof",
+      "status": "RESOLVED",
+      "basis": "AGENTS.md Verification; MeasurementPolicy §6",
+      "expectation": "MUSINSA/UNIQLO/ZARA real source, synthetic snapshots, authenticated persistence and UI evidence are distinct."
+    }
+  ],
+  "note": "Expectations were recorded before detailed implementation inspection in CoreCoverage.md; arithmetic/tie characterization was identified only after reading the production scoring owner. On 2026-10-02 the user delegated algorithm choice; three arithmetic/ranking rules are now normative under MeasurementPolicy4.4. Prior unresolved evidence is preserved; no product arithmetic or golden number changed."
+}

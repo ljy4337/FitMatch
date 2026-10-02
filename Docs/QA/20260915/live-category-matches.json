@@ -1,0 +1,2239 @@
+[
+  {
+    "url": "https://musinsa.onelink.me/PvkC/tlrprnvi",
+    "source": "musinsa",
+    "key": "5746364",
+    "path": "바지 > 슈트 팬츠/슬랙스",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487214-000/00",
+    "source": "uniqlo",
+    "key": "E487214",
+    "path": "팬츠 > 치노 팬츠 > 와이드",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488739-000/00",
+    "source": "uniqlo",
+    "key": "E488739",
+    "path": "팬츠 > 캐주얼 팬츠 > 이지 팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484875-000/00",
+    "source": "uniqlo",
+    "key": "E484875",
+    "path": "팬츠 > 와이드 팬츠 > UNIQLO : C",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488743-000/00",
+    "source": "uniqlo",
+    "key": "E488743",
+    "path": "팬츠 > 진(청바지) > 와이드",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489565-000/00",
+    "source": "uniqlo",
+    "key": "E489565",
+    "path": "팬츠 > 진(청바지) > 와이드",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488397-000/00",
+    "source": "uniqlo",
+    "key": "E488397",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488630-000/00",
+    "source": "uniqlo",
+    "key": "E488630",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487220-000/00",
+    "source": "uniqlo",
+    "key": "E487220",
+    "path": "팬츠 > 와이드 팬츠 > 슬랙스",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E492365-000/00",
+    "source": "uniqlo",
+    "key": "E492365",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482868-000/00",
+    "source": "uniqlo",
+    "key": "E482868",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E474175-000/00",
+    "source": "uniqlo",
+    "key": "E474175",
+    "path": "아우터 > 파카 & 블루종 > 포켓터블",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487394-000/00",
+    "source": "uniqlo",
+    "key": "E487394",
+    "path": "스포츠 유틸리티 웨어 > 아우터 > 포켓터블",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E481599-000/00",
+    "source": "uniqlo",
+    "key": "E481599",
+    "path": "아우터 > 파카 & 블루종 > 포켓터블",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487517-000/00",
+    "source": "uniqlo",
+    "key": "E487517",
+    "path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487832-000/00",
+    "source": "uniqlo",
+    "key": "E487832",
+    "path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488200-000/00",
+    "source": "uniqlo",
+    "key": "E488200",
+    "path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487883-000/00",
+    "source": "uniqlo",
+    "key": "E487883",
+    "path": "아우터 > 파카 & 블루종 > Uniqlo U",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487516-000/00",
+    "source": "uniqlo",
+    "key": "E487516",
+    "path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487846-000/00",
+    "source": "uniqlo",
+    "key": "E487846",
+    "path": "아우터 > 재킷 > 캐주얼 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488787-000/00",
+    "source": "uniqlo",
+    "key": "E488787",
+    "path": "아우터 > 파카 & 블루종 > 재킷 & 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488298-000/00",
+    "source": "uniqlo",
+    "key": "E488298",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489372-000/00",
+    "source": "uniqlo",
+    "key": "E489372",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487908-000/00",
+    "source": "uniqlo",
+    "key": "E487908",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E465751-000/00",
+    "source": "uniqlo",
+    "key": "E465751",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483536-000/00",
+    "source": "uniqlo",
+    "key": "E483536",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489040-000/00",
+    "source": "uniqlo",
+    "key": "E489040",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489060-000/00",
+    "source": "uniqlo",
+    "key": "E489060",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 폴로셔츠 (카라티) > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489061-000/00",
+    "source": "uniqlo",
+    "key": "E489061",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 폴로셔츠 (카라티) > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488230-000/00",
+    "source": "uniqlo",
+    "key": "E488230",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488228-000/00",
+    "source": "uniqlo",
+    "key": "E488228",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E469411-000/00",
+    "source": "uniqlo",
+    "key": "E469411",
+    "path": "니트 & 가디건 > 가디건 > 메리노",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487005-000/00",
+    "source": "uniqlo",
+    "key": "E487005",
+    "path": "니트 & 가디건 > 가디건 > 스무드 코튼",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485329-000/00",
+    "source": "uniqlo",
+    "key": "E485329",
+    "path": "니트 & 가디건 > 가디건 > 캐시미어",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485340-000/00",
+    "source": "uniqlo",
+    "key": "E485340",
+    "path": "니트 & 가디건 > 가디건 > 그 외",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491991-000/00",
+    "source": "uniqlo",
+    "key": "E491991",
+    "path": "니트 & 가디건 > 가디건 > 그 외",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E481731-000/00",
+    "source": "uniqlo",
+    "key": "E481731",
+    "path": "니트 & 가디건 > 니트 > UNIQLO : C",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488191-000/00",
+    "source": "uniqlo",
+    "key": "E488191",
+    "path": "니트 & 가디건 > 니트 > 램스울",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E469410-000/00",
+    "source": "uniqlo",
+    "key": "E469410",
+    "path": "니트 & 가디건 > 니트 > 긴팔 니트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485321-000/00",
+    "source": "uniqlo",
+    "key": "E485321",
+    "path": "니트 & 가디건 > 니트 > 3D 니트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E450514-000/00",
+    "source": "uniqlo",
+    "key": "E450514",
+    "path": "니트 & 가디건 > 니트 > 터틀넥",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488182-000/00",
+    "source": "uniqlo",
+    "key": "E488182",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488560-000/00",
+    "source": "uniqlo",
+    "key": "E488560",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489427-000/00",
+    "source": "uniqlo",
+    "key": "E489427",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489509-000/00",
+    "source": "uniqlo",
+    "key": "E489509",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491294-000/00",
+    "source": "uniqlo",
+    "key": "E491294",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491297-000/00",
+    "source": "uniqlo",
+    "key": "E491297",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489409-000/00",
+    "source": "uniqlo",
+    "key": "E489409",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483880-000/00",
+    "source": "uniqlo",
+    "key": "E483880",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 코튼",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489408-000/00",
+    "source": "uniqlo",
+    "key": "E489408",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E492900-000/00",
+    "source": "uniqlo",
+    "key": "E492900",
+    "path": "셔츠 & 블라우스 & 폴로셔츠 > 셔츠 & 블라우스 > 코튼",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E477345-000/00",
+    "source": "uniqlo",
+    "key": "E477345",
+    "path": "팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489417-000/00",
+    "source": "uniqlo",
+    "key": "E489417",
+    "path": "팬츠 > 배럴 레그 팬츠 > 긴 기장",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E475344-000/00",
+    "source": "uniqlo",
+    "key": "E475344",
+    "path": "팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489191-000/00",
+    "source": "uniqlo",
+    "key": "E489191",
+    "path": "팬츠 > 와이드 팬츠 > 커브ㆍ배럴 레그",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488700-000/00",
+    "source": "uniqlo",
+    "key": "E488700",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484807-000/00",
+    "source": "uniqlo",
+    "key": "E484807",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E479000-000/00",
+    "source": "uniqlo",
+    "key": "E479000",
+    "path": "팬츠 > 진(청바지) > 배기",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482658-000/00",
+    "source": "uniqlo",
+    "key": "E482658",
+    "path": "스커트 & 원피스 > 스커트 > 플리츠",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488364-000/00",
+    "source": "uniqlo",
+    "key": "E488364",
+    "path": "스커트 & 원피스 > 스커트 > 플리츠",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482286-000/00",
+    "source": "uniqlo",
+    "key": "E482286",
+    "path": "스커트 & 원피스 > 스커트 > 플레어",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487995-000/00",
+    "source": "uniqlo",
+    "key": "E487995",
+    "path": "스커트 & 원피스 > 스커트 > 롱 (맥시)",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488089-000/00",
+    "source": "uniqlo",
+    "key": "E488089",
+    "path": "스커트 & 원피스 > 스커트 > 플레어",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484705-000/00",
+    "source": "uniqlo",
+    "key": "E484705",
+    "path": "스커트 & 원피스 > 스커트 > 플레어",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488934-000/00",
+    "source": "uniqlo",
+    "key": "E488934",
+    "path": "스커트 & 원피스 > 스커트 > 롱 (맥시)",
+    "matches": [
+      {
+        "group": "D",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488008-000/00",
+    "source": "uniqlo",
+    "key": "E488008",
+    "path": "스커트 & 원피스 > 스커트 > 스코츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488816-000/00",
+    "source": "uniqlo",
+    "key": "E488816",
+    "path": "스커트 & 원피스 > 스커트 > 스코츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E469292-000/00",
+    "source": "uniqlo",
+    "key": "E469292",
+    "path": "아우터 > 파카 & 블루종 > 포켓터블",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484610-000/00",
+    "source": "uniqlo",
+    "key": "E484610",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486816-000/00",
+    "source": "uniqlo",
+    "key": "E486816",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488726-000/00",
+    "source": "uniqlo",
+    "key": "E488726",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488829-000/00",
+    "source": "uniqlo",
+    "key": "E488829",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487688-000/00",
+    "source": "uniqlo",
+    "key": "E487688",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488828-000/00",
+    "source": "uniqlo",
+    "key": "E488828",
+    "path": "아우터 > 파카 & 블루종 > 재킷",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486167-000/00",
+    "source": "uniqlo",
+    "key": "E486167",
+    "path": "아우터 > 파카 & 블루종 > 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484249-000/00",
+    "source": "uniqlo",
+    "key": "E484249",
+    "path": "아우터 > 파카 & 블루종 > 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491292-000/00",
+    "source": "uniqlo",
+    "key": "E491292",
+    "path": "아우터 > 파카 & 블루종 > 블루종",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484080-000/00",
+    "source": "uniqlo",
+    "key": "E484080",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482766-000/00",
+    "source": "uniqlo",
+    "key": "E482766",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E450179-000/00",
+    "source": "uniqlo",
+    "key": "E450179",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486129-000/00",
+    "source": "uniqlo",
+    "key": "E486129",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E465193-000/00",
+    "source": "uniqlo",
+    "key": "E465193",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486103-000/00",
+    "source": "uniqlo",
+    "key": "E486103",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488605-000/00",
+    "source": "uniqlo",
+    "key": "E488605",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E481441-000/00",
+    "source": "uniqlo",
+    "key": "E481441",
+    "path": "이너웨어 > 히트텍 > 히트텍 캐시미어 블렌드",
+    "matches": [
+      {
+        "group": "F",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E479450-000/00",
+    "source": "uniqlo",
+    "key": "E479450",
+    "path": "이너웨어 > 히트텍 > 히트텍 엑스트라 웜",
+    "matches": [
+      {
+        "group": "F",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E481442-000/00",
+    "source": "uniqlo",
+    "key": "E481442",
+    "path": "이너웨어 > 히트텍 > 히트텍 캐시미어 블렌드",
+    "matches": [
+      {
+        "group": "F",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487939-000/00",
+    "source": "uniqlo",
+    "key": "E487939",
+    "path": "셔츠 > 폴로셔츠 (카라티) > 그 외",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486080-000/00",
+    "source": "uniqlo",
+    "key": "E486080",
+    "path": "니트 & 가디건 > 니트 > 긴팔 니트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E487942-000/00",
+    "source": "uniqlo",
+    "key": "E487942",
+    "path": "니트 & 가디건 > 가디건 > 수플레 얀",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E450536-000/00",
+    "source": "uniqlo",
+    "key": "E450536",
+    "path": "니트 & 가디건 > 니트 > 브이넥",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488760-000/00",
+    "source": "uniqlo",
+    "key": "E488760",
+    "path": "니트 & 가디건 > 니트 > 램스울",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E479791-000/00",
+    "source": "uniqlo",
+    "key": "E479791",
+    "path": "스포츠 유틸리티 웨어 > 상의 > 긴팔",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E453754-000/00",
+    "source": "uniqlo",
+    "key": "E453754",
+    "path": "니트 & 가디건 > 니트 > 크루넥 니트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E450535-000/00",
+    "source": "uniqlo",
+    "key": "E450535",
+    "path": "니트 & 가디건 > 니트 > 크루넥 니트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488758-000/00",
+    "source": "uniqlo",
+    "key": "E488758",
+    "path": "니트 & 가디건 > 니트 > 메리노",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486066-000/00",
+    "source": "uniqlo",
+    "key": "E486066",
+    "path": "니트 & 가디건 > 니트 > 터틀넥",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486610-000/00",
+    "source": "uniqlo",
+    "key": "E486610",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488801-000/00",
+    "source": "uniqlo",
+    "key": "E488801",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488793-000/00",
+    "source": "uniqlo",
+    "key": "E488793",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486614-000/00",
+    "source": "uniqlo",
+    "key": "E486614",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E450260-000/00",
+    "source": "uniqlo",
+    "key": "E450260",
+    "path": "셔츠 > 캐주얼셔츠 > 브로드 클로스(코튼100%)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486587-000/00",
+    "source": "uniqlo",
+    "key": "E486587",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482461-000/00",
+    "source": "uniqlo",
+    "key": "E482461",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486586-000/00",
+    "source": "uniqlo",
+    "key": "E486586",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485653-000/00",
+    "source": "uniqlo",
+    "key": "E485653",
+    "path": "셔츠 > 캐주얼셔츠 > 긴팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E480764-000/00",
+    "source": "uniqlo",
+    "key": "E480764",
+    "path": "셔츠 > 캐주얼셔츠 > 브로드 클로스(코튼100%)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483443-000/00",
+    "source": "uniqlo",
+    "key": "E483443",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트풀집",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E480861-000/00",
+    "source": "uniqlo",
+    "key": "E480861",
+    "path": "아우터 > 재킷 & 파카 > 파카",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488939-000/00",
+    "source": "uniqlo",
+    "key": "E488939",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트파카",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E493533-000/00",
+    "source": "uniqlo",
+    "key": "E493533",
+    "path": "아우터 > 재킷 & 파카 > 그 외",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E490470-000/00",
+    "source": "uniqlo",
+    "key": "E490470",
+    "path": "남아 & 공용 > 아우터 > 블루종 & 파카",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491320-002/00",
+    "source": "uniqlo",
+    "key": "E491320",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491320-000/00",
+    "source": "uniqlo",
+    "key": "E491320",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E491320-001/00",
+    "source": "uniqlo",
+    "key": "E491320",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 그래픽티셔츠 > PEANUTS",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E478168-000/00",
+    "source": "uniqlo",
+    "key": "E478168",
+    "path": "아우터 > 재킷 & 파카 > 후리스",
+    "matches": [
+      {
+        "group": "B",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E478141-000/00",
+    "source": "uniqlo",
+    "key": "E478141",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 후리스 > 재킷 & 가디건",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483502-000/00",
+    "source": "uniqlo",
+    "key": "E483502",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 조거 팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486630-000/00",
+    "source": "uniqlo",
+    "key": "E486630",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 진",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486637-000/00",
+    "source": "uniqlo",
+    "key": "E486637",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 진",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486638-000/00",
+    "source": "uniqlo",
+    "key": "E486638",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 진",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488163-000/00",
+    "source": "uniqlo",
+    "key": "E488163",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488426-000/00",
+    "source": "uniqlo",
+    "key": "E488426",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E478140-000/00",
+    "source": "uniqlo",
+    "key": "E478140",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드티 > 스웨트팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485162-000/00",
+    "source": "uniqlo",
+    "key": "E485162",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 스웨트 팬츠",
+    "matches": [
+      {
+        "group": "C",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486627-000/00",
+    "source": "uniqlo",
+    "key": "E486627",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 웜 팬츠",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486629-000/00",
+    "source": "uniqlo",
+    "key": "E486629",
+    "path": "청바지 & 팬츠 > 청바지 & 팬츠 > 웜 팬츠",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489012-000/00",
+    "source": "uniqlo",
+    "key": "E489012",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(긴팔)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486412-000/00",
+    "source": "uniqlo",
+    "key": "E486412",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(긴팔)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488826-000/00",
+    "source": "uniqlo",
+    "key": "E488826",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(긴팔)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486411-000/00",
+    "source": "uniqlo",
+    "key": "E486411",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 스웨트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488006-000/00",
+    "source": "uniqlo",
+    "key": "E488006",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 스웨트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488005-000/00",
+    "source": "uniqlo",
+    "key": "E488005",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 스웨트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E488007-000/00",
+    "source": "uniqlo",
+    "key": "E488007",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 스웨트",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483127-000/00",
+    "source": "uniqlo",
+    "key": "E483127",
+    "path": "영유아(6개월~5세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483129-000/00",
+    "source": "uniqlo",
+    "key": "E483129",
+    "path": "영유아(6개월~5세) > 그래픽티셔츠 > The Picture Book Collection",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485616-000/00",
+    "source": "uniqlo",
+    "key": "E485616",
+    "path": "신생아(0개월~2세) > 티셔츠 & 스웨트셔츠 > 티셔츠(반팔)",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/4096130",
+    "source": "musinsa",
+    "key": "4096130",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6372903",
+    "source": "musinsa",
+    "key": "6372903",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1481640",
+    "source": "musinsa",
+    "key": "1481640",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6193571",
+    "source": "musinsa",
+    "key": "6193571",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6176194",
+    "source": "musinsa",
+    "key": "6176194",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/3907950",
+    "source": "musinsa",
+    "key": "3907950",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6864173",
+    "source": "musinsa",
+    "key": "6864173",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6372893",
+    "source": "musinsa",
+    "key": "6372893",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6383143",
+    "source": "musinsa",
+    "key": "6383143",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/6067466",
+    "source": "musinsa",
+    "key": "6067466",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1144989",
+    "source": "musinsa",
+    "key": "1144989",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/2149254",
+    "source": "musinsa",
+    "key": "2149254",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1129745",
+    "source": "musinsa",
+    "key": "1129745",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1920872",
+    "source": "musinsa",
+    "key": "1920872",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/3730388",
+    "source": "musinsa",
+    "key": "3730388",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/5695778",
+    "source": "musinsa",
+    "key": "5695778",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/5151554",
+    "source": "musinsa",
+    "key": "5151554",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1144999",
+    "source": "musinsa",
+    "key": "1144999",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/1446486",
+    "source": "musinsa",
+    "key": "1446486",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/5626708",
+    "source": "musinsa",
+    "key": "5626708",
+    "path": "상의 > 긴소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/2448867",
+    "source": "musinsa",
+    "key": "2448867",
+    "path": "상의 > 니트/스웨터",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/2448874",
+    "source": "musinsa",
+    "key": "2448874",
+    "path": "상의 > 니트/스웨터",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/2448866",
+    "source": "musinsa",
+    "key": "2448866",
+    "path": "상의 > 니트/스웨터",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/4682241",
+    "source": "musinsa",
+    "key": "4682241",
+    "path": "상의 > 니트/스웨터",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/5107472",
+    "source": "musinsa",
+    "key": "5107472",
+    "path": "상의 > 니트/스웨터",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.musinsa.com/products/7051965",
+    "source": "musinsa",
+    "key": "7051965",
+    "path": "바지 > 데님 팬츠",
+    "matches": null
+  },
+  {
+    "url": "https://www.musinsa.com/products/4213064",
+    "source": "musinsa",
+    "key": "4213064",
+    "path": "바지 > 데님 팬츠",
+    "matches": null
+  },
+  {
+    "url": "https://www.musinsa.com/products/5864299",
+    "source": "musinsa",
+    "key": "5864299",
+    "path": "바지 > 데님 팬츠",
+    "matches": null
+  },
+  {
+    "url": "https://www.musinsa.com/products/6193525",
+    "source": "musinsa",
+    "key": "6193525",
+    "path": "상의 > 반소매 티셔츠",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zara.com/kr/ko/릴렉스핏-배색-티셔츠-p00722370.html",
+    "source": "zara",
+    "key": "553949188",
+    "path": "ZARA > 남성 > 티셔츠 > F. Camiseta",
+    "matches": null
+  },
+  {
+    "url": "https://www.zara.com/kr/ko/인터록-릴렉스핏-티셔츠--04-p05584471.html",
+    "source": "zara",
+    "key": "545419230",
+    "path": "ZARA > 남성 > 티셔츠 > B. Camiseta",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zara.com/kr/ko/코튼-린넨-컬러-블록-티셔츠-p06264301.html",
+    "source": "zara",
+    "key": "551151802",
+    "path": "ZARA > 남성 > 티셔츠 > Camiseta M/L",
+    "matches": null
+  },
+  {
+    "url": "https://www.zara.com/kr/ko/배색-리브드-베이직-티셔츠-p00761414.html",
+    "source": "zara",
+    "key": "545419578",
+    "path": "ZARA > 남성 > 티셔츠 > B. Camiseta",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zara.com/kr/ko/스트라이프-와이드-팬츠-p04387223.html",
+    "source": "zara",
+    "key": "545478190",
+    "path": "ZARA > 여성 > 바지 > B.PANTS",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E486604-000/00",
+    "source": "uniqlo",
+    "key": "E486604",
+    "path": "셔츠 > 캐주얼셔츠 > 플란넬",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E480856-000/00",
+    "source": "uniqlo",
+    "key": "E480856",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 스웨트셔츠 & 후드집업 > 유니섹스",
+    "matches": null
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E476602-000/00",
+    "source": "uniqlo",
+    "key": "E476602",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E475436-000/00",
+    "source": "uniqlo",
+    "key": "E475436",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E475435-000/00",
+    "source": "uniqlo",
+    "key": "E475435",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E477667-000/00",
+    "source": "uniqlo",
+    "key": "E477667",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E465185-000/00?colorDisplayCode=65",
+    "source": "uniqlo",
+    "key": "E465185",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E484508-000/00?colorDisplayCode=69",
+    "source": "uniqlo",
+    "key": "E484508",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 에어리즘 코튼",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E485454-000/00?colorDisplayCode=65",
+    "source": "uniqlo",
+    "key": "E485454",
+    "path": "Special Collaborations > UNIQLO and JW ANDERSON > Cut & Sewn",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E482299-000/00",
+    "source": "uniqlo",
+    "key": "E482299",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > DRY-EX",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E489013-000/00",
+    "source": "uniqlo",
+    "key": "E489013",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E483970-000/00",
+    "source": "uniqlo",
+    "key": "E483970",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > DRY-EX",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E457263-000/00",
+    "source": "uniqlo",
+    "key": "E457263",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  },
+  {
+    "url": "https://www.uniqlo.com/kr/ko/products/E464857-000/00?colorDisplayCode=69",
+    "source": "uniqlo",
+    "key": "E464857",
+    "path": "티셔츠 & 스웨트셔츠 & 후리스 > 티셔츠 (긴팔 & 반팔) > 반팔",
+    "matches": [
+      {
+        "group": "A",
+        "source": "RETAILER_CATEGORY",
+        "disposition": "COMPARABLE"
+      }
+    ]
+  }
+]

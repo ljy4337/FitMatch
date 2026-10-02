@@ -1,0 +1,21 @@
+{
+  "kind": "synthetic_approved_snapshot_arithmetic_characterization",
+  "policy_approval": "UNRESOLVED for formula, rounding, tie break; weights and confidence separation documented",
+  "source": "FitMatchMeasurementPolicy.md §4.3 weights; fixed inputs and hand arithmetic below. No engine call produced these expectations.",
+  "unit": "cm",
+  "metrics": ["chest_width", "shoulder_width", "back_length", "sleeve_length"],
+  "basis": ["WIDTH", "WIDTH", "LENGTH", "LENGTH"],
+  "weights": [2, 1.5, 1, 1],
+  "reference": [50, 48, 70, 60],
+  "cases": [
+    {"id":"D-M","target":[52,47,73,61],"signed_delta":[2,-1,3,1],"absolute_delta":[2,1,3,1],"item_scores":[90,95,85,95],"weighted_sum":502.5,"weight_sum":5.5,"unrounded_score":91.36363636363636,"score":91,"reliability":4,"coverage":1,"weighted_mean_absolute_delta":1.7272727272727273},
+    {"id":"D-L","target":[54,50,76,63],"signed_delta":[4,2,6,3],"absolute_delta":[4,2,6,3],"item_scores":[80,90,70,85],"weighted_sum":450,"weight_sum":5.5,"unrounded_score":81.81818181818181,"score":82,"reliability":4,"coverage":1},
+    {"id":"D-partial","target":[52,48],"signed_delta":[2,0],"item_scores":[90,100],"weighted_sum":330,"weight_sum":3.5,"unrounded_score":94.28571428571429,"score":94,"reliability":2,"coverage":0.5,"weighted_mean_absolute_delta":1.1428571428571428}
+  ],
+  "arithmetic_assumption": "Current v1 item score clamp(round(100 - 5*absolute_delta),0,100); weighted mean rounded. Not newly approved product policy.",
+  "float_absolute_tolerance": 0.000001,
+  "integer_tolerance": 0,
+  "identity_case": "Two different approved product_size UUIDs intentionally share visible label M; label must not choose identity.",
+  "negative_case": "Forged server difference=999 for actual target-reference=2 must throw, not produce a score.",
+  "fixed_capture_time": "2026-10-02T00:00:00Z"
+}

@@ -1,0 +1,77 @@
+{
+  "expectations": [
+    {
+      "id": "closet-persistence",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §3.6; AGENTS.md Persistence",
+      "expectation": "Success follows authoritative persistence and exact read-back; identity-preserving retry."
+    },
+    {
+      "id": "exact-identity",
+      "status": "RESOLVED",
+      "basis": "AGENTS.md Architecture; MeasurementPolicy §4.3",
+      "expectation": "Exact product, variant, size, Closet and source observation identities; no labels/order fallback."
+    },
+    {
+      "id": "comparison-authority",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.0–4.3",
+      "expectation": "Same approved A–G group, explicit candidate selection, fresh begin, approved evidence only."
+    },
+    {
+      "id": "raw-versus-scoring",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §3–5",
+      "expectation": "All source facts preserved separately; source structure/semantic and canonical restrictions govern comparison."
+    },
+    {
+      "id": "top-weights",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.3",
+      "expectation": "Chest2.0, shoulder1.5, total length1.0, sleeve1.0; server snapshot overrides embedded fallback."
+    },
+    {
+      "id": "reliability",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §4.3; VNextCompletedReplayPolicy",
+      "expectation": "Count of scored approved metrics is separate from coverage; v2 fixture uses counts2 and4."
+    },
+    {
+      "id": "score-formula",
+      "status": "UNRESOLVED",
+      "basis": "Implementation characterization only: MeasurementComparisonEngine.compareAuthorizedEvidence",
+      "expectation": "Observed rule clamps and rounds each 100−5×absolute delta, then rounds weighted mean. No independently approved product formula was found in the policy document; oracle freezes current contract, not new product approval."
+    },
+    {
+      "id": "rounding",
+      "status": "UNRESOLVED",
+      "basis": "Implementation characterization only: Swift Double.rounded in MeasurementComparisonEngine",
+      "expectation": "Default Swift rounding is observed. Product-facing half-boundary/rounding policy is not separately specified; tests avoid half-boundary ambiguity."
+    },
+    {
+      "id": "tie-break",
+      "status": "UNRESOLVED",
+      "basis": "Implementation characterization only: VNextComparisonEngineAdapter.analyze",
+      "expectation": "Observed ranking: score descending, weighted absolute delta ascending, exact UUID ascending. Product-approved equal-score tie policy is not specified; fixture is characterization."
+    },
+    {
+      "id": "history-immutability",
+      "status": "RESOLVED",
+      "basis": "MeasurementPolicy §5; Behavior Map FLOW-RESULT/HISTORY",
+      "expectation": "Past approved snapshots remain immutable; latest completed exact-product head controls visible history."
+    },
+    {
+      "id": "alternate-selection",
+      "status": "RESOLVED",
+      "basis": "Docs/FitMatchMeasurementPolicy.md §3.1, §4.3; latest explicit user requirement F/G/H",
+      "expectation": "Alternate size needs approved batch/exact completed replay; other Closet choice needs fresh comparison authority."
+    },
+    {
+      "id": "source-proof",
+      "status": "RESOLVED",
+      "basis": "AGENTS.md Verification; MeasurementPolicy §6",
+      "expectation": "MUSINSA/UNIQLO/ZARA real source, synthetic snapshots, authenticated persistence and UI evidence are distinct."
+    }
+  ],
+  "note": "Expectations were recorded before detailed implementation inspection in CoreCoverage.md; arithmetic/tie characterization was identified only after reading the production scoring owner."
+}

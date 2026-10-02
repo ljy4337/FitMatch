@@ -1,0 +1,330 @@
+{
+  "captured_at": "2026-08-21T07:56:47.463Z",
+  "request_url": "https://www.zara.com/itxrest/4/catalog/store/11717/product/555174282/size-measure-guide?locale=ko_KR",
+  "http_status": 200,
+  "challenge_detected": false,
+  "response_hash": "c251a7d1629e36ae940df2c622b698068ce45495932d29668ca3baa8f50d9616",
+  "response": {
+    "sizeGuideInfo": {
+      "id": "315caa9c-1df9-4e79-ba77-917c3acef017",
+      "name": "AARON LEVINE X ZARA 레귤러핏 치노 팬츠",
+      "sizes": [
+        {
+          "id": "38",
+          "name": "EU 38 (KR 30)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 38 (KR 30)"
+            },
+            {
+              "units": "in",
+              "value": "EU 38 (KR 30)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "640e72e6f7a4c6f51b79498246dd6f1a",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "76"
+                },
+                {
+                  "unitId": "in",
+                  "value": "29.9"
+                }
+              ]
+            },
+            {
+              "zoneId": "98a4d2e2ef557d21d55430c893ac2723",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "96"
+                },
+                {
+                  "unitId": "in",
+                  "value": "37.8"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "40",
+          "name": "EU 40 (KR 31)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 40 (KR 31)"
+            },
+            {
+              "units": "in",
+              "value": "EU 40 (KR 31)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "640e72e6f7a4c6f51b79498246dd6f1a",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "80"
+                },
+                {
+                  "unitId": "in",
+                  "value": "31.5"
+                }
+              ]
+            },
+            {
+              "zoneId": "98a4d2e2ef557d21d55430c893ac2723",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "100"
+                },
+                {
+                  "unitId": "in",
+                  "value": "39.4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "42",
+          "name": "EU 42 (KR 32)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 42 (KR 32)"
+            },
+            {
+              "units": "in",
+              "value": "EU 42 (KR 32)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "640e72e6f7a4c6f51b79498246dd6f1a",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "84"
+                },
+                {
+                  "unitId": "in",
+                  "value": "33.1"
+                }
+              ]
+            },
+            {
+              "zoneId": "98a4d2e2ef557d21d55430c893ac2723",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "104"
+                },
+                {
+                  "unitId": "in",
+                  "value": "40.9"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "44",
+          "name": "EU 44 (KR 34)",
+          "labels": [
+            {
+              "units": "cm",
+              "value": "EU 44 (KR 34)"
+            },
+            {
+              "units": "in",
+              "value": "EU 44 (KR 34)"
+            }
+          ],
+          "measures": [
+            {
+              "zoneId": "640e72e6f7a4c6f51b79498246dd6f1a",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "88"
+                },
+                {
+                  "unitId": "in",
+                  "value": "34.6"
+                }
+              ]
+            },
+            {
+              "zoneId": "98a4d2e2ef557d21d55430c893ac2723",
+              "dimensions": [
+                {
+                  "unitId": "cm",
+                  "value": "108"
+                },
+                {
+                  "unitId": "in",
+                  "value": "42.5"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "shape": {
+        "xmedia": [
+          {
+            "datatype": "xmedia",
+            "set": 2,
+            "type": "image",
+            "kind": "other",
+            "path": "../../../assets/public/5cdb/594e/05154191b5e6/214bea852bb9/",
+            "name": "../../CRO-inferior",
+            "width": 2048,
+            "height": 2113,
+            "timestamp": "1585094400000",
+            "allowedScreens": [
+              "small",
+              "large"
+            ],
+            "isArrowsImage": true
+          }
+        ],
+        "zones": [
+          {
+            "id": "640e72e6f7a4c6f51b79498246dd6f1a",
+            "line": {
+              "startPoint": {
+                "top": 17,
+                "left": 35
+              },
+              "endPoint": {
+                "top": 17,
+                "left": 66
+              },
+              "color": "#fff"
+            },
+            "textPoint": {
+              "top": 10,
+              "left": 10
+            }
+          },
+          {
+            "id": "98a4d2e2ef557d21d55430c893ac2723",
+            "line": {
+              "startPoint": {
+                "top": 32,
+                "left": 33
+              },
+              "endPoint": {
+                "top": 32,
+                "left": 68
+              },
+              "color": "#fff"
+            },
+            "textPoint": {
+              "top": 30,
+              "left": 10
+            }
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "cm",
+          "type": "measure_cm",
+          "name": "cm",
+          "default": true
+        },
+        {
+          "id": "in",
+          "type": "measure_im",
+          "name": "in",
+          "default": false
+        }
+      ],
+      "equivalences": {
+        "type": "markets",
+        "headers": [
+          {
+            "id": "KR",
+            "name": "KR"
+          },
+          {
+            "id": "EUR",
+            "name": "EU"
+          }
+        ],
+        "rows": [
+          {
+            "sizeId": "38",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "76"
+              },
+              {
+                "headerId": "EUR",
+                "name": "38"
+              }
+            ]
+          },
+          {
+            "sizeId": "40",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "79"
+              },
+              {
+                "headerId": "EUR",
+                "name": "40"
+              }
+            ]
+          },
+          {
+            "sizeId": "42",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "82"
+              },
+              {
+                "headerId": "EUR",
+                "name": "42"
+              }
+            ]
+          },
+          {
+            "sizeId": "44",
+            "values": [
+              {
+                "headerId": "KR",
+                "name": "85"
+              },
+              {
+                "headerId": "EUR",
+                "name": "44"
+              }
+            ]
+          }
+        ]
+      },
+      "comments": [],
+      "defaultSize": "EU 38 (KR 30)",
+      "kidsEquivalences": [],
+      "section": {
+        "id": "2",
+        "name": "MAN"
+      }
+    },
+    "measureGuideInfo": null
+  }
+}

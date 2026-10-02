@@ -1,0 +1,7 @@
+Writing result bundle at path:
+	/tmp/FitMatchPolicyDecision20.xcresult
+
+2026-10-02 21:44:48.115 xcodebuild[99037:27428094] [MT] IDETestOperationsObserverDebug: 11.545 elapsed -- Testing started completed.
+2026-10-02 21:44:48.115 xcodebuild[99037:27428094] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-02 21:44:48.115 xcodebuild[99037:27428094] [MT] IDETestOperationsObserverDebug: 11.545 sec, +11.545 sec -- end
+Testing started
