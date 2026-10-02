@@ -1,3 +1,11 @@
+## 2026-10-02 main 전환 및 개발/운영 DB 정책·구조 일치 감사
+
+- 로컬 기본 checkout을 QA에서 main으로 전환했다. 시작 기준 main/QA/origin 모두 `7be63edcc9985cdc268d406fe767d8972511c571`; 임시 main worktree는 깨끗한 상태에서 제거했다. 브랜치명과 앱 연결 DB 스킴은 별개이며 배포는 FitMatch-Production/Release 구성을 사용해야 한다.
+- Supabase 개발 `hnkplvyegonlhumlejst`, 운영 `aqhrupgjpmrtnystottx` 모두 ACTIVE_HEALTHY. fitmatch_vnext의 테이블/컬럼/인덱스/제약/함수/정책/트리거와 public FitMatch 함수를 각 914/915개 객체 정의로 read-only 비교했다. 함수 28개 pg_get_functiondef 해시 차이는 CRLF/공백 형식이며 CR 제거·trim한 prosrc와 속성은 동일하다. closet detail 제약은 괄호 표현만 다르다. RLS 정책/flags 동일. ACL 9개 차이는 기본 NULL과 명시적 postgres/PUBLIC EXECUTE이며 실효 권한 동일. 원격 migration 기록은 개발의 개별 migration과 운영 bootstrap으로 달라 단순 version 일치를 주장하지 않는다.
+- 확인된 실질 차이 1개: 운영 `fitmatch_vnext.product_size_measurements.product_size_measurements_value_chk`는 `raw_value > 0`, 개발은 제거됨. 개발의 0 이하 원본 행 9개, 운영 0개. 양쪽 canonical 함수 2개는 `m.raw_value > 0` 필터 유지. Git migration `20260930225621_preserve_nonpositive_retailer_measurements.sql`은 등록돼 있고 개발에는 적용돼 있다.
+- 운영 DB migration 적용 요청은 자동 승인 검토가 거부했다. 사유: 양수 제약의 영구 제거가 데이터 무결성 검증을 약화시키는 고위험 DDL이고 일반적인 일치화 요청만으로 해당 정확한 변경의 명시 승인이 충분치 않음. 우회하지 않았다. 운영 적용 0건; 사후 read-only 제약 count=1 재확인. 정확한 운영 DDL에 대한 별도 명시 승인이 필요하다.
+- 앱 스토어 준비: 기존 1.1(14) archive는 이전 main `086617f`에서 생성되어 최신 `7be63ed` 산출물이 아니다. 최신 archive/export/Apple Validate/upload/실기기 검증 NOT RUN. 공개 개인정보처리방침·지원 URL 빈 값과 Distribution 재서명은 기존 남은 차단 요소. DB 일치 완료/배포 완료로 판단하지 않는다.
+
 ## 2026-10-02 로컬 변경 QA/main 반영 요청
 
 사용자가 기존 미커밋6개와 미추적548개 전체를 커밋하고 QA 및 main을 최신화하도록 명시적으로 요청했다. 사전 확인에서 원격 QA/main 모두 086617f였고 파일 전체 약22.8MB. 비밀키/JWT/Bearer 패턴 검사는 실제 자격증명 발견 없음. 원본 실측 관련 SQL migration은 Git 등록 대상일 뿐 DB 적용 명령을 실행하지 않는다. 이번 작업은 QA 커밋/푸시 후 main fast-forward/푸시 및 두 원격 HEAD 일치 확인으로 마감한다. 최종 커밋 SHA와 검증 결과는 Git 기록 및 작업 보고 참조.
