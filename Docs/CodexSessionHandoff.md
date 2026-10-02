@@ -1,3 +1,21 @@
+## 2026-10-03 개인정보·지원 공개 페이지 정정 및 앱 링크 연결
+
+- 사용자가 기존 Git의 개인정보처리방침을 찾아 공개 링크 입력 요청. 기존 `privacy.html`/`support.html`은 GitHub Pages에서 HTTP 200이지만 로그인 없음·서버 저장 없음·ZARA 미지원 등 현재 앱과 충돌했다. 두 페이지를 Apple 로그인/Supabase 저장/3개 쇼핑몰/기록 숨김·회원 탈퇴 설명으로 정정했다. 기존 공개 GitHub Issues 문의 경로 유지; 새 개인 이메일/운영자 실명은 제공되지 않아 게시하지 않았다.
+- 앱 `FitMatchPrivacyPolicyURL` 및 `FitMatchSupportURL`에 각각 공개 GitHub Pages HTTPS 경로를 입력. 앱 내 개인정보처리방침 시행일을 웹의 2026-10-03과 맞춤. `FitMatch-Production` Release generic iOS unsigned build exit 0; 빌드 산출물에서 두 URL과 운영 Supabase URL 확인. HTML parse, Info.plist lint, git diff --check, 보호 스크롤 PASS. 실제 공개 페이지의 새 내용은 Git push 및 Pages 반영 후 별도 확인해야 한다.
+- 고객지원에 실제 이메일/전화/주소는 아직 없고 GitHub Issues만 있으므로 Apple의 Support URL 연락처 요건 충족 여부는 미확인. 최신 코드의 새 signed archive/export/Apple Validate/upload/실기기 링크 탭 NOT RUN. 이전 1.1(14) IPA는 변경 전 URL이 비어 있어 제출에 사용하면 안 된다.
+
+## 2026-10-03 운영 IPA 재내보내기 성공 — 공개 URL 대기
+
+- 같은 운영 archive `/private/tmp/FitMatch-main-de4afaa-1.1-14.xcarchive`를 `destination=export`로 재내보내기: `xcodebuild -exportArchive ... -allowProvisioningUpdates` exit 0, `/private/tmp/FitMatch-main-de4afaa-Export-Retry/FitMatch.ipa` 생성. Export summary에 앱·Share Extension 모두 `Cloud Managed Apple Distribution`, Store provisioning profile, Team `Y344H87QC5`, 1.1(14), arm64 확인. 실제 권한의 `codesign --verify --deep --strict` PASS. IPA 앱 Info.plist 운영 Supabase `aqhrupgjpmrtnystottx` 확인.
+- 아래의 이전 `No Accounts`/로컬 Distribution 인증서 부재 차단은 **이번 IPA export에는 더 이상 적용되지 않는다**. 로컬 Keychain에는 여전히 개발 인증서만 보이지만 Xcode의 cloud-managed 배포 서명이 성공했다. 이전 archive 자체가 Development 서명이라는 사실과 export IPA 배포 서명은 구별한다.
+- IPA의 `FitMatchPrivacyPolicyURL`·`FitMatchSupportURL`은 여전히 빈 값. 실제 공개 URL·운영자/지원 연락처 미확정으로 이 IPA는 출시 제출용으로 사용하지 않는다. URL 입력 후 새 archive/export와 검증이 필요하다. Apple Validate·업로드·ASC 처리·실기기 E2E NOT RUN. 이번 작업은 앱/DB/Edge 소스·설정 변경 없음.
+
+## 2026-10-03 App Store 제출 가능 범위 재확인 — 외부 입력 대기
+
+- 현재 로컬 `main` HEAD `aff97054870f459852db48a43eedff01ce9028b8`, 작업 트리 clean 확인. 이 HEAD의 마지막 커밋은 문서만 변경했고 앱 코드 아카이브는 아래 `de4afaa` 산출물이 최신이다. 이번 세션의 Git 원격 조회는 DNS 차단으로 실패했으므로 원격 HEAD 최신 여부는 재확인하지 못했다.
+- 기존 운영 아카이브를 감사 스크립트로 재검사: 번들 ID·버전 1.1(14)·Share Extension·arm64·Privacy Manifest·dSYM 등 PASS; 공개 개인정보처리방침/지원 URL 빈 값과 아카이브 앱/확장 서명 4건 FAIL(exit 1). Keychain을 실제 권한으로 재조회해 Apple Development 1개, Distribution 0개 확인. 이전 IPA export 로그는 `missing Xcode-Token`, `No Accounts`, `No signing certificate iOS Distribution found`로 exit 70이며 IPA 없음. 이번 세션에서 export 재시도·Apple Validate·업로드는 하지 않았다.
+- 공개 운영자/지원 연락처와 실제 HTTPS 페이지가 아직 제공되지 않아 URL을 임의 입력하거나 개인정보 문안을 게시하지 않았다. Xcode 계정 재로그인과 배포 서명은 사용자의 Apple 인증이 필요하다. 앱·DB·Edge 변경 없음; 출시 가능 판정 보류.
+
 ## 2026-10-03 App Store 배포 준비 재점검 — 공개 URL·Apple 서명 대기
 
 - main `f838763` 기준 현 checkout clean에서 시작. `FitMatch-Production` 1.1(14) 최신 코드 아카이브 `/private/tmp/FitMatch-main-de4afaa-1.1-14.xcarchive`(그 후 커밋은 인수인계 문서만 변경)와 앱 운영 URL 확인. `FitMatch/Info.plist` 개인정보·지원 URL은 여전히 빈 값. `fitmatch.app/`, `/privacy`, `/support`는 공개 조회 실패(HTTP 530/접근 불가); 소유권·실제 공개 URL을 추정하지 않음. Apple 공식 기준상 개인정보처리방침과 실제 연락처가 있는 지원 URL이 필수.

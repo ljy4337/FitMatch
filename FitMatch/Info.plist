@@ -36,9 +36,9 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>FitMatchPrivacyPolicyURL</key>
-	<string></string>
+	<string>https://ljy4337.github.io/FitMatch/privacy.html</string>
 	<key>FitMatchSupportURL</key>
-	<string></string>
+	<string>https://ljy4337.github.io/FitMatch/support.html</string>
 	<key>FitMatchSupabaseURL</key>
 	<string>$(FITMATCH_SUPABASE_URL)</string>
 	<key>FitMatchSupabasePublishableKey</key>

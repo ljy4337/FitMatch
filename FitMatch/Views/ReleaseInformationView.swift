@@ -79,7 +79,7 @@ struct FitMatchPrivacyPolicyView: View {
                     .accessibilityIdentifier("privacyPolicyWebLink")
                 }
 
-                Text("시행일: 2026년 8월 20일")
+                Text("시행일: 2026년 10월 3일")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
