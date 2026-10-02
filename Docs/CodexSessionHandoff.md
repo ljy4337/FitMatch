@@ -1,3 +1,9 @@
+## 2026-10-03 GitHub Pages 반영 및 새 운영 IPA 확인
+
+- 공개 정책·지원 페이지 및 앱 링크 변경을 main 커밋 `e29ec1a`로 origin/main 푸시 성공. GitHub Pages 두 URL HTTP 200; privacy 새 시행일/Apple 로그인·Supabase·ZARA 문안, support 새 민감정보 안내와 3개 쇼핑몰 문안 확인. 기존 false 문구는 공개 응답에서 사라졌다.
+- 최신 main `e29ec1a` `FitMatch-Production` Release 아카이브 `/private/tmp/FitMatch-main-e29ec1a-1.1-14.xcarchive` 생성 exit 0, app-store-connect 방식 IPA `/private/tmp/FitMatch-main-e29ec1a-Export/FitMatch.ipa` 내보내기 exit 0. Export summary에서 앱·Share Extension 모두 Cloud Managed Apple Distribution, 1.1(14) 확인; IPA `codesign --verify --deep --strict` PASS. 실제 IPA Info.plist에 공개 privacy/support HTTPS 주소와 운영 Supabase `aqhrupgjpmrtnystottx` 확인.
+- GitHub Issues 외 공개 이메일/전화/주소는 확정되지 않았다. Apple Support URL의 실제 연락처 요건 충족 여부는 보류. App Store Connect의 Privacy Policy URL·Support URL 및 App Privacy 메타데이터 입력은 **미확인/미수행**; Apple Validate·업로드·TestFlight 처리·실기기 E2E NOT RUN. 구 IPA와 archive 서명 감사 결과를 새 IPA의 결과로 혼동하지 않는다.
+
 ## 2026-10-03 개인정보·지원 공개 페이지 정정 및 앱 링크 연결
 
 - 사용자가 기존 Git의 개인정보처리방침을 찾아 공개 링크 입력 요청. 기존 `privacy.html`/`support.html`은 GitHub Pages에서 HTTP 200이지만 로그인 없음·서버 저장 없음·ZARA 미지원 등 현재 앱과 충돌했다. 두 페이지를 Apple 로그인/Supabase 저장/3개 쇼핑몰/기록 숨김·회원 탈퇴 설명으로 정정했다. 기존 공개 GitHub Issues 문의 경로 유지; 새 개인 이메일/운영자 실명은 제공되지 않아 게시하지 않았다.
