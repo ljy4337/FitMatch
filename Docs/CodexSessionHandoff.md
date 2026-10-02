@@ -1,3 +1,10 @@
+## 2026-10-03 App Store 배포 준비 재점검 — 공개 URL·Apple 서명 대기
+
+- main `f838763` 기준 현 checkout clean에서 시작. `FitMatch-Production` 1.1(14) 최신 코드 아카이브 `/private/tmp/FitMatch-main-de4afaa-1.1-14.xcarchive`(그 후 커밋은 인수인계 문서만 변경)와 앱 운영 URL 확인. `FitMatch/Info.plist` 개인정보·지원 URL은 여전히 빈 값. `fitmatch.app/`, `/privacy`, `/support`는 공개 조회 실패(HTTP 530/접근 불가); 소유권·실제 공개 URL을 추정하지 않음. Apple 공식 기준상 개인정보처리방침과 실제 연락처가 있는 지원 URL이 필수.
+- macOS Keychain 읽기에서 Apple Development 인증서 1개, Distribution 인증서 0개. 기존 export options를 `/private/tmp/FitMatchReleaseExportOptions-20261003.plist`에 복사해 destination을 export로 바꾼 뒤 **업로드 없이** `xcodebuild -exportArchive` 시도. exit70, `No Accounts`와 `No signing certificate iOS Distribution found`; IPA 생성/Apple Validate/업로드 NOT RUN. 비밀번호·토큰 입력/보관 없음. Xcode Settings→Accounts 재로그인은 사용자 진행 대기.
+- 개발·운영 Supabase Edge `product-observation` 및 `delete-account` 모두 ACTIVE, verify_jwt=true. 원격 버전·배포물 해시는 달라도 get_edge_function으로 확인한 두 index.ts 소스는 문자 단위 동일. Apple 로그인 제공자 현 설정/실기기 로그인 E2E는 별도 미확인.
+- `Docs/AppStoreSubmissionRunbook-20260806.md`의 과거 1.0(4), 계정 불필요, 수집 없음, ZARA 누락 및 archive 감사 인자 오류를 현재 흐름에 맞게 수정. 실제 공개 운영자·지원 연락처·URL이 없어 앱 설정/웹 게시/ASC 기록은 미변경. 기존 소스·DB·Edge mutation 없음.
+
 ## 2026-10-03 운영 원본 실측 제약 승인 적용 및 DB 일치 사후 확인
 
 - 사용자 명시 승인 후 운영 `aqhrupgjpmrtnystottx`에 `preserve_nonpositive_retailer_measurements` migration 적용 성공. 운영 원격 버전 `20261002150424`, Git 파일은 `supabase/migrations/20260930225621_preserve_nonpositive_retailer_measurements.sql`(개발 원격 버전 `20260930225621`). migration 기록의 버전은 다르며 효과를 실제 정의로 확인했다.
