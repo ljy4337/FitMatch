@@ -1,7 +1,7 @@
 ## 2026-10-02 QA 통합 및 개발환경 테스트 기준
 
-- `sharebtnmodify`의 검토된 5개 커밋(`854ed0b`..`1c09701`)을 로컬 `QA`에 전체 병합한다. 공통 부모 이후 `QA`에는 무신사 0 실측 표시 수정의 별도 커밋 `5d78a42`가 있어 단순 fast-forward가 아니며, `FitMatch Behavior Map.md`의 겹친 설명만 두 흐름을 보존해 해결했다. 원격 푸시 및 최종 SHA는 병합 후 별도 검증한다. `main`은 변경하지 않는다.
-- 다음 Codex 테스트는 반드시 `FitMatch-QA` scheme의 `Debug-QA`(Run/Test) 또는 `Release-QA`(Archive)를 명시하고 개발 Supabase `hnkplvyegonlhumlejst`만 사용한다. `FitMatch-Production` 및 기본 `FitMatch` scheme은 운영 DB `aqhrupgjpmrtnystottx`이므로 QA 테스트에 사용하지 않는다. 브랜치 이름만으로 DB가 바뀌지 않으며 `FITMATCH_SUPABASE_*` 실행 환경 override가 있으면 별도 확인한다.
+- `sharebtnmodify`의 검토된 5개 커밋(`854ed0b`..`1c09701`)을 `QA`의 병합 커밋 `a9f0769`에 전체 반영하고 원격 `QA`로 푸시했다. 공통 부모 이후 `QA`에는 무신사 0 실측 표시 수정의 별도 커밋 `5d78a42`가 있어 단순 fast-forward가 아니며, `FitMatch Behavior Map.md`의 겹친 설명만 두 흐름을 보존해 해결했다. 원격 재조회 시 `QA=a9f0769`, `main=5d78a42`; `main`은 변경하지 않았다.
+- 다음 Codex 테스트는 반드시 `FitMatch-QA` scheme의 `Debug-QA`(Run/Test) 또는 `Release-QA`(Archive)를 명시하고 개발 Supabase `hnkplvyegonlhumlejst`만 사용한다. `FitMatch-Production` 및 기본 `FitMatch` scheme은 운영 DB `aqhrupgjpmrtnystottx`이므로 QA 테스트에 사용하지 않는다. 브랜치 이름만으로 DB가 바뀌지 않으며 `FITMATCH_SUPABASE_*` 실행 환경 override가 있으면 별도 확인한다. 현재 Xcode 창의 선택 스킴은 확인하지 못했다.
 - PASS: `xcodebuild -project FitMatch.xcodeproj -scheme FitMatch-QA -configuration Debug-QA -showBuildSettings`에서 앱 ID `com.ljy4337.fitmatch.qa`, 개발 URL `https://hnkplvyegonlhumlejst.supabase.co` 확인. 현재 shell의 `FITMATCH_SUPABASE_*` override 없음. QA 빌드는 소스 컴파일 후 universal binary 결합 시 `/tmp` 디스크 여유 부족으로 exit 65 (`No space left on device`); BUILD PASS 아님. 이 작업이 만든 `/tmp/FitMatchQAMergeBuild`만 제거했다. 병합은 DB/Edge write나 인증된 상품·옷장·비교 E2E를 수행하지 않는다.
 
 ## 2026-10-02 온보딩 후 등록 진입 UI 테스트 보정 (로컬 미커밋)
