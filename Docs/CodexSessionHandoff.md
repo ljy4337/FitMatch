@@ -1,3 +1,11 @@
+## 2026-10-03 운영 원본 실측 제약 승인 적용 및 DB 일치 사후 확인
+
+- 사용자 명시 승인 후 운영 `aqhrupgjpmrtnystottx`에 `preserve_nonpositive_retailer_measurements` migration 적용 성공. 운영 원격 버전 `20261002150424`, Git 파일은 `supabase/migrations/20260930225621_preserve_nonpositive_retailer_measurements.sql`(개발 원격 버전 `20260930225621`). migration 기록의 버전은 다르며 효과를 실제 정의로 확인했다.
+- 적용 대상은 `fitmatch_vnext.product_size_measurements.product_size_measurements_value_chk` 제거 1건. 사전 제약 1/두 canonical 양수 필터 true; 사후 운영 제약 0/두 필터 true/0 이하 저장행 0. 개발 제약 0/두 필터 true/0 이하 원본 9행. 운영 기존 데이터 삭제·수정 0건.
+- 개발/운영 `fitmatch_vnext`, `fitmatch_catalog`, `public`의 관계·컬럼·인덱스·제약·함수 본문/속성·RLS 정책·일반 트리거를 재비교: 개발 1173/운영 1174 객체, 정규화 정의 차이는 운영에만 있는 `public.rls_auto_enable()` 1개. 이 함수는 운영의 `ensure_rls` event trigger와 연결돼 새 public 테이블의 RLS를 켠다. 플랫폼/운영 보안 보호이므로 제거하지 않았다. 앱 소유 객체의 확인된 실질 구조·정책 차이는 0건. 원격 migration history가 동일하다는 주장은 하지 않는다.
+- 운영 Supabase security advisors 조회 성공: INFO `rls_enabled_no_policy` 14, WARN `anon_security_definer_function_executable` 1, WARN `authenticated_security_definer_function_executable` 4, WARN `auth_leaked_password_protection` 1. 이번 migration과 인과관계는 확인하지 않았고 보안 설정 변경도 하지 않았다. 참고: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable , https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable .
+- 최신 main 운영 아카이브는 이전 기록대로 1.1(14) 생성 PASS, 공개 개인정보/지원 URL과 Distribution 서명 감사 FAIL. IPA export/Apple Validate/upload/실기기 E2E NOT RUN. DB 구조 일치가 앱스토어 배포 완료를 의미하지 않는다.
+
 ## 2026-10-02 main 전환 및 개발/운영 DB 정책·구조 일치 감사
 
 - 로컬 기본 checkout을 QA에서 main으로 전환했다. 시작 기준 main/QA/origin 모두 `7be63edcc9985cdc268d406fe767d8972511c571`; 임시 main worktree는 깨끗한 상태에서 제거했다. 브랜치명과 앱 연결 DB 스킴은 별개이며 배포는 FitMatch-Production/Release 구성을 사용해야 한다.
