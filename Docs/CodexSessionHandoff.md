@@ -4,7 +4,7 @@
 - Supabase 개발 `hnkplvyegonlhumlejst`, 운영 `aqhrupgjpmrtnystottx` 모두 ACTIVE_HEALTHY. fitmatch_vnext의 테이블/컬럼/인덱스/제약/함수/정책/트리거와 public FitMatch 함수를 각 914/915개 객체 정의로 read-only 비교했다. 함수 28개 pg_get_functiondef 해시 차이는 CRLF/공백 형식이며 CR 제거·trim한 prosrc와 속성은 동일하다. closet detail 제약은 괄호 표현만 다르다. RLS 정책/flags 동일. ACL 9개 차이는 기본 NULL과 명시적 postgres/PUBLIC EXECUTE이며 실효 권한 동일. 원격 migration 기록은 개발의 개별 migration과 운영 bootstrap으로 달라 단순 version 일치를 주장하지 않는다.
 - 확인된 실질 차이 1개: 운영 `fitmatch_vnext.product_size_measurements.product_size_measurements_value_chk`는 `raw_value > 0`, 개발은 제거됨. 개발의 0 이하 원본 행 9개, 운영 0개. 양쪽 canonical 함수 2개는 `m.raw_value > 0` 필터 유지. Git migration `20260930225621_preserve_nonpositive_retailer_measurements.sql`은 등록돼 있고 개발에는 적용돼 있다.
 - 운영 DB migration 적용 요청은 자동 승인 검토가 거부했다. 사유: 양수 제약의 영구 제거가 데이터 무결성 검증을 약화시키는 고위험 DDL이고 일반적인 일치화 요청만으로 해당 정확한 변경의 명시 승인이 충분치 않음. 우회하지 않았다. 운영 적용 0건; 사후 read-only 제약 count=1 재확인. 정확한 운영 DDL에 대한 별도 명시 승인이 필요하다.
-- 앱 스토어 준비: 기존 1.1(14) archive는 이전 main `086617f`에서 생성되어 최신 `7be63ed` 산출물이 아니다. 최신 archive/export/Apple Validate/upload/실기기 검증 NOT RUN. 공개 개인정보처리방침·지원 URL 빈 값과 Distribution 재서명은 기존 남은 차단 요소. DB 일치 완료/배포 완료로 판단하지 않는다.
+- 앱 스토어 준비: 최신 main `de4afaa`에서 FitMatch-Production/Release 1.1(14) archive `/private/tmp/FitMatch-main-de4afaa-1.1-14.xcarchive` 생성 PASS (`xcodebuild archive` exit 0), 번들 운영 URL `https://aqhrupgjpmrtnystottx.supabase.co` 확인. `scripts/audit-app-store-archive.sh` exit 1/4건: 공개 개인정보처리방침·지원 URL 빈 값, 앱·확장 Distribution 서명 미적용. `/private/tmp/FitMatch-main-de4afaa-audit.log`. export/Apple Validate/upload/실기기 검증 NOT RUN. DB 일치 완료/배포 완료로 판단하지 않는다.
 
 ## 2026-10-02 로컬 변경 QA/main 반영 요청
 
