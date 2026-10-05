@@ -87,4 +87,3 @@ assert.equal((await context(null)).target_comparison_group.source,'RETAILER_CATE
 assert.deepEqual(await permissions(),initialPermissions);
 await db.close();
 console.log('PASS: real context SQL provenance, unmapped/session, stale fingerprint, safety rejects, unchanged mapped response/ACL and rollback. Isolated dependency fixtures; no authenticated E2E.');
-
