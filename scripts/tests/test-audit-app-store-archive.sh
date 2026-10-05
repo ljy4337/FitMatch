@@ -35,6 +35,14 @@ grep -q 'PASS: app build number' "$tmp/output"
 grep -q 'PASS: share extension marketing version' "$tmp/output"
 grep -q 'PASS: share extension build number' "$tmp/output"
 grep -q 'FAIL: app signature' "$tmp/output"
+grep -q 'FAIL: app icon asset name' "$tmp/output"
+/usr/libexec/PlistBuddy -c "Add :CFBundleIcons dict" "$app/Info.plist"
+/usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon dict" "$app/Info.plist"
+/usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName string AppIcon" "$app/Info.plist"
+run "$archive" 2.3 19
+[[ $result == 1 ]]
+grep -q 'PASS: app icon asset name' "$tmp/output"
+grep -q 'FAIL: app signature' "$tmp/output"
 run "$archive" 2.4 20
 [[ $result == 1 ]]
 grep -q 'FAIL: app marketing version' "$tmp/output"
@@ -45,4 +53,4 @@ run "$archive" 2.3 19
 grep -q 'PASS: app marketing version' "$tmp/output"
 grep -q 'FAIL: share extension marketing version' "$tmp/output"
 grep -q 'FAIL: share extension build number' "$tmp/output"
-echo 'PASS: 6 archive argument/version cases; synthetic archive remains rejected'
+echo 'PASS: 7 archive argument/version/icon cases; synthetic archive remains rejected'
