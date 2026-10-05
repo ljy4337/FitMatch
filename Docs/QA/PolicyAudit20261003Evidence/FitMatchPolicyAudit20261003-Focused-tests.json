@@ -1,0 +1,446 @@
+{
+  "devices" : [
+    {
+      "architecture" : "x86_64",
+      "deviceId" : "03BAF093-552E-4E53-ABFB-7DE0653BE676",
+      "deviceName" : "iPhone 17 Pro",
+      "modelName" : "iPhone 17 Pro",
+      "osBuildNumber" : "23D8133",
+      "osVersion" : "26.3.1",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "name" : "duplicateServerRowsRejectInsteadOfTrappingOrChoosingFirst()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/duplicateServerRowsRejectInsteadOfTrappingOrChoosingFirst()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateServerRowsRejectInsteadOfTrappingOrChoosingFirst()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "exactEnvelopePreservesServerOrderAndLegacyFacts()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/exactEnvelopePreservesServerOrderAndLegacyFacts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/exactEnvelopePreservesServerOrderAndLegacyFacts()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "previewCannotBelongToAnotherProductOrBypassExactCandidateMembership()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/previewCannotBelongToAnotherProductOrBypassExactCandidateMembership()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/previewCannotBelongToAnotherProductOrBypassExactCandidateMembership()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "emptyCandidateListRemainsValid()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/emptyCandidateListRemainsValid()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/emptyCandidateListRemainsValid()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "differentProductIsRejected()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/differentProductIsRejected()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/differentProductIsRejected()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "differentVariantIsRejected()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/differentVariantIsRejected()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/differentVariantIsRejected()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "duplicateSelectableCandidateIsRejected()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/duplicateSelectableCandidateIsRejected()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateSelectableCandidateIsRejected()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "candidateCannotAlsoBeBlocked()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/candidateCannotAlsoBeBlocked()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/candidateCannotAlsoBeBlocked()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "duplicateBlockedCandidateIsRejected()",
+                  "nodeIdentifier" : "FitMatchCandidateEnvelopeTests/duplicateBlockedCandidateIsRejected()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests/duplicateBlockedCandidateIsRejected()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchCandidateEnvelopeTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchCandidateEnvelopeTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "name" : "emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "candidateHandoffRejectsAnotherProductsAuthority()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/candidateHandoffRejectsAnotherProductsAuthority()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateHandoffRejectsAnotherProductsAuthority()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "requestedComparisonGroupResponseRetainsServerAuthorityContext()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/requestedComparisonGroupResponseRetainsServerAuthorityContext()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/requestedComparisonGroupResponseRetainsServerAuthorityContext()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "cancellingProductContextClearsRequestedComparisonGroup()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/cancellingProductContextClearsRequestedComparisonGroup()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/cancellingProductContextClearsRequestedComparisonGroup()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "locallyEditedReferenceCannotReuseStaleServerAuthorization()",
+                  "nodeIdentifier" : "FitMatchServerAuthorityIntegrationTests/locallyEditedReferenceCannotReuseStaleServerAuthorization()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests/locallyEditedReferenceCannotReuseStaleServerAuthorization()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchServerAuthorityIntegrationTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchServerAuthorityIntegrationTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "1초",
+                  "durationInSeconds" : 1,
+                  "name" : "suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()",
+                  "nodeIdentifier" : "FitMatchSupabaseProductResolverTests/suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchSupabaseProductResolverTests/suppliedUnmappedProductsRouteToExplicitGroupSelectionWithoutServerError()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()",
+                  "nodeIdentifier" : "FitMatchSupabaseProductResolverTests/closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchSupabaseProductResolverTests/closetComparisonGroupPayloadOmitsAutomaticGroupAndKeepsExplicitChoices()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchSupabaseProductResolverTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchSupabaseProductResolverTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "name" : "completedReplayReliabilityAcceptsOnlyDocumentedFormulas()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/completedReplayReliabilityAcceptsOnlyDocumentedFormulas()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/completedReplayReliabilityAcceptsOnlyDocumentedFormulas()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "retailerExactV2ContractRequiresExactUnscoredSemanticIdentity()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/retailerExactV2ContractRequiresExactUnscoredSemanticIdentity()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/retailerExactV2ContractRequiresExactUnscoredSemanticIdentity()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "runtimeDTOSeparatesGarmentAndAllLengthAxes()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/runtimeDTOSeparatesGarmentAndAllLengthAxes()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/runtimeDTOSeparatesGarmentAndAllLengthAxes()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "observationSizePreservesRetailerAvailabilityEvidence()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/observationSizePreservesRetailerAvailabilityEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/observationSizePreservesRetailerAvailabilityEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineScoresOnlyExactAuthorizedCandidateSetAndRanksDeterministically()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/serverListPreviewMatchesDetailAndNeverUsesWrongTargetEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "detailReusesPreviewArithmeticButStillRejectsDeniedBegin()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/detailReusesPreviewArithmeticButStillRejectsDeniedBegin()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/detailReusesPreviewArithmeticButStillRejectsDeniedBegin()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/scoreCacheInvalidatesChangedEvidenceWeightsAndMinimum()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/availabilityAndExpiryNeverChangeAuthorizedCandidateScoring()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineKeepsServerDesignAxisExclusionsAsTypedPresentationEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/differentSleeveBasisAddsExplanationWithoutChangingScoresOrEvidence()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "eligibleCandidateDTOKeepsStableBlockedReasonCode()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/eligibleCandidateDTOKeepsStableBlockedReasonCode()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/eligibleCandidateDTOKeepsStableBlockedReasonCode()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineAcceptsEveryActiveServerCanonicalMetricCode()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineAcceptsEveryActiveServerCanonicalMetricCode()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineAcceptsEveryActiveServerCanonicalMetricCode()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineRejectsSnapshotCandidateSetMismatchBeforeScoring()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineRejectsSnapshotCandidateSetMismatchBeforeScoring()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineRejectsSnapshotCandidateSetMismatchBeforeScoring()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "name" : "engineRejectsBlockedAuthorizationBeforeScoring()",
+                  "nodeIdentifier" : "FitMatchVNextContractTests/engineRejectsBlockedAuthorizationBeforeScoring()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests/engineRejectsBlockedAuthorizationBeforeScoring()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchVNextContractTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests/FitMatchVNextContractTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "FitMatchTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Passed"
+        },
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "duration" : "26초",
+                  "durationInSeconds" : 26.663987040519714,
+                  "name" : "test02MusinsaFactsStayVisibleWithoutServerRegistrationAuthority()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test02MusinsaFactsStayVisibleWithoutServerRegistrationAuthority()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test02MusinsaFactsStayVisibleWithoutServerRegistrationAuthority",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "23초",
+                  "durationInSeconds" : 23.251188039779663,
+                  "name" : "test03UniqloFactsStayVisibleWithoutServerRegistrationAuthority()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test03UniqloFactsStayVisibleWithoutServerRegistrationAuthority()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test03UniqloFactsStayVisibleWithoutServerRegistrationAuthority",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "16초",
+                  "durationInSeconds" : 16.990224957466125,
+                  "name" : "test04ManualRegistrationRemainsAvailableAfterGuide()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test04ManualRegistrationRemainsAvailableAfterGuide()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test04ManualRegistrationRemainsAvailableAfterGuide",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "18초",
+                  "durationInSeconds" : 18.348171949386597,
+                  "name" : "test05NextPersistsOnboardingCompletionAcrossRelaunch()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test05NextPersistsOnboardingCompletionAcrossRelaunch()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test05NextPersistsOnboardingCompletionAcrossRelaunch",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "7초",
+                  "durationInSeconds" : 7.39884889125824,
+                  "name" : "test06UnownedSeedDataDoesNotLeakIntoTheTestAccount()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test06UnownedSeedDataDoesNotLeakIntoTheTestAccount()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test06UnownedSeedDataDoesNotLeakIntoTheTestAccount",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "24초",
+                  "durationInSeconds" : 24.01180601119995,
+                  "name" : "test07RepeatedLoadCannotReportSaveWithoutServerAuthority()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test07RepeatedLoadCannotReportSaveWithoutServerAuthority()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test07RepeatedLoadCannotReportSaveWithoutServerAuthority",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "Initial session emitted after attempting to refresh the local stored session.\nThis is incorrect behavior and will be fixed in the next major release since it's a breaking change.\nTo opt-in to the new behavior now, set `emitLocalSessionAsInitialSession: true` in your AuthClient configuration.\nThe new behavior ensures that the locally stored session is always emitted, regardless of its validity or expiration.\nIf you rely on the initial session to opt users in, you need to add an additional check for `session.isExpired` in the session.\n\nCheck https://github.com/supabase/supabase-swift/pull/822 for more information.",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "7초",
+                  "durationInSeconds" : 7.394382953643799,
+                  "name" : "test08SignedOutRootShowsLoginBeforeOnboarding()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/test08SignedOutRootShowsLoginBeforeOnboarding()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/test08SignedOutRootShowsLoginBeforeOnboarding",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "19초",
+                  "durationInSeconds" : 19.40139091014862,
+                  "name" : "testFourGuidePagesHaveOnlyNextAndFinish()",
+                  "nodeIdentifier" : "FitMatchOnboardingUITests/testFourGuidePagesHaveOnlyNextAndFinish()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests/testFourGuidePagesHaveOnlyNextAndFinish",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchOnboardingUITests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchOnboardingUITests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "19초",
+                  "durationInSeconds" : 19.683905005455017,
+                  "name" : "testCurrentOnboardingNextReachHome()",
+                  "nodeIdentifier" : "FitMatchReleaseCurrentUIAuditTests/testCurrentOnboardingNextReachHome()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentOnboardingNextReachHome",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "15초",
+                  "durationInSeconds" : 15.714738965034485,
+                  "name" : "testCurrentTabsAndPrivacySupportNavigation()",
+                  "nodeIdentifier" : "FitMatchReleaseCurrentUIAuditTests/testCurrentTabsAndPrivacySupportNavigation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testCurrentTabsAndPrivacySupportNavigation",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "12초",
+                  "durationInSeconds" : 12.884895920753479,
+                  "name" : "testLinkedClosetEmptyInputCannotLoadOrAdvance()",
+                  "nodeIdentifier" : "FitMatchReleaseCurrentUIAuditTests/testLinkedClosetEmptyInputCannotLoadOrAdvance()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testLinkedClosetEmptyInputCannotLoadOrAdvance",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "11초",
+                  "durationInSeconds" : 11.958680987358093,
+                  "name" : "testMalformedComparisonLinkShowsActionableMessage()",
+                  "nodeIdentifier" : "FitMatchReleaseCurrentUIAuditTests/testMalformedComparisonLinkShowsActionableMessage()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchReleaseCurrentUIAuditTests/testMalformedComparisonLinkShowsActionableMessage",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "FitMatchReleaseCurrentUIAuditTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests/FitMatchReleaseCurrentUIAuditTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "FitMatchUITests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/FitMatch/FitMatchUITests",
+          "nodeType" : "UI test bundle",
+          "result" : "Passed"
+        }
+      ],
+      "name" : "FitMatch-QA",
+      "nodeType" : "Test Plan",
+      "result" : "Passed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

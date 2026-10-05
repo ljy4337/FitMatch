@@ -40,11 +40,14 @@ Verification status must be PASS, FAIL, NOT RUN, or BLOCKED. Never describe skip
 - `FitMatch Behavior Map.md`: primary flow/RPC navigation. Start with the relevant Flow ID and its READ FIRST owners before broader searches.
 - `FitMatch Swift Feature Map.md`: supplementary detailed Swift ownership; read only relevant sections.
 - `Docs/FitMatchMeasurementPolicy.md`: authoritative product policy for retailer measurement display, persistence, measurement identity, and comparison selection.
+- `Docs/FitMatchReleaseGate.md`: branch promotion, required release verification, evidence levels, and result interpretation.
 - `Docs/CodexSessionHandoff.md`: current implementation state, recent product decisions, Production changes, and unresolved issues.
 
 At the start of every new session, read the current-state portion of `Docs/CodexSessionHandoff.md` completely before changing code. Before finishing meaningful work, update it with actual changes, decisions, tests/builds run, unverified areas, and remaining issues. Preserve history and mark superseded policy explicitly. Never describe prepared SQL as applied or unexecuted work as passed.
 
 ## Architecture and Product Authority
+
+Current approved FitMatch policy takes precedence over superseded legacy behavior. Develop against currently supported retailer API behavior; do not add speculative abstractions, defenses, or inference fallbacks solely for possible future API changes. Preserve validation and explicit handling of currently observed failures.
 
 Retailer parsers provide retailer facts, not a second FitMatch policy engine. For server-authoritative flows, server/database results are authoritative; Swift transports, validates, adapts, persists, and presents them. Required missing, null, empty, unknown, malformed, or mismatched values must fail closed or enter explicit recovery. Never use local inference, first-item selection, visible labels, or defaults to replace required server authority.
 
@@ -53,6 +56,8 @@ For any Closet registration or product-comparison work involving measurements, r
 FitMatch comparison groups and active group policy are the current comparison authority. Detailed garment classification is not a primary Closet-registration or readiness gate. Do not reintroduce superseded detailed-category gating or fabricate a confirmed group.
 
 The old Reference Garment concept is deprecated as product/UX policy. Do not create automatic reference selection, require a permanent reference, restore its UX, or treat legacy `reference*` names as current policy. The current flow uses comparison groups and user-selectable Closet candidates.
+
+Never automatically select a Closet item to generate a detailed comparison result. A user-selected exact Closet identity and fresh server authorization remain required. Compatible legacy names alone do not justify refactoring.
 
 Preserve original retailer facts and measurements separately from FitMatch canonical/group data. Never substitute product, variant, size, local, historical, or another Closet identity for the exact server/user-selected identity.
 
@@ -69,6 +74,12 @@ Before any Supabase/database write, migration, destructive SQL, RPC mutation, or
 Never commit credentials, tokens, keys, passwords, or secrets. Redact them from output and use existing environment/secret mechanisms.
 
 ## Git and Working Tree Safety
+
+`connectDB` is retired as a development baseline. Start every new development or bug fix on a work branch created from the latest `main`; use purpose-specific names such as `feature/...`, `fix/...`, `refactor/...`, `release/...`, or `docs/...`. Do not develop features directly on `main` or `QA`. Preserve existing dirty work; use an isolated checkout when switching would mix or overwrite it.
+
+`main` is the deployable baseline. `QA` integrates work branches for verification. Standard flow: latest main -> work branch -> branch verification -> QA integration -> required Release Gate PASS -> verified change set promoted to main. Fix QA-discovered defects on a work branch and integrate them again. Do not promote unverified feature code. Verify the final source combination being promoted; conflict resolutions or changed combinations require affected checks to run again.
+
+If main advances ahead of QA, synchronize QA with main before starting the next development task, using an authorized normal merge without dropping QA-only changes. Aim for main == QA when no development is pending. Branch names do not select a database; QA tests must explicitly use FitMatch-QA and the development environment described in Docs/FitMatchBuildEnvironments.md.
 
 At the start of editing, inspect `git status --short --branch`. Never force-push, rewrite history, commit, push, merge, switch branches, pull/rebase, reset, or stash unless required and authorized. Inspect overlapping diffs before editing and preserve unrelated changes.
 
@@ -95,6 +106,8 @@ fi
 If unauthorized protected behavior changes are required, stop and report the conflict.
 
 ## Verification and Review
+
+Follow Docs/FitMatchReleaseGate.md for release verification. Required FAIL, BLOCKED, or NOT RUN never counts as overall PASS. Past test totals are historical evidence, not verification of the current source. Fix the A-E acceptance scope before execution; do not expand release requirements into every possible input/screen/provider combination.
 
 Use the narrowest meaningful verification. For Swift changes, run focused tests/builds and `git diff --check` when practical. For server changes, validate DTO/contract assumptions and use read-only Production postflight. Do not invent schemes, destinations, environments, or test targets. Report PASS, FAIL, NOT RUN, or BLOCKED accurately.
 
