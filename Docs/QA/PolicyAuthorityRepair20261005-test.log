@@ -1,0 +1,1 @@
+PASS: real context SQL provenance, unmapped/session, stale fingerprint, safety rejects, unchanged mapped response/ACL and rollback. Isolated dependency fixtures; no authenticated E2E.

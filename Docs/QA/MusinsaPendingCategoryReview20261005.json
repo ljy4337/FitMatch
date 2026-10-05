@@ -1,0 +1,797 @@
+{
+  "status": "BLOCKED",
+  "reason": "Live official details API returned HTTP 403; browser API navigation ERR_BLOCKED_BY_CLIENT. Category page alone does not verify parser/API exact category.",
+  "runtimePolicyUnchanged": true,
+  "newPaths": 53,
+  "aliasOnly": 1,
+  "candidates": [
+    {
+      "group_code": "A",
+      "source_category_key": "musinsa:017016001",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "니트/스웨터"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "A",
+      "source_category_key": "musinsa:017016006",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "피케/카라 티셔츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "A",
+      "source_category_key": "musinsa:017016007",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "후드 티셔츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "A",
+      "source_category_key": "musinsa:017016008",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "기타상의"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "A",
+      "source_category_key": "musinsa:017016011",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "유니폼"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002004",
+      "category_path": [
+        "아우터",
+        "스타디움 재킷"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002009",
+      "category_path": [
+        "아우터",
+        "겨울 기타 코트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002013",
+      "category_path": [
+        "아우터",
+        "롱패딩/헤비 아우터"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002024",
+      "category_path": [
+        "아우터",
+        "겨울 더블 코트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002025",
+      "category_path": [
+        "아우터",
+        "무스탕/퍼"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:002027002",
+      "category_path": [
+        "아우터",
+        "경량 패딩/패딩 베스트",
+        "패딩 베스트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018001",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "베스트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018006",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "스타디움 재킷"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018007",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "아노락 재킷"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018008",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "트레이닝 재킷"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018010",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "카디건"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018011",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "레인코트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018015",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "하프 패딩/하프 헤비 아우터"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018017",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "유니폼"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018018",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "패딩 베스트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "B",
+      "source_category_key": "musinsa:017018019",
+      "category_path": [
+        "스포츠/레저",
+        "아우터",
+        "블레이저"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:003004",
+      "category_path": [
+        "바지",
+        "트레이닝/조거 팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:003005",
+      "category_path": [
+        "바지",
+        "레깅스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:003006",
+      "category_path": [
+        "바지",
+        "기타 하의"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:003008",
+      "category_path": [
+        "바지",
+        "슈트 팬츠/슬랙스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": true
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:003009",
+      "category_path": [
+        "바지",
+        "숏 팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020001",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "기타 바지"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020002",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "숏팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020003",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "조거 팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020004",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "트레이닝 팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020006",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "유니폼"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020007",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "레깅스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "C",
+      "source_category_key": "musinsa:017020012",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "일자 팬츠"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "D",
+      "source_category_key": "musinsa:017017002",
+      "category_path": [
+        "스포츠/레저",
+        "스커트",
+        "미니스커트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "D",
+      "source_category_key": "musinsa:017017003",
+      "category_path": [
+        "스포츠/레저",
+        "스커트",
+        "미디스커트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "D",
+      "source_category_key": "musinsa:100004",
+      "category_path": [
+        "원피스/스커트",
+        "미니스커트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "D",
+      "source_category_key": "musinsa:100005",
+      "category_path": [
+        "원피스/스커트",
+        "미디스커트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "D",
+      "source_category_key": "musinsa:100006",
+      "category_path": [
+        "원피스/스커트",
+        "롱스커트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:003010",
+      "category_path": [
+        "바지",
+        "점프 슈트/오버올"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:017019002",
+      "category_path": [
+        "스포츠/레저",
+        "원피스",
+        "미니 원피스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:017019003",
+      "category_path": [
+        "스포츠/레저",
+        "원피스",
+        "미디 원피스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:017020005",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "점프 슈트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:017020011",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "오버롤"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:100001",
+      "category_path": [
+        "원피스/스커트",
+        "미니원피스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:100002",
+      "category_path": [
+        "원피스/스커트",
+        "미디원피스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "E",
+      "source_category_key": "musinsa:100003",
+      "category_path": [
+        "원피스/스커트",
+        "맥시원피스"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:017016009",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "브라탑"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:017016010",
+      "category_path": [
+        "스포츠/레저",
+        "상의",
+        "언더레이어"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:017020010",
+      "category_path": [
+        "스포츠/레저",
+        "하의",
+        "언더레이어"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:026001",
+      "category_path": [
+        "속옷/홈웨어",
+        "여성 속옷 상의"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:026002",
+      "category_path": [
+        "속옷/홈웨어",
+        "여성 속옷 하의"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:026003",
+      "category_path": [
+        "속옷/홈웨어",
+        "여성 속옷 세트"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "F",
+      "source_category_key": "musinsa:026004",
+      "category_path": [
+        "속옷/홈웨어",
+        "남성 속옷"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    },
+    {
+      "group_code": "G",
+      "source_category_key": "musinsa:026005",
+      "category_path": [
+        "속옷/홈웨어",
+        "홈웨어"
+      ],
+      "mapping_basis": "Seven-group category mapping; stored dictionary checked 2026-09-14; live API NOT revalidated",
+      "notes": [
+        "Category grouping only: COMPARABLE does not authorize every product/measurement pair.",
+        "Live API and product-level regression are required before activation."
+      ],
+      "existing_path_same_group": false
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-05",
+  "authorization": "User approved scoped Production function application via '해' after exact scope explanation.",
+  "target": "aqhrupgjpmrtnystottx",
+  "environment": "Production",
+  "migration": "repair_comparison_group_provenance",
+  "localMigration": "20261005095057_repair_comparison_group_provenance.sql",
+  "apply": "APPLIED",
+  "receipt": [
+    {
+      "version": "20261005105711",
+      "name": "repair_comparison_group_provenance"
+    }
+  ],
+  "before": {
+    "definition_hash": "653383c60fe7336c529b267b1cb4eac3",
+    "reads_actual_mapping_source": false,
+    "rejects_unknown_source": false,
+    "removed_wrong_default": false,
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "prosecdef": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "owner": "postgres",
+    "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": true
+  },
+  "after": {
+    "definition_hash": "64fa01b9fdba8224476bf0bb51d4f6bc",
+    "reads_actual_mapping_source": true,
+    "rejects_unknown_source": true,
+    "removed_wrong_default": true,
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "prosecdef": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "owner": "postgres",
+    "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": true
+  },
+  "development": {
+    "definition_hash": "64fa01b9fdba8224476bf0bb51d4f6bc",
+    "reads_actual_mapping_source": true,
+    "rejects_unknown_source": true,
+    "removed_wrong_default": true,
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "prosecdef": true,
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "owner": "postgres",
+    "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": true
+  },
+  "verification": {
+    "isolatedSQLRegression": "PASS",
+    "deployedDefinitionAndPrivilegeChecks": "PASS",
+    "authenticatedRegistrationComparisonE2E": "NOT RUN"
+  },
+  "userRowDML": 0,
+  "gitPromotion": "NOT RUN"
+}
