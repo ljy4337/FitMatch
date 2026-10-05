@@ -1,5 +1,14 @@
 # FitMatch Docs
 
+## 현행 기준
+
+- `../AGENTS.md`: 안정적인 개발·브랜치·안전 규칙.
+- `FitMatchReleaseGate.md`: 핵심 A-E 검증과 증거 계층·QA 승격 기준.
+- `FitMatchMeasurementPolicy.md`: 현행 실측 표시·저장·비교 정책.
+- `CodexSessionHandoff.md`: 최신 실제 작업·검증·DB 적용 상태.
+- `../FitMatch Behavior Map.md`, `../FitMatch Swift Feature Map.md`: 코드/흐름 탐색.
+- `FitMatchMarkdownInventory.md`: Git 추적 문서와 로컬 문서의 전체 경로 목록. 추적 여부는 현행 정책 승인 여부를 의미하지 않는다.
+
 작성일: 2026-07-07
 
 이 폴더는 FitMatch의 제품 방향, 개발 결정, 아키텍처, 백로그, 릴리즈 기록을 보관한다.

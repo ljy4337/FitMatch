@@ -4,6 +4,8 @@ This document is repository navigation for coding agents. It is not a chronologi
 
 Start with the relevant Flow ID in `FitMatch Behavior Map.md`; use this file for deeper Swift ownership.
 
+Branch promotion and release evidence: `Docs/FitMatchReleaseGate.md`. Stable branch rules: `AGENTS.md`. This map does not declare tests passed.
+
 Use it selectively:
 
 • Consult the relevant section before broad repository searches.

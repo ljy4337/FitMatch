@@ -1,3 +1,71 @@
+## 2026-10-05 배포 직전 준비 재개 — QA 통합 및 현시점 검증 예정
+- 사용자 모든 작업 완료/배포 직전 준비 요청. 기존 docs/SQL/asset worktree의 관련 변경을 종류별 검토 후 QA에 통합하고 현재 조합으로 검증한다. 필수 Gate 미통과 상태에서 main 승격하지 않으며 업로드/심사 제출은 하지 않는다. 기존 사용자 데이터/dirty 작업 보존, 추가 운영 쓰기0.
+- 단일 scripts/fitmatch_release_gate.py 추가: 기존 runner/실제 QA Xcode/3사 live parser/정상 인증 Swift 및 fixture UI를 재사용. QA clean HEAD/보호scroll/원본hash/DB대상/필수 누락·skip·unknown 검사. 인증 A-E 화면 여정은 기존 helper만으로 증명 불가하여 명시 BLOCKED. 테스트 먼저4개 FAIL 후 구현/기존 합계45개 PASS, archive auditor7case PASS. 신규 Gate의 QA 통합 실행은 아직 NOT RUN.
+- 현재 shell QA credential 변수0 및 /private/tmp의 준비 sessions.env0. 기존 개인세션/Keychain 추출 및 인증 우회0. 정상 전용QA 로그인 절차를 사용자에게 요청했으며, 비밀번호/토큰 채팅 요청0. 따라서 현재 인증등록·비교A-E 검증과 Gate PASS/main승격은 BLOCKED. 독립 빌드/서명·export 준비는 계속 수행 가능하되 candidate와 배포main을 구분한다.
+- ReleaseGate 문서의 잘못된 QA/ 상대참조를 실제 Docs/QA/ 경로로 수정. DB provenance 개발/운영 적용은 아래 완료기록을 유지하며 재적용하지 않는다. 무신사 미검증 초안 신규 mapping은 자동 활성화하지 않는다.
+
+## 2026-10-05 운영 그룹 출처 함수 승인 적용 완료
+- 사용자가 대상/범위를 설명받은 후 '해'로 운영 적용 승인. 운영 aqhrupgjpmrtnystottx/FitMatch_PROD ACTIVE_HEALTHY 재확인, 사전 실제함수 구버전hash/원래ACL 확인 및 동일migration기록0 확인 후 기존 검증SQL repair_comparison_group_provenance 적용 success=true. 운영 remote migration version 20261005105711; 로컬파일 20261005095057은 별도버전. 개발기존적용 재실행0.
+- 적용한 것은 fitmatch_vnext.comparison_target_context(uuid,uuid,text)의 mapping_source 검증/출처 보존 수정만. group/점수/정책/UI/사용자row DML0, 기존완료History 재작성0. USER session선택 출처 유지. PRODUCT_OVERRIDE의 이전 in-flight authority는 fresh 조회/authorization 필요. 아래 운영미적용/승인대기 기록은 역사이며 이번단계로 해소.
+- PASS: 현시점 격리SQL회귀 및 운영 pg_get_functiondef 해시 64fa01b9fdba8224476bf0bb51d4f6bc/3개수정flag=true, 개발과 완전동일. 원래owner/postgres·signature·ACL·SECURITY DEFINER·빈search_path·anon false/authenticated true/service_role true 유지. 원격ledger도 확인. 증거 Docs/QA/ProductionProvenanceApplied20261005.json. NOT RUN: 인증앱등록/비교E2E(관리자SELECT를사용자성공으로확대하지않음).
+- 운영securityadvisors조회: 기존 INFO RLS무정책14/anonymous SECURITY DEFINER1/authenticated SECURITY DEFINER4/누출비번보호disabled1 경고 남음. 이번 private함수는 exposed경고목록에없고 권한변경0; 별개미해결경고를이번수정으로해결했다고하지않음. commit/push/QA/main승격0. 이미지수정은여전히별도workbranch/main미반영.
+
+## 2026-10-05 이미지 참조 수정 및 실제 빌드 검증 — main 승격/운영 적용 대기
+- 사용자의 수정 요청으로 최신 main 기반 codex/fix-release-assets-20261005에서 AppIcon/SplashBackground 이미지6개 파일명을 ASCII로 변경하고 Contents.json6개 참조 수정. 영구 checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchReleaseAssetRepair. Git 원본/변경파일 SHA2566개 모두 동일; 이미지/UI/기능 변화0. 이전 actool Unicode이름 불일치 가설은 최소변경 후 경고 소멸/실제catalog포함으로 확인.
+- 기존 archive auditor에 primary AppIcon metadata 검사 추가. 테스트를 먼저 실패시킨 후 수정, 기존/추가7case PASS 및 bash -n PASS. hash 대조 첫 실행은 Node execFileSync maxBuffer로 ENOBUFS; 4MB로 증가 후6개 원본 일치 PASS(제품결함 아님).
+- 실제 actool PASS, 부분plist AppIcon 및 Assets.car AppIcon/SplashBackground 포함 확인. 전체 FitMatch-Production/Release generic iOS unsigned build exit0, BUILD SUCCEEDED. 새 앱의 iconPNG/CFBundleIcons/catalog확인, 운영aqhrup URL/운영ID 유지. 로그 /private/tmp/FitMatchReleaseAssetRepair20261005-build.log. 기존 /private/tmp/FitMatchMainFinalDerived20261005의 products는 이제 수정work branch 산출물이며 이전main산출물로 재사용하면 안됨.
+- 출처수정 PGlite 회귀와 comparison_preview14case 재실행 PASS(helper fixtures, 인증E2E아님). 운영 함수 SELECT는 원래hash 유지. 이전 운영쓰기거절을 우회하지 않고 명시 대상 승인 질문 제출, 응답 대기; 이번 운영변경0. 개발기존적용 재실행0.
+- commit/push/QA merge/main승격0, main 배포 checkout은 아직 미수정. 기존 dirty작업 보존. NOT RUN: 인증A-E/전체Gate/signedarchive/export/upload. 이미지 참조 결함은 수정branch에서 해소; 운영 함수 승인은 별도. 보고서 수정checkout Docs/QA/ReleaseAssetRepair20261005.md.
+
+## 2026-10-05 main / 운영 최종 재점검 — 배포 설정 확인, asset 차단 발견
+- origin main/QA fetch 및 SHA 확인: main/local/origin b0c9088, QA aff9705; main2ahead/QA0ahead. 기존 dirty 문서 작업 브랜치 보존하고 별도 clean main checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchMainRelease 준비. 이 프로젝트 + FitMatch-Production/Release가 로컬 배포 기준. 원래 열린 폴더의 브랜치를 main으로 바꿨다는 뜻이 아니며 Xcode는 실제 열린 checkout을 빌드한다. commit/push/merge 없음.
+- 실제 main Production Release generic iOS unsigned build exit0, BUILD SUCCEEDED. 산출물 Info.plist 운영 aqhrup, 앱/확장 운영 ID, 1.1(14), 개인정보/지원 URL 확인. command process의 DB override0. signed archive/export/upload 아님. 로그 /private/tmp/FitMatchMainFinalBuild20261005.log.
+- 현재 정책14테이블 전체 count/content hash 개발/운영 동일, A-G/7개 group policy/metric 활성. 함수126/126 실제 정의·권한 재대조에서 출처 함수1개만 차이. 운영 comparison_target_context 구버전 hash 유지; 적용 승인 대기, 운영 쓰기0. 운영 Edge observation/delete-account ACTIVE/verify_jwt=true. user/Closet/History 행조회0.
+- FAIL: main clean build actool의 앱아이콘/스플래시 참조 경고와 실제 asset 패키징 누락 확인. 물리 파일은 존재하고 reference와 Unicode정규화상 동일하지만 문자형태가 다름. 한글 파일명 정규화 불일치가 유력; 수정/원인최종확정 전. 앱 Info에 CFBundleIcons 없음/AppIcon png 없음, assetutil의 Assets.car Name에 AppIcon/SplashBackground 없음. 빌드 성공을 제출가능으로 확대하지 않음. 기존 UI/이미지/소스 변경0; 별도 work branch 최소수정 후 QA 검증 필요.
+- NOT RUN: 인증된 실제 A-E 전체흐름/ReleaseGate/Apple검증·업로드. 이전 PASS를 이번 HEAD 결과로 재사용하지 않음. 증거 Docs/QA/MainProductionFinalAudit20261005.md 및 .json. 릴리스준비완료 판정 아님.
+
+## 2026-10-05 그룹 출처 수정 개발 적용 — 운영 적용 차단
+- 최신 main b0c9088에서 격리 브랜치 codex/fix-policy-authority-20261005 생성. 영구 checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchPolicyRepair; 기존 checkout dirty/untracked 문서 보존. commit/push/merge/QA-main승격 없음.
+- 실제 deployed comparison_target_context의 출처 결함을 PGlite SQL로 재현(기존 함수 PRODUCT_OVERRIDE -> RETAILER_CATEGORY, 기대 FAIL). 신규 migration 20261005095057_repair_comparison_group_provenance.sql에서 mapping_source 검증으로 수정. session source 유지; group/scoring/security/ACL/search_path/사용자 데이터 변경 없음. 사전 정의 hash 가드, 별도 사후 SELECT와 hash 가드 rollback 준비.
+- 개발 hnkplvyegonlhumlejst APPLIED: repair_comparison_group_provenance, remote version 20261005095512. 사후 hash 64fa01b9fdba8224476bf0bb51d4f6bc, 올바른 key/unknown 거절/기존 default 제거 true, anon execute false 및 기존 signature/ACL 동일.
+- 운영 aqhrupgjpmrtnystottx NOT APPLIED: 실제 적용 요청은 안전 검토에서 구체적인 Production 승인 부족으로 거절. 우회/재시도 없음. SELECT 사후 원래 hash653383c60fe7336c529b267b1cb4eac3 유지 확인. 개발/운영 함수가 이번 승인 대기 동안 서로 다름. 운영 적용에는 정확한 대상 함수 수정의 명시적 승인 필요.
+- PASS: 수정 SQL provenance/safety/동일 mapped 응답/ACL/guarded rollback 격리 테스트, 기존 comparison_preview14-case 회귀, 개발 정의/권한 사후검증. dependency fixtures이며 인증 E2E 아님. NOT RUN: 앱 build/인증 등록·비교/전체ReleaseGate. SQL 수정만으로 출시 승인 아님.
+- 무신사54key(신규53path, 동일path기존C연결0030081건) 후보 JSON 보존. curl 공식 category100004/details7122627 HTTP403; 정상 browser category page 로드 성공, 화면 관측7309004의 API browser 접근 ERR_BLOCKED_BY_CLIENT. 목록 상품명으로 API 분류를 대체하지 않음. 신규매핑/초안 활성화0. 현재 API근거 확보는 BLOCKED.
+- 개발 security advisors 기존 exposed authenticated SECURITY DEFINER3건/누출비밀번호보호disabled 경고 확인. 수리한 private함수는 해당 exposed 목록에 없음; security/Auth 변경 없음. Report/실제 postflight JSON/test.log/카테고리 후보는 수정 checkout Docs/QA/PolicyAuthorityRepair20261005* 및 MusinsaPendingCategoryReview20261005.json. 원본/옷장/비교/History row 변경0.
+
+## 2026-10-05 발견 문제 해결방안 추가 검토 — 적용 전
+
+- 사용자 요청에 따라 DB 초안54개 category key/path/group/mapping_basis/notes를 읽기 전용으로 재검토. A5/B16/C12/D5/E8/F7/G1. 그중 C1개는 현행의 다른 key에서 동일 path/group으로 이미 연결돼 있다. 따라서 이전의54개는 key 차이이며 신규 미연결 경로는53개이다. 경로가 동일한데 그룹이 충돌하는 초안행0. 기존 source dictionary에 기반한 초안이며 notes에 live API/product regression required, mapping_basis에 live API NOT revalidated 명시. 그룹 제안의 자동 승인/초안 전체 activation 금지.
+- 해결안: 기존 v3 runtime 정책을 유지하면서 공식 API의 code/full path로 검증한 신규 경로만 추가하고 이미 연결된1개는 키 연결 보완으로 별도 처리. 기타하의/유니폼/언더레이어/속옷세트는 상품 구조·원본 카테고리 근거를 확인한 후 판정한다. 미확정은 REVIEW/현재 명시적 그룹 선택 유지; 그룹 등록으로 구조·실측 safety gate를 완화하지 않는다. 원래 draft의 타 쇼핑몰/기존 매핑을 덮어쓰지 않는다.
+- 출처 결함 해결안: comparison_target_context의 resolved->>'source' + RETAILER_CATEGORY 기본값을 실제 product_comparison_group의 mapping_source 검증으로 바꾼다. RETAILER_CATEGORY/PRODUCT_OVERRIDE 출처를 그대로 유지하고 명시적 session 선택은 SESSION_USER_SELECTED 유지; missing/unknown 출처를 임의 기본 처리하지 않는다. 그룹·출처가 fingerprint에 포함되므로 수정 전 in-flight authority는 새 후보조회/authorization으로 갱신해야 하며 완료된 history는 재작성하지 않는다. Swift DTO는 이미 mapping_source 별도 디코딩을 지원; UI 변경 불필요.
+- 이번 단계는 해결방안 검토/보고이다. 소스/SQL migration 준비 및 적용 NOT RUN. 신규 분류 확정에 필요한 현재 API 근거 미확보, 운영 aqhrup 적용의 구체 범위 승인 미확보. DB read-only, user/Closet/History 조회0, DB write0. 기존 dirty 문서 보존. 다음 적용 범위: 별도 fix branch/신규 migration/격리 SQL 회귀 -> 개발 검증 -> 운영 승인 적용 및 postflight; 기존 기록/사용자 데이터 변경 제외.
+
+## 2026-10-05 로컬/main 및 개발/운영 정책 DB 읽기 전용 재감사
+
+- origin main/QA fetch 성공. 로컬 `docs/development-release-policy` HEAD, local main, origin/main 모두 `b0c908822702bf11f3d2a620ee5d8a0620d0a351`. QA `aff97054870f459852db48a43eedff01ce9028b8`, main 2 ahead/QA 0 ahead. 기존 dirty 5개 문서 및 미추적 QA 자료 보존; 앱 소스는 main과 동일. merge/switch/commit/push 없음.
+- 개발 `hnkplvyegonlhumlejst`/운영 `aqhrupgjpmrtnystottx` 모두 ACTIVE_HEALTHY. 현 빌드 설정의 QA/운영 URL 일치. 사용자/Auth/Closet/비교/History 행 및 상품 저장 데이터는 조회하지 않음. 정책/분류 사전 15개 테이블 SELECT와 pg_catalog 정의만 조사, DB write 0.
+- 14개 정책 테이블은 전체 행 count/content MD5 동일. 나머지 source_classification_signals는 개발2556/운영2555: 공통12행 updated_at/last_seen_at만 다르고 개발에 PRODUCT_EXACT 6991945 관측 신호1행 추가. 해당 신호를 참조하는 classification_signal_mappings 0건. 원본 신호 해시 차이를 카테고리 매핑 누락으로 해석하지 않음.
+- A-G 모두 활성, 연결된 비교 정책/metric 존재. 원본 항목51/별칭227/canonical42/매핑48, 비교 정책44/metric647 동일. 정책 FK17건씩 실제 missing-parent 검사0. 현행 v3 카테고리538행(M40/U342/Z156), 초안485행 포함 총1023행 동일. 무신사 초안 loading의54개 key는 현행에 없으며 현행 무신사 D-G 자동매핑0; 사용자 수동 그룹 경로의 실제 E2E는 이번에 실행하지 않음. 초안을 현행 적용 완료로 보고하지 않음.
+- 앱 함수128개(공개RPC overload 포함24개) pg_get_functiondef 공백 정규화 hash/인자/반환형/owner/volatility/strict/security-definer/search_path 및 anon/authenticated/service_role 실제 EXECUTE 권한 동일. 별도 procedure0. 운영에만 rls_auto_enable/ensure_rls 플랫폼 보호 존재. 38테이블/550컬럼/116인덱스/274제약/26RLS정책/44트리거/1view/1sequence 일치. 제약1개는 AND 괄호 배치만 다르고 논리 동일; NULL 기본 ACL vs 명시 ACL10개도 실제 권한 동일. Edge product-observation/delete-account 모두 ACTIVE/verify_jwt=true, 배포 files 소스 문자동일.
+- 정의 검토에서 공통 provenance 결함 확인: product_comparison_group은 mapping_source를 반환하지만 comparison_target_context는 resolved->>'source'를 읽고 RETAILER_CATEGORY로 기본 처리한다. 따라서 PRODUCT_OVERRIDE가 있는 경우 해당 context source가 RETAILER_CATEGORY로 잘못 표기될 수 있다. 사용자/상품 override 행은 이번 범위에서 조회하지 않았으므로 실제 영향 상품/인증 흐름은 미확인. 이번 요청은 감사이므로 SQL/소스 수정 없음.
+- PASS: 현시점 읽기 전용 정책/구조/함수/권한 대조, git diff --check/보호스크롤. NOT RUN: Xcode build, 정상 인증 등록/비교 E2E, 전체 Release Gate. 정책 존재/DB 간 일치를 기능 성공/출시 승인으로 확대하지 않음. 첫 metric 검사는 컬럼명 오류로 실패했고 실제 comparison_policy_code로 고쳐 양쪽 재실행 성공. 증거 `Docs/QA/BranchPolicyDatabaseAudit20261005.json`.
+
+## 2026-10-03 현행 Release Gate 기준 실제 소스 진단
+
+- 최신 fetch: main `b0c908822702bf11f3d2a620ee5d8a0620d0a351`, QA `aff97054870f459852db48a43eedff01ce9028b8`, main 2 ahead / QA 0 ahead. 같은 main HEAD의 `docs/development-release-policy`에서 기존 문서 dirty/untracked 보존. QA 동기화/merge/commit/push 없음. 앱/서비스/파서/UI/알고리즘/DB 계약 수정 없음.
+- 이번 실제 `FitMatch-QA` / `Debug-QA` / 개발 hnkpl / iPhone 17 Pro iOS26.3: `release_qa.py smoke` 앱 Xcode build 및 61 methods / 인자별85회 PASS, 0 FAIL/0skip. Python runner41 + DB 오프라인9 PASS. 별도 실제 ProductURLParserService 3사각1URL PASS(M2/U7/Z4사이즈). 파서 성공은 DB 저장/서버 그룹/비교 완료 증거가 아니다.
+- 추가 XcodeBuildMCP focused 실행 46건 PASS: DTO/authority/identity34 + 실제 화면 XCTest12(온보딩8/현재UI4), 0FAIL/0skip. 미매핑28입력의 그룹선택 라우팅, 다른 그룹/identity 거절, 자동 그룹과 explicit 저장 provenance 검증 포함. synthetic RPC/DEBUG fixture 화면과 실제 사용자 DB E2E를 구분한다. A-E 대표 owner 로직은 PASS지만 정상 인증 DB 및 전체 버튼 기반 A-E 여정은 미검증.
+- 전체 RELEASE GATE **BLOCKED**. 전용 두 계정의 정상 세션/환경 없음으로 DB preflight 요청0/실제case0. 기존 smoke 전체exit2에는 work branch에서 최종QA가 아니라는 branch 경계도 포함. 이번 범위에서 재현된 제품 버그0이며 무결함/출시승인으로 확대하지 않는다. 실제 iPhone 체감/Apple 제출은 USER CHECK/NOT AUTOMATED이며 기술blocker로 추가하지 않음.
+- GitHub read-only: admin권한있음, main/QA 보호false, protection404, repository/parent rulesets없음. Actions는 Pages배포1개만 있고 앱CI없음. 보호 설정 변경0. 기존 runner는 dirty상태기록만 하고 보호스크롤/핵심UI를 하나의 새 Gate로 묶지 않는다. 새 Gate/CI구축은 미수행. build default argument actor경고1건은 런타임장애미재현으로 미수정.
+- 보고서 `Docs/QA/PolicyAudit20261003.md`, 현재 실행 요약/선택자/파서/DB차단 증거 `Docs/QA/PolicyAudit20261003Evidence/`. 원본 xcresult/log `/private/tmp/FitMatchPolicyAudit20261003-Smoke/`, `/private/tmp/FitMatchPolicyAudit20261003-Focused.xcresult`. 최종 diff --check/보호스크롤 PASS. 다음: 정상 전용 인증+exact입력의 실제DB A-E → 기존 Gate에필수검사연결 → QA동기화/동일조합검증·보호정책. DB write/Auth생성/운영테스트0.
+
+## 2026-10-03 개발·QA·승격 규칙 기록 및 Markdown 목록
+
+- 사용자 확정 규칙을 AGENTS에 기록하고 `Docs/FitMatchReleaseGate.md`를 추가했다. connectDB 개발 기준 은퇴, 최신 main 기반 작업 브랜치, QA 통합 검증 후 검증된 최종 조합을 main에 승격, 필수 FAIL/BLOCKED/NOT RUN의 전체 PASS 금지, 핵심 A-E 범위 고정, 사용자 UX/Apple 제출과 자동 기술 Gate 구분을 명시했다. 기존 실행기를 새 Gate 완료 증거로 승격하지 않았으며 새 실행기 구축은 이번 기록 범위에서 미수행이다.
+- 원격 fetch 확인: main `b0c908822702bf11f3d2a620ee5d8a0620d0a351`, QA `aff97054870f459852db48a43eedff01ce9028b8`; main 2 ahead / QA 0 ahead. clean main에서 `docs/development-release-policy`를 생성해 문서만 편집했다. 다음 개발 전 QA를 최신 main으로 정상 동기화하는 단계는 아직 수행하지 않았다. main/QA merge·push·DB write 없음.
+- 두 Map과 Docs README에 현행 기준을 연결했다. `Docs/FitMatchMarkdownInventory.md`에 Git 추적 218개와 신규 미추적 2개, ignore된 과거 인계 보관본 1개, 총 221개 경로를 기록했다. macOS 한글 Unicode 차이는 동일 경로로 대조했다. 외부 문서는 집계하지 않으며 Git 추적 여부는 최신 정책 승인 여부와 다르다.
+- 이번 작업은 문서 기록이다. Swift build/앱 테스트/새 Release Gate 실행/브랜치 보호·CI 설정은 NOT RUN. 문서 경로·목록 대조, git diff --check 및 보호 스크롤 검사 PASS. 과거 테스트 PASS를 이번 결과에 재사용하지 않는다.
+
 ## 2026-10-03 GitHub Pages 반영 및 새 운영 IPA 확인
 
 - 공개 정책·지원 페이지 및 앱 링크 변경을 main 커밋 `e29ec1a`로 origin/main 푸시 성공. GitHub Pages 두 URL HTTP 200; privacy 새 시행일/Apple 로그인·Supabase·ZARA 문안, support 새 민감정보 안내와 3개 쇼핑몰 문안 확인. 기존 false 문구는 공개 응답에서 사라졌다.

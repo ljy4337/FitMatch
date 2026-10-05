@@ -1,11 +1,13 @@
 # FitMatch Behavior Map — Codex Edition
 
-- Code baseline: `ae69b30ed37386f6361882d36bafbd972235ebd4` / `connectDB`
+- Historical navigation baseline: `ae69b30ed37386f6361882d36bafbd972235ebd4` / retired `connectDB`. New work starts from latest `main`; verify current owners rather than treating this historical baseline as current HEAD.
 - Updated: 2026-09-15. Adapted from the user-supplied map based on `a68c8496628eb0bc1223b34708fb88e8fe945de1`.
 - Supabase project: `hnkplvyegonlhumlejst`. This identifier is context, never write authorization.
 - Local owners checked against this baseline. Server cleanup status comes from the dated handoff/postflight; this documentation update did not re-query or change Production.
 
 ## 0. Read protocol / authority
+
+Branch promotion and release verification criteria: `Docs/FitMatchReleaseGate.md`. Use that document for evidence levels; this map only locates owners and existing test entrypoints.
 
 1. Read `AGENTS.md` and the current-state portion of `Docs/CodexSessionHandoff.md`. Use the flow index below to select the task's flow.
 2. Read that flow's READ FIRST owners, then follow actual calls into downstream owners/RPCs. For deeper Swift ownership use `FitMatch Swift Feature Map.md` selectively.

@@ -1,0 +1,3549 @@
+{
+  "date": "2026-10-05",
+  "main": "b0c908822702bf11f3d2a620ee5d8a0620d0a351",
+  "QA": "aff97054870f459852db48a43eedff01ce9028b8",
+  "mainAheadQA": 2,
+  "releaseCheckout": "/Users/jinyoung/Developer/FitMatchLocal/FitMatchMainRelease",
+  "scheme": "FitMatch-Production",
+  "configuration": "Release",
+  "production": "aqhrupgjpmrtnystottx",
+  "development": "hnkplvyegonlhumlejst",
+  "policyDevelopment": [
+    {
+      "table_name": "fitmatch_catalog.comparison_group_policies",
+      "row_count": 2,
+      "content_hash": "e983e772809cc1f15652219dfd0936a9"
+    },
+    {
+      "table_name": "fitmatch_catalog.comparison_groups",
+      "row_count": 7,
+      "content_hash": "f3d07372fa51138619b00821c39ef31b"
+    },
+    {
+      "table_name": "fitmatch_catalog.source_category_comparison_groups",
+      "row_count": 1023,
+      "content_hash": "a7a62e28ce69185d36fa4fa9db0abbff"
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_axis_value_authority",
+      "row_count": 12,
+      "content_hash": "15bd85e7c74fe299d7939bec4c063452"
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_signal_mappings",
+      "row_count": 2250,
+      "content_hash": "30efd6db42c14ace58ab41b5ab85194a"
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_metrics",
+      "row_count": 647,
+      "content_hash": "450c35a71389683ca3922974ba0ef813"
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_policies",
+      "row_count": 44,
+      "content_hash": "7e02b281f68f178ad31b976e669b7f6d"
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_categories",
+      "row_count": 11,
+      "content_hash": "b917c4c242362a39738c55654626295b"
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_measurements",
+      "row_count": 42,
+      "content_hash": "29426b51dc5e59a9bd9c24191c07a16b"
+    },
+    {
+      "table_name": "fitmatch_vnext.garment_types",
+      "row_count": 60,
+      "content_hash": "dc4c7d77dc78dd7f692943588cb55533"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_aliases",
+      "row_count": 227,
+      "content_hash": "af002a3a6a548c9cdcd3d33736ce65f8"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_mappings",
+      "row_count": 48,
+      "content_hash": "b37c35eb9baaeb2c6373751d4028e439"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurements",
+      "row_count": 51,
+      "content_hash": "18bfdb3980825725f23c6965b7caf2ec"
+    },
+    {
+      "table_name": "fitmatch_vnext.sources",
+      "row_count": 3,
+      "content_hash": "faf513dc02bd7867fa83c570e970c7d3"
+    }
+  ],
+  "policyProduction": [
+    {
+      "table_name": "fitmatch_catalog.comparison_group_policies",
+      "row_count": 2,
+      "content_hash": "e983e772809cc1f15652219dfd0936a9"
+    },
+    {
+      "table_name": "fitmatch_catalog.comparison_groups",
+      "row_count": 7,
+      "content_hash": "f3d07372fa51138619b00821c39ef31b"
+    },
+    {
+      "table_name": "fitmatch_catalog.source_category_comparison_groups",
+      "row_count": 1023,
+      "content_hash": "a7a62e28ce69185d36fa4fa9db0abbff"
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_axis_value_authority",
+      "row_count": 12,
+      "content_hash": "15bd85e7c74fe299d7939bec4c063452"
+    },
+    {
+      "table_name": "fitmatch_vnext.classification_signal_mappings",
+      "row_count": 2250,
+      "content_hash": "30efd6db42c14ace58ab41b5ab85194a"
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_metrics",
+      "row_count": 647,
+      "content_hash": "450c35a71389683ca3922974ba0ef813"
+    },
+    {
+      "table_name": "fitmatch_vnext.comparison_policies",
+      "row_count": 44,
+      "content_hash": "7e02b281f68f178ad31b976e669b7f6d"
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_categories",
+      "row_count": 11,
+      "content_hash": "b917c4c242362a39738c55654626295b"
+    },
+    {
+      "table_name": "fitmatch_vnext.fitmatch_measurements",
+      "row_count": 42,
+      "content_hash": "29426b51dc5e59a9bd9c24191c07a16b"
+    },
+    {
+      "table_name": "fitmatch_vnext.garment_types",
+      "row_count": 60,
+      "content_hash": "dc4c7d77dc78dd7f692943588cb55533"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_aliases",
+      "row_count": 227,
+      "content_hash": "af002a3a6a548c9cdcd3d33736ce65f8"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurement_mappings",
+      "row_count": 48,
+      "content_hash": "b37c35eb9baaeb2c6373751d4028e439"
+    },
+    {
+      "table_name": "fitmatch_vnext.source_measurements",
+      "row_count": 51,
+      "content_hash": "18bfdb3980825725f23c6965b7caf2ec"
+    },
+    {
+      "table_name": "fitmatch_vnext.sources",
+      "row_count": 3,
+      "content_hash": "faf513dc02bd7867fa83c570e970c7d3"
+    }
+  ],
+  "functionsDevelopment": [
+    {
+      "schema": "fitmatch_catalog",
+      "name": "runtime_infer_body_length_code",
+      "args": "p_category_code text, p_product_name text, p_source_category_path text",
+      "kind": "f",
+      "definition_hash": "c783cd42e11c8a902f765bd9f1677013",
+      "security_definer": false,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_catalog",
+      "name": "sync_product_body_length",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "04b8d9c71d0fdf76c9b8f492abf9577a",
+      "security_definer": false,
+      "config": [
+        "search_path=pg_catalog, fitmatch_catalog"
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "advance_comparison_result_head",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "dc9fa2f506a946945a7b1559afddcee2",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_closet_comparison_group",
+      "args": "p_closet_item_id uuid, p_requested_group_code text, p_explicit boolean",
+      "kind": "f",
+      "definition_hash": "60ed4f095ead8beac6d5737c7bb7eaf0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_linked_closet_snapshot_for_swift",
+      "args": "p_request jsonb, p_existing_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "af03458149898a0089c99adadca0b76c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "b4ac3130c50c7a3c6877b3fd129d2157",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "a3ac12e6ddbe84e15bf2d319ac0efe28",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "205e054509f44b370e2fbd93c38e9d9f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "a27880dc60574e668aaef56bc0b657a1",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "6d512ef1d0fd02a0d73209a5721002d9",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison_legacy_20260914",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "fb0388e75b96cf8e30701e0a66e55901",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_session_group",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "5248110a40a83724097f78903dda5273",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size",
+      "args": "p_product_size_id uuid",
+      "kind": "f",
+      "definition_hash": "38afa0b053276319c5bb3d7321b7ff64",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size_with_context",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "7fc26941b51cec66967b5b53b89b717e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_decision",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "4ed644cd0419c482c4cb86896450d9b3",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "cab5f0127f7309ca0d8d245f7a6b5de2",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v6_core",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "abbe336cf6b7e2154523304d33954558",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v7_pre_explicit_core",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "153df4d45b7424df0f31fcdafa649cd6",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_tuple_validation",
+      "args": "p_garment_type_code text, p_product_structure_code text, p_audience_code text, p_sleeve_length_code text, p_lower_length_code text, p_body_length_code text",
+      "kind": "f",
+      "definition_hash": "2f67c129008b25cd570c56ad53cfef9e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9af22055f5779bf33d159a4d0940f5b1",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "7936a9d4440954b058dd6648f85d4e3f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "closet_comparison_group",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "559a15963e99f3706ac09bf0dcbe401a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_domain_20260908",
+      "args": "p_policy text",
+      "kind": "f",
+      "definition_hash": "ab7ff05fdaf5e8eb0cb31094bdcb2228",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_evidence_20260908",
+      "args": "p_reference_closet_item_id uuid, p_policy text, p_canonical jsonb",
+      "kind": "f",
+      "definition_hash": "dedd9a76c69244bb31ef806b6a5868f4",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_group_tuple",
+      "args": "p_product_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "e5e63667292e42b774f785006578de12",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_history",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "1f2990c1cd45375b6aa23e0914fac428",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_history_sync",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "b65bdd6ff27281cce3f4a01bc173d68d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_target_context",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "64fa01b9fdba8224476bf0bb51d4f6bc",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "kind": "f",
+      "definition_hash": "a52a4585a4884eef2018daa4228c19a0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_product_readiness",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "33e2fc23bb8b3470484247caf8497a9a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_target_classification",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "6a770e93b46b6a2c323c1666a4cf1e46",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "kind": "f",
+      "definition_hash": "fbade90d13dea7f17cfa2e84bcdd465f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "4ade647a5b6f1e02061059acc8fd1b0f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "enforce_uniqlo_generic_category_leaf_inactive",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "bf08ae4ac24d63b60fc657a0e6dba6f8",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "exact_product_authority_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "5be64cda6ea8dfae9882bf152795dd42",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "kind": "f",
+      "definition_hash": "83033d30a538678fdfd4c851219325af",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "9cb5d0863ea71fa400347185fa52cb5e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates_filtered",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "33d62751cddd15d5f0258a66587087be",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates_filtered",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text, p_reference_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "1948e8edf4d1330b80a36cb0d3a5b9ae",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "ac037b01ad43e8b2c4059c92f79d889f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime_base",
+      "args": "p_source_code text, p_source_product_key text, p_include_derived boolean",
+      "kind": "f",
+      "definition_hash": "f859b3a776cd71e25cc04b532ba26b91",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime_for_swift",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "9fa036f2a5edb25f5db2856af705e8fd",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "kind": "f",
+      "definition_hash": "f7bf2aa0a0fdcd41f9b8b46c8c734c6c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "dca62d00be354b91a4eb76893e2030eb",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation_v2",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "2c225e906a0a5612818e060dec514031",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "b717f981be229ca4ce666c44d9515b9a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "02353daa22739a906148dcec8c41ebd3",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_detail_snapshot_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "a23a612216721efbd8ad237e276a5fa5",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_detail_snapshot_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "d73ca6251f8da22d5a9c3adbb35d3e52",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "ca45775cce1af8fd756c9bc7dff44e33",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "43516548cba687620004b7f74f8ce65e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_receipt_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "9eb502954ab6b32215116cca6f02b520",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_receipt_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "c0370fbe4e22540b81e0f2b4b13abe54",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "normalize_measurement_label",
+      "args": "p_label text",
+      "kind": "f",
+      "definition_hash": "70924b0d50a2300152ff2d35547eec2c",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_group",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "bde5b4cb22419440cdbd562a1b45b041",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_unit_decision",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "0306bc3fc62f4c56cf732cb9547fc635",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_measurement_readiness",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "9e9dfffaa19f7279efc5e35023dcc430",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "741cc1cb8d3665e1fb3d607283565c8a",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "d25426ebf1c78613ef9f538fd8bbf4de",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context_v1",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "0ffefe5861551a4fc18e6c24afb5bbc5",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "promote_uniqlo_audience_invariant_category_mapping",
+      "args": "p_target_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "fb7bbb894b3bd79b033952a621f8f6ec",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_completed_comparison",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "023a3a046a83a88a8754263d09367511",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_fitmatch_measurement_semantics",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "8325215c79f0d1d67604ba3f85c39495",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_product_ingestion_receipt",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "825e94a693905f9fc9d96d7317bff35e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_source_measurement_semantics",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "6e085961770cd1ad0571a9c7452a7c06",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_user_classification_feedback_evidence",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "75d6b0ae6c0c0cb17bc72d031f3d5c70",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "record_size_availability",
+      "args": "p_product_size_id uuid, p_availability_status text, p_evidence_kind text, p_evidence_payload jsonb, p_observed_at timestamp with time zone, p_valid_until timestamp with time zone",
+      "kind": "f",
+      "definition_hash": "4600d00281d723919d23e8bafa9921cb",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_measurement",
+      "args": "p_source_code text, p_parser_code text, p_raw_measurement_code text, p_raw_label text, p_garment_type_code text, p_fitmatch_category_code text, p_raw_value numeric",
+      "kind": "f",
+      "definition_hash": "918dc6a6b09531e2e28293b3a5a8b7e1",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_product_classification",
+      "args": "p_source_code text, p_source_product_key text, p_apply boolean",
+      "kind": "f",
+      "definition_hash": "292cbe62546b8cdaeca1d93f0c470142",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "revalidate_uniqlo_auto_promoted_mappings",
+      "args": "p_external_key text",
+      "kind": "f",
+      "definition_hash": "667b66d32e87bb43113c63b610565c2c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "kind": "f",
+      "definition_hash": "16461c1ee332c9bc8a2ad51c3a7a91a5",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_detail_snapshot_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "964843dd15d5785d90076768284aa99b",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "84edfe5a0a715cc2512c7a054c7aa1c3",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_updated_at",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "616d41d2e58ddfb51feceb58daadc7c6",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "b6469cdd97fa820877880866de98d4ad",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "soft_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "1a7d80ae869c1f922f063eb26c34002d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_auto_promoted_mapping_is_current",
+      "args": "p_mapping_id uuid",
+      "kind": "f",
+      "definition_hash": "c899c4c016d29d9987e2562cd131f236",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_matches_observed_path",
+      "args": "p_signal_id uuid, p_path text[]",
+      "kind": "f",
+      "definition_hash": "9f41de6b46f546fe8d4e677d96f1ed56",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_safe",
+      "args": "p_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "40856feb164d9cca572c7c95e9cb115d",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_complete_observed_category_path",
+      "args": "p_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "5940f00f061c0e260538f2469e226eab",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "3886e2e3e7dc523cfcf03419d6ce839c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "cf921a03894e9d4d4c7d47e994d07932",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item_snapshot_base",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "842a3839b730d5fb95da6ed1fdc789ff",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item_with_group_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "0312137708f0c1fe3c772ddbfdd71d46",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "2f72cc6039136df53b85db7649f1bf8d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_for_swift",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "b487faa0e75f3e0d2c0eb9a27498858b",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_with_group_for_swift",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "20f369b4a9e6be61be763d6538b31fb8",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_with_group_for_swift_snapshot_base",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "0419d9eefcba4c6511afb07cc8ec561e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_classification_mapping",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "83a67075716f22462df0284ff8c8c89f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_mode",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "f6099d377bfd1c7df9a525142681fe24",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_source_snapshot",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "16dc964114f125d2f5ffc95e0a775fd2",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_product_hierarchy",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "3d7d20238d2dbd2eebb694dfd0c26b0b",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_completion_payload",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "37136328aeb0f4f8573dec8b62944895",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_ownership_and_target",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "c681482808067b3c168f50f453d647dd",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_garment_axis_values",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "be441cf28bac0c0eac00817c9cfa289b",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_ingestion_receipt_facts",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "a0b13ec72b46108617749db7ac9dd456",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_product_signal_source",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "87bef90da19d7816fe726b7530f1db8f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_size_availability_observation",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "39e53f8acd0587e138383ce1845382ff",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_identifier_owner",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "3dfa5dc01582df3bd487c5f59beade45",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_measurement_alias_source",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "d59b4aae76c3de7f15d8e52182459798",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_signal_parent",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "014a971d8b55c3712c6ebac7757411e3",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_user_product_classification_override",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "55f9b1498ec0b8ddb00ac01b38e683bf",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_begin_comparison",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "34546a6234eefdb92366c3bed34fed1e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "ab02ff781a73d6054234e317f43a90d6",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "19cc3e1f87fd1d61eaa52d10e3905c2d",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_comparison_history",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "0f9e2b47b07da9a7154f14aea84de147",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_comparison_history_sync",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "0559f87f5d25b329a42ed6581208b5e5",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "kind": "f",
+      "definition_hash": "232d207d33d998786106553879996017",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "5160dafbf914ed2effba3d6343826586",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "kind": "f",
+      "definition_hash": "9eab31c1ad30c8f0a39cb3c1e5e325a2",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "eeb36d1e50bf9974ee7c6d06821309b8",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "kind": "f",
+      "definition_hash": "a42191e09f9f353eb5ca2b7cf034e6f7",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "ae28182f49059a7677e0bc306c21453f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_selected_reference_candidate",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "0ea7121662536971d558c4723168c9d0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_classification_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "69134c89f27497f142b37bff4df76651",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9fe60d3d3327d087423b54a0453f0ea6",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "b6455aec0b5fd4eae43aa5dd5337b88a",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "kind": "f",
+      "definition_hash": "61edadbe816a2857dbee1bd17bcbbe58",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "faa4e2d9f2052222e209fc3f4e1bb2b7",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_list_closet_items",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "aa79b1dc2dbf6ad77e94bb7acd3bdecd",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "kind": "f",
+      "definition_hash": "e4d8c74baea12b82f38a9d9bf9c4e249",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "2eb6835de219b3f8d51a0c0a0de1ab2f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "8c8bbc0a4c333bd76a766989b2969b7e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9cac15a401a5d5b479af835009db6e39",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "a9348e8896ee78b0d1913a3f7297afbe",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_upsert_closet_item",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "5fa05c5d7aadc4925629b90ddba6a58e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    }
+  ],
+  "functionsProduction": [
+    {
+      "schema": "fitmatch_catalog",
+      "name": "runtime_infer_body_length_code",
+      "args": "p_category_code text, p_product_name text, p_source_category_path text",
+      "kind": "f",
+      "definition_hash": "c783cd42e11c8a902f765bd9f1677013",
+      "security_definer": false,
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_catalog",
+      "name": "sync_product_body_length",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "04b8d9c71d0fdf76c9b8f492abf9577a",
+      "security_definer": false,
+      "config": [
+        "search_path=pg_catalog, fitmatch_catalog"
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "advance_comparison_result_head",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "dc9fa2f506a946945a7b1559afddcee2",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_closet_comparison_group",
+      "args": "p_closet_item_id uuid, p_requested_group_code text, p_explicit boolean",
+      "kind": "f",
+      "definition_hash": "60ed4f095ead8beac6d5737c7bb7eaf0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "apply_linked_closet_snapshot_for_swift",
+      "args": "p_request jsonb, p_existing_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "af03458149898a0089c99adadca0b76c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "b4ac3130c50c7a3c6877b3fd129d2157",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "a3ac12e6ddbe84e15bf2d319ac0efe28",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "205e054509f44b370e2fbd93c38e9d9f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "authorize_comparison_with_context_v1",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_product_size_id uuid, p_manual_explicit boolean, p_effective_classification jsonb, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "a27880dc60574e668aaef56bc0b657a1",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "6d512ef1d0fd02a0d73209a5721002d9",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "begin_comparison_legacy_20260914",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "fb0388e75b96cf8e30701e0a66e55901",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_session_group",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "5248110a40a83724097f78903dda5273",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size",
+      "args": "p_product_size_id uuid",
+      "kind": "f",
+      "definition_hash": "38afa0b053276319c5bb3d7321b7ff64",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "canonical_measurements_for_size_with_context",
+      "args": "p_product_size_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "7fc26941b51cec66967b5b53b89b717e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_decision",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "4ed644cd0419c482c4cb86896450d9b3",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "cab5f0127f7309ca0d8d245f7a6b5de2",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v6_core",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "abbe336cf6b7e2154523304d33954558",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_recovery_options_v7_pre_explicit_core",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "153df4d45b7424df0f31fcdafa649cd6",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "classification_tuple_validation",
+      "args": "p_garment_type_code text, p_product_structure_code text, p_audience_code text, p_sleeve_length_code text, p_lower_length_code text, p_body_length_code text",
+      "kind": "f",
+      "definition_hash": "2f67c129008b25cd570c56ad53cfef9e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9af22055f5779bf33d159a4d0940f5b1",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "7936a9d4440954b058dd6648f85d4e3f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "closet_comparison_group",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "559a15963e99f3706ac09bf0dcbe401a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_domain_20260908",
+      "args": "p_policy text",
+      "kind": "f",
+      "definition_hash": "ab7ff05fdaf5e8eb0cb31094bdcb2228",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_evidence_20260908",
+      "args": "p_reference_closet_item_id uuid, p_policy text, p_canonical jsonb",
+      "kind": "f",
+      "definition_hash": "dedd9a76c69244bb31ef806b6a5868f4",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_group_tuple",
+      "args": "p_product_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "e5e63667292e42b774f785006578de12",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_history",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "1f2990c1cd45375b6aa23e0914fac428",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_history_sync",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "b65bdd6ff27281cce3f4a01bc173d68d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "comparison_target_context",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "653383c60fe7336c529b267b1cb4eac3",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "kind": "f",
+      "definition_hash": "a52a4585a4884eef2018daa4228c19a0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_product_readiness",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "33e2fc23bb8b3470484247caf8497a9a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "effective_target_classification",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "6a770e93b46b6a2c323c1666a4cf1e46",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "kind": "f",
+      "definition_hash": "fbade90d13dea7f17cfa2e84bcdd465f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "4ade647a5b6f1e02061059acc8fd1b0f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "enforce_uniqlo_generic_category_leaf_inactive",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "bf08ae4ac24d63b60fc657a0e6dba6f8",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "exact_product_authority_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "5be64cda6ea8dfae9882bf152795dd42",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "kind": "f",
+      "definition_hash": "83033d30a538678fdfd4c851219325af",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "9cb5d0863ea71fa400347185fa52cb5e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates_filtered",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "33d62751cddd15d5f0258a66587087be",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "find_reference_candidates_filtered",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text, p_reference_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "1948e8edf4d1330b80a36cb0d3a5b9ae",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "ac037b01ad43e8b2c4059c92f79d889f",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime_base",
+      "args": "p_source_code text, p_source_product_key text, p_include_derived boolean",
+      "kind": "f",
+      "definition_hash": "f859b3a776cd71e25cc04b532ba26b91",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "get_product_runtime_for_swift",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "9fa036f2a5edb25f5db2856af705e8fd",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "kind": "f",
+      "definition_hash": "f7bf2aa0a0fdcd41f9b8b46c8c734c6c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "dca62d00be354b91a4eb76893e2030eb",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "ingest_product_observation_v2",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "2c225e906a0a5612818e060dec514031",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "b717f981be229ca4ce666c44d9515b9a",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "02353daa22739a906148dcec8c41ebd3",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_detail_snapshot_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "a23a612216721efbd8ad237e276a5fa5",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_detail_snapshot_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "d73ca6251f8da22d5a9c3adbb35d3e52",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "ca45775cce1af8fd756c9bc7dff44e33",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "43516548cba687620004b7f74f8ce65e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_receipt_base",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "9eb502954ab6b32215116cca6f02b520",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "list_closet_items_snapshot_receipt_base",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "c0370fbe4e22540b81e0f2b4b13abe54",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "normalize_measurement_label",
+      "args": "p_label text",
+      "kind": "f",
+      "definition_hash": "70924b0d50a2300152ff2d35547eec2c",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_group",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "bde5b4cb22419440cdbd562a1b45b041",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_comparison_unit_decision",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "0306bc3fc62f4c56cf732cb9547fc635",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_measurement_readiness",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "9e9dfffaa19f7279efc5e35023dcc430",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "741cc1cb8d3665e1fb3d607283565c8a",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "d25426ebf1c78613ef9f538fd8bbf4de",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "product_readiness_with_context_v1",
+      "args": "p_product_id uuid, p_effective_classification jsonb",
+      "kind": "f",
+      "definition_hash": "0ffefe5861551a4fc18e6c24afb5bbc5",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "promote_uniqlo_audience_invariant_category_mapping",
+      "args": "p_target_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "fb7bbb894b3bd79b033952a621f8f6ec",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_completed_comparison",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "023a3a046a83a88a8754263d09367511",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_fitmatch_measurement_semantics",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "8325215c79f0d1d67604ba3f85c39495",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_product_ingestion_receipt",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "825e94a693905f9fc9d96d7317bff35e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_source_measurement_semantics",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "6e085961770cd1ad0571a9c7452a7c06",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "protect_user_classification_feedback_evidence",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "75d6b0ae6c0c0cb17bc72d031f3d5c70",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "record_size_availability",
+      "args": "p_product_size_id uuid, p_availability_status text, p_evidence_kind text, p_evidence_payload jsonb, p_observed_at timestamp with time zone, p_valid_until timestamp with time zone",
+      "kind": "f",
+      "definition_hash": "4600d00281d723919d23e8bafa9921cb",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_measurement",
+      "args": "p_source_code text, p_parser_code text, p_raw_measurement_code text, p_raw_label text, p_garment_type_code text, p_fitmatch_category_code text, p_raw_value numeric",
+      "kind": "f",
+      "definition_hash": "918dc6a6b09531e2e28293b3a5a8b7e1",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "resolve_product_classification",
+      "args": "p_source_code text, p_source_product_key text, p_apply boolean",
+      "kind": "f",
+      "definition_hash": "292cbe62546b8cdaeca1d93f0c470142",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "revalidate_uniqlo_auto_promoted_mappings",
+      "args": "p_external_key text",
+      "kind": "f",
+      "definition_hash": "667b66d32e87bb43113c63b610565c2c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "kind": "f",
+      "definition_hash": "16461c1ee332c9bc8a2ad51c3a7a91a5",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_detail_snapshot_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "964843dd15d5785d90076768284aa99b",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "84edfe5a0a715cc2512c7a054c7aa1c3",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_updated_at",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "616d41d2e58ddfb51feceb58daadc7c6",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "b6469cdd97fa820877880866de98d4ad",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "soft_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "1a7d80ae869c1f922f063eb26c34002d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_auto_promoted_mapping_is_current",
+      "args": "p_mapping_id uuid",
+      "kind": "f",
+      "definition_hash": "c899c4c016d29d9987e2562cd131f236",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_matches_observed_path",
+      "args": "p_signal_id uuid, p_path text[]",
+      "kind": "f",
+      "definition_hash": "9f41de6b46f546fe8d4e677d96f1ed56",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_category_parent_chain_safe",
+      "args": "p_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "40856feb164d9cca572c7c95e9cb115d",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "uniqlo_complete_observed_category_path",
+      "args": "p_signal_id uuid",
+      "kind": "f",
+      "definition_hash": "5940f00f061c0e260538f2469e226eab",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "3886e2e3e7dc523cfcf03419d6ce839c",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "cf921a03894e9d4d4c7d47e994d07932",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item_snapshot_base",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "842a3839b730d5fb95da6ed1fdc789ff",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "update_closet_item_with_group_for_swift",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "0312137708f0c1fe3c772ddbfdd71d46",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "2f72cc6039136df53b85db7649f1bf8d",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_for_swift",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "b487faa0e75f3e0d2c0eb9a27498858b",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_with_group_for_swift",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "20f369b4a9e6be61be763d6538b31fb8",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "upsert_closet_item_with_group_for_swift_snapshot_base",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "0419d9eefcba4c6511afb07cc8ec561e",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_classification_mapping",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "83a67075716f22462df0284ff8c8c89f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_mode",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "f6099d377bfd1c7df9a525142681fe24",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_measurement_source_snapshot",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "16dc964114f125d2f5ffc95e0a775fd2",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_closet_product_hierarchy",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "3d7d20238d2dbd2eebb694dfd0c26b0b",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_completion_payload",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "37136328aeb0f4f8573dec8b62944895",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_comparison_ownership_and_target",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "c681482808067b3c168f50f453d647dd",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_garment_axis_values",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "be441cf28bac0c0eac00817c9cfa289b",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_ingestion_receipt_facts",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "a0b13ec72b46108617749db7ac9dd456",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_product_signal_source",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "87bef90da19d7816fe726b7530f1db8f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_size_availability_observation",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "39e53f8acd0587e138383ce1845382ff",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_identifier_owner",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "3dfa5dc01582df3bd487c5f59beade45",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_measurement_alias_source",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "d59b4aae76c3de7f15d8e52182459798",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_source_signal_parent",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "014a971d8b55c3712c6ebac7757411e3",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "fitmatch_vnext",
+      "name": "validate_user_product_classification_override",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "55f9b1498ec0b8ddb00ac01b38e683bf",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_begin_comparison",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "34546a6234eefdb92366c3bed34fed1e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_closet_classification_override",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "ab02ff781a73d6054234e317f43a90d6",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_clear_user_product_classification",
+      "args": "p_product_id uuid, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "19cc3e1f87fd1d61eaa52d10e3905c2d",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_comparison_history",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "0f9e2b47b07da9a7154f14aea84de147",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_comparison_history_sync",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "0559f87f5d25b329a42ed6581208b5e5",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_complete_comparison",
+      "args": "p_comparison_id uuid, p_result jsonb",
+      "kind": "f",
+      "definition_hash": "232d207d33d998786106553879996017",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_delete_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "5160dafbf914ed2effba3d6343826586",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean",
+      "kind": "f",
+      "definition_hash": "9eab31c1ad30c8f0a39cb3c1e5e325a2",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_eligible_candidate_sizes",
+      "args": "p_reference_closet_item_id uuid, p_target_product_id uuid, p_target_variant_id uuid, p_manual_explicit boolean, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "eeb36d1e50bf9974ee7c6d06821309b8",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid",
+      "kind": "f",
+      "definition_hash": "a42191e09f9f353eb5ca2b7cf034e6f7",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_reference_candidates",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "ae28182f49059a7677e0bc306c21453f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_find_selected_reference_candidate",
+      "args": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text",
+      "kind": "f",
+      "definition_hash": "0ea7121662536971d558c4723168c9d0",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_classification_recovery_options",
+      "args": "p_product_id uuid",
+      "kind": "f",
+      "definition_hash": "69134c89f27497f142b37bff4df76651",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_closet_item",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9fe60d3d3327d087423b54a0453f0ea6",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_get_product_runtime",
+      "args": "p_source_code text, p_source_product_key text",
+      "kind": "f",
+      "definition_hash": "b6455aec0b5fd4eae43aa5dd5337b88a",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_hide_comparison_history",
+      "args": "p_client_comparison_ids uuid[]",
+      "kind": "f",
+      "definition_hash": "61edadbe816a2857dbee1bd17bcbbe58",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_ingest_product_observation",
+      "args": "p_payload jsonb, p_actor_id uuid",
+      "kind": "f",
+      "definition_hash": "faa4e2d9f2052222e209fc3f4e1bb2b7",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_list_closet_items",
+      "args": "",
+      "kind": "f",
+      "definition_hash": "aa79b1dc2dbf6ad77e94bb7acd3bdecd",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_classification_override",
+      "args": "p_closet_item_id uuid, p_override jsonb",
+      "kind": "f",
+      "definition_hash": "e4d8c74baea12b82f38a9d9bf9c4e249",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "2eb6835de219b3f8d51a0c0a0de1ab2f",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_set_user_product_classification",
+      "args": "p_product_id uuid, p_selected_candidate_fingerprint text, p_expected_candidate_set_hash text, p_expected_product_input_fingerprint text, p_expected_product_evidence_fingerprint text, p_mutation_id uuid, p_expected_revision integer",
+      "kind": "f",
+      "definition_hash": "8c8bbc0a4c333bd76a766989b2969b7e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_unset_closet_reference",
+      "args": "p_closet_item_id uuid",
+      "kind": "f",
+      "definition_hash": "9cac15a401a5d5b479af835009db6e39",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_update_closet_item",
+      "args": "p_closet_item_id uuid, p_request jsonb",
+      "kind": "f",
+      "definition_hash": "a9348e8896ee78b0d1913a3f7297afbe",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    },
+    {
+      "schema": "public",
+      "name": "fitmatch_vnext_upsert_closet_item",
+      "args": "p_request jsonb",
+      "kind": "f",
+      "definition_hash": "5fa05c5d7aadc4925629b90ddba6a58e",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true
+    }
+  ],
+  "productionGroupPolicyStatus": [
+    {
+      "audit": {
+        "groups": [
+          {
+            "code": "A",
+            "active": true
+          },
+          {
+            "code": "B",
+            "active": true
+          },
+          {
+            "code": "C",
+            "active": true
+          },
+          {
+            "code": "D",
+            "active": true
+          },
+          {
+            "code": "E",
+            "active": true
+          },
+          {
+            "code": "F",
+            "active": true
+          },
+          {
+            "code": "G",
+            "active": true
+          }
+        ],
+        "policies": [
+          {
+            "status": "validated",
+            "version": "retailer-comparison-groups-v3-seven-20260911"
+          },
+          {
+            "status": "loading",
+            "version": "retailer-comparison-groups-v3-seven-20260911-musinsa-draft-20260914"
+          }
+        ],
+        "runtime_mapping_counts": [
+          {
+            "count": 40,
+            "source_code": "musinsa"
+          },
+          {
+            "count": 342,
+            "source_code": "uniqlo"
+          },
+          {
+            "count": 148,
+            "source_code": "zara"
+          }
+        ],
+        "group_comparison_policies": [
+          {
+            "policy_active": true,
+            "active_metrics": 24,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_bottom",
+            "min_common_measurements": 2
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 10,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_homewear",
+            "min_common_measurements": 1
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 10,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_innerwear",
+            "min_common_measurements": 1
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 12,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_onepiece",
+            "min_common_measurements": 2
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 18,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_outerwear",
+            "min_common_measurements": 1
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 12,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_skirt",
+            "min_common_measurements": 2
+          },
+          {
+            "policy_active": true,
+            "active_metrics": 16,
+            "garment_active": true,
+            "garment_type_code": "comparison_group_top",
+            "min_common_measurements": 1
+          }
+        ]
+      }
+    }
+  ],
+  "writes": 0,
+  "authenticatedE2E": "NOT RUN",
+  "fullReleaseGate": "NOT RUN"
+}
