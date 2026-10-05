@@ -1,0 +1,45 @@
+{
+  "developmentApplied": true,
+  "developmentPostflight": [
+    {
+      "definition_hash": "64fa01b9fdba8224476bf0bb51d4f6bc",
+      "reads_actual_mapping_source": true,
+      "rejects_unknown_source": true,
+      "removed_wrong_default": true,
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "anon_execute": false,
+      "authenticated_execute": true
+    }
+  ],
+  "productionApplied": false,
+  "productionPostflight": [
+    {
+      "definition_hash": "653383c60fe7336c529b267b1cb4eac3",
+      "reads_actual_mapping_source": false,
+      "rejects_unknown_source": false,
+      "removed_wrong_default": false,
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ],
+      "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_requested_group_code text",
+      "anon_execute": false,
+      "authenticated_execute": true
+    }
+  ],
+  "productionApplyBlockedBySafetyReview": true,
+  "userDataChanged": false,
+  "categoryMappingChanged": false,
+  "retailerChecks": {
+    "categoryCurlHTTP": 403,
+    "detailsCurlHTTP": 403,
+    "browserCategory": "Current page loaded, title 미니스커트 | 무신사 추천 상품",
+    "browserDetails": "net::ERR_BLOCKED_BY_CLIENT"
+  }
+}
