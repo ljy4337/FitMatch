@@ -1,3 +1,22 @@
+## 2026-10-05 로컬 main App Store 아카이브 설정 확인
+- 사용자 로컬 아카이브 생성 설정 요청. main b74040b 별도 프로젝트 FitMatchMainRelease/FitMatch.xcodeproj를 Xcode open 성공. 실제 xcodebuild FitMatch-Production/Release/generic iOS showBuildSettings exit0 확인: 앱1.1(14), 운영bundleID/aqhrup, automatic signing/team Y344H87QC5. ArchiveAction Release 및 앱 buildForArchiving YES 확인. 프로젝트 소스 설정 수정 불필요.
+- Xcode UI의 현재 scheme/destination 선택은 미검증. 사용자는 FitMatch-Production / Any iOS Device (arm64) 선택 후 Product > Archive 실행. 실제 archive/export/upload NOT RUN; build14의 App Store Connect 기존사용 여부 미조회. 계정/인증서/DB변경0, push0.
+
+## 2026-10-05 자산 수정만 main 예외 승격 승인 완료
+- 사용자 명시 승인으로 기존 자산 수정34ff5d3만 clean main에 cherry-pick, main b74040b. 다른 QA 정책/DB 변경 반영0; 이미지6개 100% rename, 디자인/Swift/점수 변화0. 원래 dirty작업 보존.
+- 실제 main actool exit0, Assets.car AppIcon/SplashBackground 및 primary AppIcon metadata PASS; archive auditor7건 PASS, 범위 diff-check/보호scroll PASS. 로그 /private/tmp/FitMatchMainAssetVerify20261005/actool.log.
+- 로컬main origin/main보다1commit앞섬. push0. 전체앱build/archive/export/업로드 NOT RUN. 인증 A-E/전체Gate BLOCKED 유지; 자산 수정 예외 승인만이며 출시승인 아님. 아래 승인대기 기록은 이번 승인으로 해소.
+
+## 2026-10-05 FAIL 자산 수정만 재검증
+- 사용자 FAIL만 조치 요청. 기존 main 기반 자산 수정 commit 34ff5d3 범위 확인; 추가 앱/DB/UI 변경0. 원본 이미지6개 SHA256 동일, 참조 검증 PASS. 기존 archive auditor7건 실제 재실행 PASS.
+- 실제 actool 재실행: 최초 sandbox CoreSimulator 접근 차단으로 실패, 권한 승인 후 exit0. 생성 Assets.car AppIcon/SplashBackground 포함 및 primary AppIcon metadata 확인 PASS. 로그 /private/tmp/FitMatchAssetOnlyVerify20261005/actool.log. 전체 앱 빌드/archive/export/upload NOT RUN.
+- 필수 Gate 전 main 승격 금지 규칙 유지. main 반영0/push0. 자산 수정만 예외 승격에 대한 사용자 명시 승인 대기; 인증 A-E 차단 해소나 출시 PASS로 확대하지 않음. 기존 dirty 작업 보존.
+
+## 2026-10-05 사용자 재시도 요청 — Distribution IPA 성공, QA 인증 차단 유지
+- 기존 영구보관 archive로 로컬 export 재시도 exit0/EXPORT SUCCEEDED. 실행 전 find-identity는 Apple Development1개만 반환했지만 이번 export는 실제 Apple Distribution으로 성공; 로컬 identity 목록만으로 cloud/export 가능 여부를 단정하지 않는다. Xcode QA프로젝트 정상open 수행, 사용자 계정/Keychain수정0. 성공의 구체적인 인증 회복 원인은 미확정.
+- 실제 IPA 앱/확장 codesign --verify --deep --strict PASS, Apple Distribution authority/운영bundleID 및 운영aqhrup URL 확인PASS. 영구 /Users/jinyoung/Developer/FitMatchLocal/FitMatchReleaseArtifacts/20261005/FitMatch-1.1-14-QA-Candidate.ipa 저장. QA검증 source기반 candidate이며 main승격/업로드/심사제출0. 아래 이전export실패는 이번성공으로 해소.
+- 현재 QA credential환경0/준비session파일0 재확인. 실제 개발DB preflight exit2/BLOCKED, 요청0/case0. 계정 정상 로그인과 검증seed/A-E화면 증거가 여전히 필요하며 '로그인만 하면 전체Gate 자동PASS'로 설명하지 않는다. main승격/push/DB쓰기0. 로그 /private/tmp/FitMatchReleaseExportRetry20261005.log, /private/tmp/FitMatchQAAuthRetry20261005.json. 이전 build/테스트를 새 실행으로 집계하지 않음.
+
 ## 2026-10-05 QA 통합 검증 및 운영 설정 archive 완료 — 최종 승격/서명 차단
 - 사용자 배포 직전까지 완료 요청으로 종류별 커밋 e93e13d(정책/Gate), 34ff5d3(asset), 9fbb568(DB provenance), d983ae5(EOF 포맷) 작성. QA 최신main fast-forward 후 세 branch 정상merge, 검증HEAD 0fdbecb74bd4f0371b822479636c7e98e71a4a0f. 영구QA checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchQARelease; 원래 docs checkout/별도 fix의 중복 미커밋Handoff journal 보존. push/main승격0. main/origin b0c9088 unchanged, 아직 asset수정 없음.
 - 실제 새 단일Gate exit2/BLOCKED. PASS: QA cleanHEAD/branch/diff/보호scroll/원문hash/대상설정, runner45·archive auditor7·별도DB 안전9, 실제 QA Xcode build+61 test methods(0fail/0skip), 현재3사각1URL API 파싱(M2/U7/Z4사이즈), 온보딩/현재fixtureUI12(0fail/0skip). PGlite 실제 context SQL 회귀 재실행PASS(helper fixtures, 인증E2E아님). 앱 Swift/파서/버튼/UI/점수 수정0.
