@@ -1,3 +1,10 @@
+## 2026-10-08 사용자 승인 main/QA 최신 소스 일치화
+
+- 사용자 main=배포, QA=테스트 및 최신 로컬 변경 일치화 명시 승인에 따라 기존 QA/문서/main 자산 커밋을 정상 병합. 새 작업 브랜치 생성0, 강제푸시/이력재작성0. 기존 별도 작업 폴더의 미커밋 기록 원문은 이 문서 하단에 보존; 해당 폴더 원본도 유지.
+- 통합 앱/확장/Shared/Xcode 프로젝트 tree는 기존 QA 170ee2f와 동일. UI/Swift/계산/DB 설정 추가 수정0. FitMatch-Production은 운영 aqhrup, FitMatch-QA는 개발 hnkpl 유지. SQL은 Git 통합만 수행, DB 적용0.
+- 이번 실행 PASS: Python release 검사45, archive 검사7, diff-check, 보호 scroll 확인. 전체 앱 build/인증 A-E/실기기/배포 NOT RUN. 과거 인증 Gate BLOCKED를 PASS로 바꾸지 않으며 이번 사용자의 Git 일치화 지시에 따라 반영한다. Git 동기화는 출시 검증 완료가 아니다.
+- 최종 main/QA 로컬·원격 SHA와 clean 상태는 push 후 직접 확인하여 사용자 보고. 현재 기본 폴더는 main으로 전환하고 기존 main 전용 폴더는 삭제 없이 detached 보존한다.
+
 ## 2026-10-05 로컬 main App Store 아카이브 설정 확인
 - 사용자 로컬 아카이브 생성 설정 요청. main b74040b 별도 프로젝트 FitMatchMainRelease/FitMatch.xcodeproj를 Xcode open 성공. 실제 xcodebuild FitMatch-Production/Release/generic iOS showBuildSettings exit0 확인: 앱1.1(14), 운영bundleID/aqhrup, automatic signing/team Y344H87QC5. ArchiveAction Release 및 앱 buildForArchiving YES 확인. 프로젝트 소스 설정 수정 불필요.
 - Xcode UI의 현재 scheme/destination 선택은 미검증. 사용자는 FitMatch-Production / Any iOS Device (arm64) 선택 후 Product > Archive 실행. 실제 archive/export/upload NOT RUN; build14의 App Store Connect 기존사용 여부 미조회. 계정/인증서/DB변경0, push0.
@@ -5887,3 +5894,36 @@ git diff -- '*.swift' | grep -E \
 - 기존 미커밋 작업을 범위별로 분리했다: 공유 버튼 상태 `854ed0b`, 기록의 다른 사이즈 비교 복원 및 결과 성능 진단 `b55c7bf`, 4장 온보딩과 UI 테스트 `826f48b`, 앱/공유 확장 빌드 번호 14 `db072cc`. 아래의 "로컬 미커밋" 표기는 각 작업 당시의 기록이며, 현재 커밋 상태를 뜻하지 않는다.
 - 현재 소스의 `FitMatch-Production` Release iOS 빌드(`CODE_SIGNING_ALLOWED=NO`) PASS. `scripts/test-metrics-diagnostics.sh` Swift Testing 9건 PASS. 온보딩/등록 UI 테스트는 9건 중 첫 실행 6 PASS/3 fixture 기대값 FAIL, 해당 fixture 수정 후 실패 3건만 재실행해 3 PASS. 따라서 최종 소스에서 전체 9건 일괄 PASS라고 주장하지 않는다.
 - 인증된 서버 저장/비교 실기기 E2E, 신규 TestFlight 업로드는 NOT RUN. 기존 1.1(14) 아카이브 업로드는 Xcode 계정 인증 문제로 BLOCKED. DB/Edge write 없음. 다른 미추적 QA/수집/마이그레이션 파일은 이번 커밋 범위에서 제외한다.
+
+
+## 2026-10-08 통합 시 보존한 과거 작업 기록
+
+아래는 당시 기록 원문이며 현재 배포·검증 상태를 뜻하지 않는다. 최신 상태는 문서 맨 위를 따른다.
+
+### 기존 작업 폴더 미커밋 기록 보존: FitMatchPolicyRepair
+
+## 2026-10-05 운영 승인 적용 완료 — 기존 미적용 상태 해소
+- 대상/범위 설명 후 사용자 '해' 승인으로 운영 aqhrupgjpmrtnystottx에 repair_comparison_group_provenance 적용 success=true, remote version20261005105711. 사전 기존정의hash/기록0 확인. 개발기존적용 재실행0.
+- 운영 사후 hash64fa01b9fdba8224476bf0bb51d4f6bc/수정flags3true 및 개발동일 PASS, 기존owner/signature/ACL/security/search_path/실효EXECUTE권한 유지. 실제원격ledger확인/PGlite회귀PASS. UI/점수/정책/사용자row변경0; 완료History변경0. 아래 운영미적용은 역사기록이며 이번승인적용으로해소.
+- 별개기존securityadvisor경고 남음. 인증앱E2E/build/승격NOT RUN, commit/push/merge0. 증거 Docs/QA/ProductionProvenanceApplied20261005.json 및 PolicyAuthorityRepair20261005.md. 이미지수정branch별도/main미반영.
+
+## 2026-10-05 그룹 출처 수정 개발 적용 — 운영 적용 차단
+- 최신 main b0c9088에서 격리 브랜치 codex/fix-policy-authority-20261005 생성. 영구 checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchPolicyRepair; 기존 checkout dirty/untracked 문서 보존. commit/push/merge/QA-main승격 없음.
+- 실제 deployed comparison_target_context의 출처 결함을 PGlite SQL로 재현(기존 함수 PRODUCT_OVERRIDE -> RETAILER_CATEGORY, 기대 FAIL). 신규 migration 20261005095057_repair_comparison_group_provenance.sql에서 mapping_source 검증으로 수정. session source 유지; group/scoring/security/ACL/search_path/사용자 데이터 변경 없음. 사전 정의 hash 가드, 별도 사후 SELECT와 hash 가드 rollback 준비.
+- 개발 hnkplvyegonlhumlejst APPLIED: repair_comparison_group_provenance, remote version 20261005095512. 사후 hash 64fa01b9fdba8224476bf0bb51d4f6bc, 올바른 key/unknown 거절/기존 default 제거 true, anon execute false 및 기존 signature/ACL 동일.
+- 운영 aqhrupgjpmrtnystottx NOT APPLIED: 실제 적용 요청은 안전 검토에서 구체적인 Production 승인 부족으로 거절. 우회/재시도 없음. SELECT 사후 원래 hash653383c60fe7336c529b267b1cb4eac3 유지 확인. 개발/운영 함수가 이번 승인 대기 동안 서로 다름. 운영 적용에는 정확한 대상 함수 수정의 명시적 승인 필요.
+- PASS: 수정 SQL provenance/safety/동일 mapped 응답/ACL/guarded rollback 격리 테스트, 기존 comparison_preview14-case 회귀, 개발 정의/권한 사후검증. dependency fixtures이며 인증 E2E 아님. NOT RUN: 앱 build/인증 등록·비교/전체ReleaseGate. SQL 수정만으로 출시 승인 아님.
+- 무신사54key(신규53path, 동일path기존C연결0030081건) 후보 JSON 보존. curl 공식 category100004/details7122627 HTTP403; 정상 browser category page 로드 성공, 화면 관측7309004의 API browser 접근 ERR_BLOCKED_BY_CLIENT. 목록 상품명으로 API 분류를 대체하지 않음. 신규매핑/초안 활성화0. 현재 API근거 확보는 BLOCKED.
+- 개발 security advisors 기존 exposed authenticated SECURITY DEFINER3건/누출비밀번호보호disabled 경고 확인. 수리한 private함수는 해당 exposed 목록에 없음; security/Auth 변경 없음. Report/실제 postflight JSON/test.log/카테고리 후보는 수정 checkout Docs/QA/PolicyAuthorityRepair20261005* 및 MusinsaPendingCategoryReview20261005.json. 원본/옷장/비교/History row 변경0.
+
+### 기존 작업 폴더 미커밋 기록 보존: FitMatchReleaseAssetRepair
+
+## 2026-10-05 운영 출처 함수 적용 완료
+- 사용자가 범위설명 후 '해'로 승인하여 운영aqhrup comparison_target_context 수정 적용. remote migration20261005105711, 개발동일정의hash/실효권한 사후확인PASS. 사용자row/UI/점수변경0. 기존운영승인대기 기록은 이번적용으로해소. 증거 별도 SQL worktree Docs/QA/ProductionProvenanceApplied20261005.json.
+- 이미지수정 QA/main승격/commit/push는 아직미수행. 앱인증E2E NOT RUN. 운영적용을 새 앱업로드 또는 출시승인으로 확대하지않음.
+
+## 2026-10-05 이미지 참조 수정 — 검증 완료, 승격 미수행
+- 최신 main b0c9088 기반 codex/fix-release-assets-20261005. AppIcon/SplashBackground 파일6개 ASCII rename/JSON참조 수정, Git 원본 SHA256 전부동일. UI/이미지/기능 변경0. 영구 checkout /Users/jinyoung/Developer/FitMatchLocal/FitMatchReleaseAssetRepair.
+- PASS: 실제 actool catalog/primary icon, unsigned Production Release Xcode build 및 생성앱 AppIcon PNG/CFBundleIcons/AppIcon·SplashBackground Assets.car, 운영URL/ID 유지. 기존 archive audit의7case/문법/보호scroll/diff PASS. 로그 /private/tmp/FitMatchReleaseAssetRepair20261005-build.log. 공유DerivedData products는 이제 수정브랜치 산출물이므로 unchanged main 결과로 사용하지 말 것.
+- 출처SQL/preview14case PGlite 회귀 PASS(helper fixtures, 인증E2E아님). 개발SQL기존적용 유지. 운영aqhrup 함수는 원래hash이며 명시승인질문 응답대기; 운영쓰기0. 상세 Docs/QA/ReleaseAssetRepair20261005.md 및 원래checkout 최신 Handoff.
+- commit/push/QA/main승격0; main배포 checkout미수정. NOT RUN: 인증A-E/전체ReleaseGate/signedarchive/export/upload. 이전출시준비완료로 해석하지 말 것.
