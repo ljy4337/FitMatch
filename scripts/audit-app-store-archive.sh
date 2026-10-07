@@ -80,6 +80,7 @@ if [[ -f "$app_plist" ]]; then
     require_plist_value "$app_plist" CFBundleIdentifier "com.ljy4337.fitmatch" "app bundle identifier"
     require_plist_value "$app_plist" CFBundleShortVersionString "$expected_version" "app marketing version"
     require_plist_value "$app_plist" CFBundleVersion "$expected_build" "app build number"
+    require_plist_value "$app_plist" CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName "AppIcon" "app icon asset name"
     require_plist_value "$app_plist" CFBundleURLTypes:0:CFBundleURLName "com.ljy4337.fitmatch" "URL type identifier"
     require_plist_value "$app_plist" CFBundleURLTypes:0:CFBundleURLSchemes:0 "fitmatch" "URL scheme"
 
