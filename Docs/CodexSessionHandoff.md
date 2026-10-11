@@ -1,3 +1,16 @@
+## 2026-10-11 상품 비교 시작 스캔 버튼 스타일 정렬
+
+- 사용자 요청으로 CompareFlowSheet의 태그 스캔만 시스템 bordered Button에서 기존 공통 SecondaryButton으로 교체. 전체 너비/48pt 높이/16pt 모서리/공통 보조 버튼 배경·글꼴 사용. 액션/disabled/accessibility ID 및 스캔 이후 흐름 유지. 기존 미커밋 스캔 작업 보존.
+- diff-check/보호scroll PASS. FitMatch-QA/Debug-QA/iPhone17 Simulator build PASS(exit0, /tmp/FitMatchTagButtonBuild.log); 실기기 화면 확인 NOT RUN.
+
+## 2026-10-11 사용자 컨펌 태그 스캔 진입점 구현
+
+- 사용자 승인 위치: 상품 비교 시작의 URL 입력 카드 아래 `태그 스캔`, 내 옷 추가 방법 선택창의 세 번째 `태그 스캔`. 공통 VisionKit 카메라 화면(EAN13/QR), 권한/취소/재시도/중복 감지 처리. 정상 URL 결과는 스캐너 dismiss 후 기존 비교 `startCompareTask` 또는 링크 옷장 등록 `initialURL` 자동 불러오기로 연결한다. 스캔값으로 사이즈/내 옷 자동 선택, 비교 실행, 저장을 하지 않는다.
+- 최신 origin/main=origin/QA=2d01ea4 직접 확인 후 clean main 기반 `feature/retailer-tag-scan` 생성. 기존 qrcode branch 보존. DB/계정/서버/원본 측정 정책 수정0, commit/push/merge0.
+- `TagProductResolver`는 유니클로 EAN13 checksum 검증 및 공식 `/kr/api/commerce/v5/ko/l3s/{barcode}` 응답의 정확한 product/priceGroup/color/pld를 URL로 전달한다. 무신사는 허용 도메인 내 리다이렉트를 단계별 확인하여 중간 OneLink의 공식 PDP goodsNo를 확보; 내부 RFID QR/충돌 상품ID/잘못된 호스트는 거절. 스캔 옵션으로 사용자 사이즈 선택을 대체하지 않는다.
+- 실제 새 Swift 코드/macOS URLSession 직접 호출 PASS: 2000222273037 → E487689-000/00 color09/pld000; mss.kr/sh/7952a8dd → 6853555; mss.kr/sh/fd3d0058 → 6341385. Firecrawl 경유 아님. 앞선 Python timeout은 이 Swift 조회의 실패로 해석하지 않는다. 물리 카메라/기기별 네트워크/전체 상품 보장은 미검증.
+- 초기 QA compile FAIL: Vision import 누락 수정. 최종 FitMatch-QA/Debug-QA/iPhone17 iOS26.3.1 Simulator build+집중 XCTest 6개 PASS(0fail/0skip), xcodebuild exit0. checksum/줄바꿈·형식거절, product/color/pld 보존, 사이즈 자동선택 없음, OneLink 2상품, 불명/충돌ID 거절, 기존 상품입력 gate 연결, 내부RFID 거절 검증. 로그 /tmp/FitMatchTagScanFinal.log, xcresult /tmp/FitMatchTagScanBuild/Logs/Test/Test-FitMatch-QA-2026.10.11_09-13-00-+0900.xcresult. 실제조회 3건 로그 /tmp/FitMatchTagScanLive.log. Info.plist 카메라 권한 빌드 산출물 확인/diff-check/보호scroll PASS. 실기기 카메라·버튼 탭/인증 등록·비교 E2E/전체 Release Gate NOT RUN. commit/push/QA·main승격 없음.
+
 ## 2026-10-08 사용자 승인 main/QA 최신 소스 일치화
 
 - 사용자 main=배포, QA=테스트 및 최신 로컬 변경 일치화 명시 승인에 따라 기존 QA/문서/main 자산 커밋을 정상 병합. 새 작업 브랜치 생성0, 강제푸시/이력재작성0. 기존 별도 작업 폴더의 미커밋 기록 원문은 이 문서 하단에 보존; 해당 폴더 원본도 유지.

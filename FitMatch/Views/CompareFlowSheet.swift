@@ -18,6 +18,8 @@ struct CompareFlowSheet: View {
     @StateObject private var viewModel: ShoppingProductViewModel
     @State private var step: CompareFlowStep = .start
     @State private var productURL = ""
+    @State private var isShowingTagScanner = false
+    @State private var scannedProductURL: URL?
     @State private var errorMessage: String?
     @State private var selectedReferenceItemID: UUID?
     @State private var selectedComparisonGroup: FitMatchComparisonGroup?
@@ -179,6 +181,14 @@ struct CompareFlowSheet: View {
         .onChange(of: userFits.count) { _, _ in
             guard step == .missingReference || step == .closetSelection else { return }
             rebuildPreparedComparison()
+        }
+        .sheet(isPresented: $isShowingTagScanner, onDismiss: {
+            guard let url = scannedProductURL else { return }
+            scannedProductURL = nil
+            productURL = url.absoluteString
+            startCompareTask(with: url.absoluteString)
+        }) {
+            TagScannerSheet { scannedProductURL = $0 }
         }
         .sheet(item: $registrationRoute) { route in
             AddComparedProductToClosetSheet(
@@ -1027,6 +1037,14 @@ private extension CompareFlowSheet {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color(.separator).opacity(0.12), lineWidth: 0.5)
                 }
+
+                SecondaryButton(title: "태그 스캔", systemImage: "qrcode.viewfinder") {
+                    isURLFocused = false
+                    scannedProductURL = nil
+                    isShowingTagScanner = true
+                }
+                .accessibilityIdentifier("compare.scanTag")
+                .disabled(viewModel.isLoadingProductInfo)
 
                 PrimaryButton(title: "비교하기", systemImage: "sparkles") {
                     isURLFocused = false

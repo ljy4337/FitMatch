@@ -11,6 +11,7 @@ struct MyClosetView: View {
     @Query(sort: \RecommendationHistory.createdAt, order: .reverse) private var histories: [RecommendationHistory]
     @AppStorage("FitMatch.closetViewLayout") private var closetViewLayoutRaw = ContentListLayout.list.rawValue
     @State private var activeSheet: ClosetActiveSheet?
+    @State private var scannedClosetURL: String?
     @State private var selectedComparisonGroup: FitMatchComparisonGroup?
     @State private var selectedBrand: String?
     @State private var sortOption: FitMatchClosetSortOption = .recent
@@ -49,6 +50,7 @@ struct MyClosetView: View {
             case .addMethod:
                 AddClosetMethodSheet(
                     onLink: {
+                        scannedClosetURL = nil
                         dismissActiveSheet()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                             presentActiveSheet(.linkRegistration)
@@ -59,9 +61,16 @@ struct MyClosetView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                             presentActiveSheet(.manualAdd)
                         }
+                    },
+                    onScanned: { url in
+                        scannedClosetURL = url.absoluteString
+                        dismissActiveSheet()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            presentActiveSheet(.linkRegistration)
+                        }
                     }
                 )
-                .presentationDetents([.height(290)])
+                .presentationDetents([.height(390)])
                 .presentationDragIndicator(.visible)
             case .manualAdd:
                 NavigationStack {
@@ -70,7 +79,7 @@ struct MyClosetView: View {
                 .presentationDragIndicator(.visible)
             case .linkRegistration:
                 NavigationStack {
-                    LinkClosetRegistrationView()
+                    LinkClosetRegistrationView(initialURL: scannedClosetURL)
                 }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -451,6 +460,9 @@ struct AddClosetMethodSheet: View {
     @Environment(\.dismiss) private var dismiss
     let onLink: () -> Void
     let onManual: () -> Void
+    let onScanned: (URL) -> Void
+    @State private var isShowingTagScanner = false
+    @State private var scannedURL: URL?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -481,9 +493,26 @@ struct AddClosetMethodSheet: View {
                 ) {
                     onManual()
                 }
+                AddClosetMethodRow(
+                    title: "태그 스캔",
+                    subtitle: "유니클로 바코드 · 무신사 상품 QR로 불러오기",
+                    systemImage: "qrcode.viewfinder",
+                    isPrimary: false
+                ) {
+                    scannedURL = nil
+                    isShowingTagScanner = true
+                }
+                .accessibilityIdentifier("closet.scanTag")
             }
 
             Spacer(minLength: 0)
+        }
+        .sheet(isPresented: $isShowingTagScanner, onDismiss: {
+            guard let url = scannedURL else { return }
+            scannedURL = nil
+            onScanned(url)
+        }) {
+            TagScannerSheet { scannedURL = $0 }
         }
         .padding(20)
         .background(Color(.systemGroupedBackground))

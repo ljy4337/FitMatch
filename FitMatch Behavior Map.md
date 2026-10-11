@@ -67,6 +67,12 @@ READ FIRST: `FitMatchShareExtension/ShareViewController.swift`, `FitMatch/Servic
 
 Read URL/plain text → App Group pending URL + destination (legacy default Compare) → active app reads SharedURLStore → Compare or linked Closet registration routing. The Share UI sets the destination against the exact URL/generation before opening its route. Closet entry passes that URL to the existing LinkClosetRegistrationView and begins its normal product load once; it does not create a separate parser or persistence path. Verify consumption/routing separately from physical Share Sheet handoff.
 
+### FLOW-TAG-SCAN — 태그 스캔 → 기존 상품 불러오기
+
+READ FIRST: `FitMatch/Views/TagScannerSheet.swift`, `FitMatch/Services/TagProductResolver.swift`, `FitMatch/Views/CompareFlowSheet.swift`, `FitMatch/Views/MyClosetView.swift`, `FitMatch/ContentView.swift`.
+
+Compare start URL card / AddClosetMethodSheet → shared camera sheet (QR/EAN-13) → UNIQLO KR commerce `/l3s/{EAN13}` or MUSINSA short-link intermediate redirect → validated product URL. Scanner dismissal then invokes existing `startCompareTask(with:)` or `LinkClosetRegistrationView(initialURL:)` auto-load. No new parser, server authority, comparison, or persistence path. Scanned options do not select a size; user selection remains required. Non-product RFID QR and unknown hosts are rejected; cancellation discards pending lookup.
+
 ### FLOW-PRODUCT-LOAD — 상품 링크 불러오기
 
 READ FIRST: `FitMatch/Services/ProductURLParserService.swift`, `FitMatch/ViewModels/ShoppingProductViewModel.swift`, `FitMatch/Services/FitMatchServerAuthorityCoordinator.swift`, `FitMatch/Services/FitMatchSupabaseProductResolver.swift`.

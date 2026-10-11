@@ -1165,9 +1165,12 @@ private struct MainTabView: View {
                     },
                     onManual: {
                         presentManualClosetAddFromNewTask()
+                    },
+                    onScanned: { url in
+                        presentClosetLinkRegistrationFromNewTask(initialURL: url.absoluteString)
                     }
                 )
-                .presentationDetents([.height(290)])
+                .presentationDetents([.height(390)])
                 .presentationDragIndicator(.visible)
             case .closetLinkRegistration(let request):
                 NavigationStack {
@@ -1371,10 +1374,10 @@ private struct MainTabView: View {
         }
     }
 
-    private func presentClosetLinkRegistrationFromNewTask() {
+    private func presentClosetLinkRegistrationFromNewTask(initialURL: String? = nil) {
         activeSheet = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            presentSheet(.closetLinkRegistration(nil))
+            presentSheet(.closetLinkRegistration(initialURL.map { ClosetLinkRequest(initialURL: $0) }))
         }
     }
 
