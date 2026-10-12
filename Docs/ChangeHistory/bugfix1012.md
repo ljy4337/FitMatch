@@ -211,3 +211,47 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 
 - 보류 유지: 다른 기기 Closet 삭제 전달, History 삭제 후 복사 데이터 정리. 같은 개수 History 화면 cache 수정도 별도 범위이다.
 - 최종 검증 이후 추가 변경은 실행 보고/이력/화면 증거뿐이다. main 승격·DB 적용·배포 없음. bugfix1012 및 QA의 원격 반영은 push 후 SHA를 직접 확인한다.
+
+## BF1012-01 / BF1012-06 후속 — 개발 DB 적용 완료
+
+브랜치: bugfix1012 · 작업일: 2026-10-12 (Asia/Seoul)
+
+### 승인과 계획
+
+- 사용자 “개발디비에 먼저 적용해. 승인한다”를 BF1012-01 준비 SQL의 개발 `hnkplvyegonlhumlejst` 적용 승인으로 확인했다. QA scheme과 실제 project metadata(FitMatch/ACTIVE_HEALTHY/서울/PG17.6)를 대조했다. 운영 적용·main 승격·배포 승인으로 확대하지 않는다.
+- 계획: 현재 DB 정의/대상 확인 → 기존 준비 Apply 그대로 migration 적용 → 별도 Verify/권한/API 사후 검사 → 이력 기록. 신규 계약 범위를 추가하지 않는다.
+
+### 실제 실행 / 대상 파일
+
+- **APPLIED** `supabase/sql/bugfix1012_user_size_recovery_Apply.sql` 원문 1회. 원격 migration `20261012045134`, 이름 `bugfix1012_user_size_recovery`. 함수/테이블/제약조건/권한 및 기존 비교 연결을 하나의 준비된 계약으로 적용했다.
+- **EXECUTED READ ONLY** `supabase/sql/bugfix1012_user_size_recovery_Verify.sql`의 4개 SELECT를 각각 독립 실행해 모든 결과를 보존했다. owner policy/ACL parity와 실제 익명 HTTPS API 검사를 추가했다.
+- **NOT RUN** `supabase/sql/bugfix1012_user_size_recovery_Rollback.sql`: 준비만, 실제 실행 없음. 수락된 복구 데이터가 있으면 rollback을 거절해 사용자 identity를 보존하는 계약 유지.
+- 실제 수정 파일: 이 이력, `Docs/CodexSessionHandoff.md`, `FitMatch Behavior Map.md`, 새 적용 증거 `Docs/ChangeHistory/bugfix1012-development-db-applied.json`. 앱/테스트/기존 SQL 원문 변경 없음. JSON은 실행 SQL SHA256·원격 migration·사전/사후 metadata·API 결과·기존 advisory를 보존한다.
+- 기존 문제: 준비된 복구 RPC/저장소가 개발 DB에 없어서 실제 서버 복구 검증이 막혀 있었다. 현재는 계약 배포 완료이며 아래 과거 개발 미적용/승인 대기 상태를 대체한다. 실제 로그인 앱 동작 완료를 뜻하지 않는다.
+
+### 이번 실행 검증
+
+| 항목 | 상태 | 근거 / 경계 |
+| --- | --- | --- |
+| 개발 대상·신규 계약 미적용·기존 함수12 일치 | PASS | 실제 get_project 및 읽기 전용 system catalog. 모든 LF-normalized hash 일치 확인 후 적용 |
+| 준비 SQL 격리 회귀 재실행 | PASS | `/private/tmp/bf1012/sql-dev-apply-preflight.log`, exit0. PGlite 실제 SQL/fixture; live 인증 E2E 아님 |
+| 원격 Apply / migration 영수증 | PASS | apply_migration success=true 및 ledger `20261012045134` 재조회 |
+| 사용자 소유 RLS·직접 INSERT/UPDATE/DELETE 거절·anon 접근 거절 | PASS | owner_id=auth.uid() SELECT 정책2, authenticated SELECT만, backup 접근 거절 |
+| public 저장/조회 RPC와 private helper 권한 | PASS | public SECURITY INVOKER2, authenticated 실행 허용/anon 거절, 빈 search_path. private 비교 helper 직접 실행 거절 |
+| 공식 FK·사용자 recovery FK·정확한 비교 identity | PASS | 기존 product_sizes FK 보존, 별도 recovery FK와 상호배타 check/owner snapshot trigger 확인 |
+| 적용된 함수12 정의·기존 canonical ACL/security 유지 | PASS | backup applied hash와 현재 pg_get_functiondef 전부 일치, canonical old/new ACL·invoker 동일 |
+| 실제 HTTPS 익명 RPC 접근 | PASS | 정확한 앱 인자 get(p_request_id)/save(p_request) 각각 HTTP401·42501. 인증 저장 성공 증거는 아님 |
+| 신규 security advisor | PASS | 사전/사후 동일 findings18(기존 INFO14+WARN3+WARN1), 추가0. 기존 경고 해결을 주장하지 않음 |
+| 실제 로그인 복구·재조회·비교 완료·History / live 자동 비교 | NOT RUN | 정상 QA 사용자 세션 필요. auth impersonation/RLS bypass/사용자 테스트 데이터 생성 없음 |
+| 적용 후 앱 build/test 재실행 / 실기기 | NOT RUN | 이번 앱 소스 변경 없음. 이전 198/11 결과를 이번 실행으로 표현하지 않음 |
+| 운영 DB 적용 / Rollback / main 승격·배포 | NOT RUN | 이번 실행 대상 제외, 실제 적용0 |
+
+실제 API 첫 검사 스크립트가 save 인자를 p_payload로 잘못 보내 PGRST202를 받은 것은 검사 오류였다. 앱/SQL 소유자의 p_request를 확인해 검사만 수정하고 get/save 모두 재실행했다. 해당 최초 결과를 계약 배포 실패나 PASS 증거로 사용하지 않는다.
+
+기존 보안 참고: [authenticated SECURITY DEFINER 경고](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [유출 비밀번호 보호](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). 이번 승인 범위에서 기존 Auth 설정을 변경하지 않았다.
+
+### 남음
+
+- 개발 DB 적용에 필요한 추가 승인/사용자 SQL 실행은 없다. 정상 로그인한 FitMatch-QA 앱에서 복구 입력→서버 재조회→옷 선택→비교 완료·History 및 기존 자동 비교를 검증해야 한다.
+- 운영 적용은 이번 승인에 포함되지 않으며 NOT APPLIED. 별도 승인과 현시점 사전 검사 필요.
+- 실기기 공유/사진/오류화면, History count-only cache 문제와 기존 명시 보류 항목은 그대로 남는다. 추가 독립 수정 없음.

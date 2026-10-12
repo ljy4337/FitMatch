@@ -1,10 +1,19 @@
+## 2026-10-12 BF1012-01/06 — 개발 복구 계약 적용 완료 / 인증 앱 검증 남음
+
+- 사용자 “개발디비에 먼저 적용해. 승인한다”로 BF1012-01 준비 SQL의 개발 적용을 명시 승인. QA 빌드 환경 문서와 실제 project metadata로 개발 FitMatch `hnkplvyegonlhumlejst`/ACTIVE_HEALTHY/서울 확인. 운영 적용 승인 아님.
+- **APPLIED** `supabase/sql/bugfix1012_user_size_recovery_Apply.sql`을 변경 없이 원격 migration `20261012045134_bugfix1012_user_size_recovery`로 1회 적용. 사용자 복구/active pointer/RLS/RPC 및 기존 비교 snapshot 연결. 운영 `aqhrupgjpmrtnystottx` 적용0, main·앱 소스·공용 상품/사용자/Closet/History 데이터 의도적 변경0.
+- **PASS** 사전 기존 함수12 normalized hash 일치·신규 객체 없음·새 PGlite 회귀. 사후 Verify 4개 SELECT 각각 실행: owner RLS2/직접 쓰기 거절, public invoker RPC2/anon 실행 거절, 기존 official FK+별도 recovery FK/상호배타 identity, 적용 함수12 hash 일치, canonical resolver ACL/invoker 동일. 정상 인증 세션을 사칭하거나 RLS를 우회하지 않았다.
+- **PASS** 실제 HTTPS 익명 get/save RPC는 각각 HTTP401/code42501로 거절. 최초 검사 스크립트의 잘못된 p_payload 인자는 실제 앱/SQL p_request로 고쳐 두 RPC를 재실행했다. 서버 계약 수정 없음. 신규 보안 advisory0; 기존 INFO14/SECURITY DEFINER WARN3/password WARN1 유지. 복구 데이터는 사후 조회 시0건.
+- 실행 증거: `Docs/ChangeHistory/bugfix1012-development-db-applied.json`, 중앙 이력 `Docs/ChangeHistory/bugfix1012.md`의 BF1012-01/06 개발 적용 후속 항목. Apply만 실제 적용, Verify는 읽기 전용 실행, Rollback은 준비만/NOT RUN. 적용 이후 app build/test 재실행은 NOT RUN(앱 소스 변경 없음).
+- **NOT RUN** 정상 로그인 QA 앱의 복구 저장→독립 재조회→사용자 옷 선택→비교→History, 정상 자동 비교 live E2E, 실기기. DB 적용은 완료됐으며 더 이상 개발 SQL 승인 대기 상태가 아니다. 아래 과거 기록의 미적용/승인 대기/BLOCKED는 당시 상태로 보존하고 이번 기록으로 대체한다. 운영 적용·main 승격·배포·History cache/명시 보류 범위는 확대하지 않는다.
+
 ## 2026-10-12 BF1012-06 — 사용자 승인 QA 병합 / 통합 조합 PASS
 
 - 사용자 QA merge 요청에 따라 bugfix1012 `a676ab8`를 기존 QA `1580aa3`에 정상 merge, 소스 병합 `32d34804d68b4a88b2c882a23fab9da27194b1f5`. 앱 소스 충돌0. Handoff/Behavior Map 문서 충돌2개는 QR/bugfix 이력 모두 보존하여 해결. main/DB/배포 변경0.
 - **PASS** 실제 QA 조합 FitMatch-QA simulator build+198 tests(회귀190+QR8, 0fail/0skip), diff/보호 scroll 및 QR resolver/scanner/권한/test 원본 유지 확인. 증거 `Docs/ChangeHistory/bugfix1012-qa-verification.json`; 소스 검증 후 추가 변경은 이 문서 기록뿐이다.
 - 원격 QA 반영 후 최종 SHA를 직접 확인하여 보고한다. 아래 최초 구현 보고의 QA 통합 NOT RUN/merge0는 당시 이력이며 이번 승인/실행으로 대체한다. 신규 개발 SQL 적용0/별도 승인 대기, 인증 앱 E2E·실기기·전체 ReleaseGate NOT RUN/BLOCKED 유지.
 
-## 2026-10-12 bugfix1012 — 복구 서버 연결 준비 / 개발 SQL 승인 대기
+## 2026-10-12 bugfix1012 — 복구 서버 연결 준비 / 개발 SQL 승인 대기 (과거 이력)
 
 - 이력/완료 보고의 단일 진입점: `Docs/ChangeHistory/bugfix1012.md` (BF1012-01~06), 실제 최종 결과와 source hash: `Docs/ChangeHistory/bugfix1012-verification.json`.
 - fetch 후 기존 local/remote bugfix1012와 최신 origin/main=`2d01ea4cc0dd245f9406a9f3e80e2f50711d485d` 확인, 기존 branch 재생성/reset0. 시작 clean. QA=`1580aa358486c6dc2a24fbd51d3c550059667545` QR2commit 앞섬. QA source patch `git apply --check` PASS만 수행, merge/commit/push/배포0.
