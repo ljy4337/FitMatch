@@ -1,0 +1,861 @@
+{
+  "history_id": "BF1012-01",
+  "branch": "bugfix1012",
+  "work_date": "2026-10-12",
+  "timezone": "Asia/Seoul",
+  "authorization": {
+    "user_message": "개발디비에 먼저 적용해. 승인한다",
+    "scope": "BF1012-01 prepared recovery SQL on QA development hnkplvyegonlhumlejst only"
+  },
+  "target": {
+    "id": "hnkplvyegonlhumlejst",
+    "ref": "hnkplvyegonlhumlejst",
+    "organization_id": "hodvywkzszrpxkmxggoi",
+    "organization_slug": "hodvywkzszrpxkmxggoi",
+    "name": "FitMatch",
+    "region": "ap-northeast-2",
+    "status": "ACTIVE_HEALTHY",
+    "database": {
+      "host": "db.hnkplvyegonlhumlejst.supabase.co",
+      "version": "17.6.1.147",
+      "postgres_engine": "17",
+      "release_channel": "ga"
+    },
+    "created_at": "2026-07-21T23:36:55.946063Z"
+  },
+  "apply_requested_at_utc": {
+    "current_time": "2026-10-12 04:51:29 UTC"
+  },
+  "apply_result": {
+    "success": true
+  },
+  "applied_sql": "supabase/sql/bugfix1012_user_size_recovery_Apply.sql",
+  "verification_sql": "supabase/sql/bugfix1012_user_size_recovery_Verify.sql",
+  "rollback_sql": {
+    "path": "supabase/sql/bugfix1012_user_size_recovery_Rollback.sql",
+    "status": "NOT RUN",
+    "reason": "Prepared guarded rollback only; no need to revert successful approved apply"
+  },
+  "preflight": {
+    "project": {
+      "id": "hnkplvyegonlhumlejst",
+      "ref": "hnkplvyegonlhumlejst",
+      "organization_id": "hodvywkzszrpxkmxggoi",
+      "organization_slug": "hodvywkzszrpxkmxggoi",
+      "name": "FitMatch",
+      "region": "ap-northeast-2",
+      "status": "ACTIVE_HEALTHY",
+      "database": {
+        "host": "db.hnkplvyegonlhumlejst.supabase.co",
+        "version": "17.6.1.147",
+        "postgres_engine": "17",
+        "release_channel": "ga"
+      },
+      "created_at": "2026-07-21T23:36:55.946063Z"
+    },
+    "hashes": [
+      {
+        "signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb,text)",
+        "expected_hash": "669db92dfa1baf41dba949d08f6f0fb2",
+        "actual_hash": "669db92dfa1baf41dba949d08f6f0fb2",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)",
+        "expected_hash": "dcab58b5a92f13e877deaeeaa2eae5a3",
+        "actual_hash": "dcab58b5a92f13e877deaeeaa2eae5a3",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.canonical_measurements_for_size_with_context(uuid,jsonb)",
+        "expected_hash": "3bad84cc862151e479946261126ec0e6",
+        "actual_hash": "3bad84cc862151e479946261126ec0e6",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.comparison_history()",
+        "expected_hash": "e7fbfff5b5ad7b2b547e655f1f0e437f",
+        "actual_hash": "e7fbfff5b5ad7b2b547e655f1f0e437f",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.complete_comparison(uuid,jsonb)",
+        "expected_hash": "73b596a1bda260e16834b03e9f7368f7",
+        "actual_hash": "73b596a1bda260e16834b03e9f7368f7",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean,text)",
+        "expected_hash": "2b4355e8478fa925a269f60d188dae9c",
+        "actual_hash": "2b4355e8478fa925a269f60d188dae9c",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean)",
+        "expected_hash": "3360061ebd04240f4704a4a1cd117277",
+        "actual_hash": "3360061ebd04240f4704a4a1cd117277",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.get_product_runtime_base(text,text,boolean)",
+        "expected_hash": "fd985da7af3436a0d17477d580d5786e",
+        "actual_hash": "fd985da7af3436a0d17477d580d5786e",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.get_product_runtime_for_swift(text,text)",
+        "expected_hash": "385b78f0fea567c0367804260d253ce5",
+        "actual_hash": "385b78f0fea567c0367804260d253ce5",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.product_measurement_readiness(uuid,jsonb)",
+        "expected_hash": "4d9516769c12b658ab5ea05fae7b235f",
+        "actual_hash": "4d9516769c12b658ab5ea05fae7b235f",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.protect_completed_comparison()",
+        "expected_hash": "1e6e15dec62d631de4893b95c822e509",
+        "actual_hash": "1e6e15dec62d631de4893b95c822e509",
+        "matches": true
+      },
+      {
+        "signature": "fitmatch_vnext.validate_comparison_completion_payload()",
+        "expected_hash": "55feee500250b836bd8a1eec36c4b9e1",
+        "actual_hash": "55feee500250b836bd8a1eec36c4b9e1",
+        "matches": true
+      }
+    ],
+    "objects": [
+      {
+        "database": "postgres",
+        "server_version": "17.6",
+        "recovery_table": null,
+        "active_recovery_table": null,
+        "backup_table": null,
+        "save_rpc": null,
+        "get_rpc": null,
+        "has_recovery_comparison_column": false
+      }
+    ]
+  },
+  "postflight": {
+    "tables": [
+      {
+        "relname": "active_user_size_recoveries",
+        "relrowsecurity": true,
+        "authenticated_insert": false,
+        "authenticated_update": false,
+        "anon_select": false
+      },
+      {
+        "relname": "user_size_recoveries",
+        "relrowsecurity": true,
+        "authenticated_insert": false,
+        "authenticated_update": false,
+        "anon_select": false
+      }
+    ],
+    "functions": [
+      {
+        "nspname": "fitmatch_vnext",
+        "proname": "user_size_recovery_metadata",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "nspname": "fitmatch_vnext",
+        "proname": "comparison_product_sizes",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "nspname": "fitmatch_vnext",
+        "proname": "get_user_size_recovery",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "nspname": "fitmatch_vnext",
+        "proname": "save_user_size_recovery",
+        "prosecdef": true,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "nspname": "public",
+        "proname": "fitmatch_vnext_save_user_size_recovery",
+        "prosecdef": false,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "nspname": "public",
+        "proname": "fitmatch_vnext_get_user_size_recovery",
+        "prosecdef": false,
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "authenticated_execute": true
+      }
+    ],
+    "constraints": [
+      {
+        "conname": "comparisons_recommended_authority_chk",
+        "definition": "CHECK ((((result_status = 'COMPLETED'::text) AND (COALESCE(recommended_product_size_id, recommended_user_recovery_size_id) IS NOT NULL) AND (recommended_size_label IS NOT NULL) AND (fit_score IS NOT NULL) AND (reliability_level IS NOT NULL) AND (coverage_ratio IS NOT NULL) AND (NULLIF(btrim(engine_version), ''::text) IS NOT NULL) AND (result_payload_hash IS NOT NULL) AND (completed_at IS NOT NULL) AND (jsonb_typeof(result_evidence) = 'object'::text) AND (jsonb_typeof((result_evidence -> 'candidate_size_ranking'::text)) = 'array'::text) AND (jsonb_array_length((result_evidence -> 'candidate_size_ranking'::text)) > 0) AND (jsonb_typeof((result_evidence -> 'metric_evidence'::text)) = 'array'::text) AND (jsonb_array_length((result_evidence -> 'metric_evidence'::text)) > 0) AND (jsonb_typeof(reference_snapshot) = 'object'::text) AND (reference_snapshot <> '{}'::jsonb) AND (jsonb_typeof(target_snapshot) = 'object'::text) AND (target_snapshot <> '{}'::jsonb) AND (jsonb_typeof(authority_snapshot) = 'object'::text) AND (authority_snapshot <> '{}'::jsonb) AND (jsonb_typeof(policy_snapshot) = 'object'::text) AND (policy_snapshot <> '{}'::jsonb)) OR ((result_status <> 'COMPLETED'::text) AND (COALESCE(recommended_product_size_id, recommended_user_recovery_size_id) IS NULL) AND (recommended_size_label IS NULL))))"
+      },
+      {
+        "conname": "comparisons_recommended_product_size_fkey",
+        "definition": "FOREIGN KEY (recommended_product_size_id) REFERENCES fitmatch_vnext.product_sizes(id) ON DELETE RESTRICT"
+      },
+      {
+        "conname": "comparisons_recommended_user_recovery_size_id_fkey",
+        "definition": "FOREIGN KEY (recommended_user_recovery_size_id) REFERENCES fitmatch_vnext.user_size_recoveries(recovery_size_id) ON DELETE RESTRICT"
+      },
+      {
+        "conname": "comparisons_single_recommended_identity_chk",
+        "definition": "CHECK (((recommended_product_size_id IS NULL) OR (recommended_user_recovery_size_id IS NULL)))"
+      }
+    ],
+    "definitions": [
+      {
+        "object_signature": "comparisons_recommended_authority_chk",
+        "before_hash": "230e9107c24068362e8baa904073a7f4",
+        "applied_hash": null,
+        "still_matches_proposal": null
+      },
+      {
+        "object_signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb,text)",
+        "before_hash": "669db92dfa1baf41dba949d08f6f0fb2",
+        "applied_hash": "0af0ba72be2e57eb89bec393f70532bb",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)",
+        "before_hash": "dcab58b5a92f13e877deaeeaa2eae5a3",
+        "applied_hash": "115d7f319346a29c7874fc0d4d733922",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.canonical_measurements_for_size_with_context(uuid,jsonb)",
+        "before_hash": "ebf0d03b7ddb9e905f5ce3b2f397db14",
+        "applied_hash": "85dcc98af99b9c78f67672823b5657a5",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.comparison_history()",
+        "before_hash": "e7fbfff5b5ad7b2b547e655f1f0e437f",
+        "applied_hash": "dc81454841b29b164e1682ac954d5f04",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.complete_comparison(uuid,jsonb)",
+        "before_hash": "73b596a1bda260e16834b03e9f7368f7",
+        "applied_hash": "05318ab74fb6d67f260d3e8f46bf623e",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean,text)",
+        "before_hash": "175c33b6c57ae5cb72e15ffd38810f22",
+        "applied_hash": "42b3a83c7baef848b8b3d06ed0069375",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean)",
+        "before_hash": "3360061ebd04240f4704a4a1cd117277",
+        "applied_hash": "0a68258da688552eb4bb63b8555acf5f",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.get_product_runtime_base(text,text,boolean)",
+        "before_hash": "fd985da7af3436a0d17477d580d5786e",
+        "applied_hash": "f668e7d19090f02a1adf6a4ace3987ff",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.get_product_runtime_for_swift(text,text)",
+        "before_hash": "385b78f0fea567c0367804260d253ce5",
+        "applied_hash": "882d759fd82d2ce0dd0743f3728a0259",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.product_measurement_readiness(uuid,jsonb)",
+        "before_hash": "a56029a3183772e468a88a97cb195516",
+        "applied_hash": "2f9ccc3324fbe82a57a4b6614f593d59",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.protect_completed_comparison()",
+        "before_hash": "1e6e15dec62d631de4893b95c822e509",
+        "applied_hash": "606c6d044a9a6b9694246b127cdd5043",
+        "still_matches_proposal": true
+      },
+      {
+        "object_signature": "fitmatch_vnext.validate_comparison_completion_payload()",
+        "before_hash": "55feee500250b836bd8a1eec36c4b9e1",
+        "applied_hash": "8298c8af71e3cfd98abb6f27667a6190",
+        "still_matches_proposal": true
+      }
+    ],
+    "migration": [
+      {
+        "version": "20261012045134",
+        "name": "bugfix1012_user_size_recovery"
+      }
+    ]
+  },
+  "owner_policy_and_acl_postflight": {
+    "policies": [
+      {
+        "cmd": "SELECT",
+        "qual": "(owner_id = ( SELECT auth.uid() AS uid))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "active_user_size_recoveries",
+        "policyname": "active_user_size_recovery_owner_read",
+        "schemaname": "fitmatch_vnext"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(owner_id = ( SELECT auth.uid() AS uid))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "user_size_recoveries",
+        "policyname": "user_size_recovery_owner_read",
+        "schemaname": "fitmatch_vnext"
+      }
+    ],
+    "table_acl": [
+      {
+        "relname": "active_user_size_recoveries",
+        "anon_insert": false,
+        "auth_delete": false,
+        "auth_select": true
+      },
+      {
+        "relname": "bugfix1012_recovery_backups",
+        "anon_insert": false,
+        "auth_delete": false,
+        "auth_select": false
+      },
+      {
+        "relname": "user_size_recoveries",
+        "anon_insert": false,
+        "auth_delete": false,
+        "auth_select": true
+      }
+    ],
+    "canonical_acl_equal": true,
+    "recovery_table_rows": 0,
+    "active_recovery_rows": 0
+  },
+  "security_advisors": {
+    "comparison": {
+      "added": [],
+      "removed": [],
+      "beforeCount": 18,
+      "afterCount": 18
+    },
+    "before": {
+      "lints": [
+        {
+          "name": "rls_enabled_no_policy",
+          "title": "RLS Enabled No Policy",
+          "level": "INFO",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+          "count": 14,
+          "findings": [
+            {
+              "detail": "Table \\`fitmatch_catalog.comparison_group_policies\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_group_policies",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.comparison_groups\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_groups",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.product_classification_history\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_classification_history",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.product_comparison_group_overrides\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_comparison_group_overrides",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.products\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "products",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.releases\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "releases",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.retailer_observed_categories\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "retailer_observed_categories",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.retailer_observed_category_measurements\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "retailer_observed_category_measurements",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.source_category_comparison_groups\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "source_category_comparison_groups",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.closet_item_source_measurement_snapshots\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "closet_item_source_measurement_snapshots",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.closet_item_source_measurements\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "closet_item_source_measurements",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.comparison_result_heads\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_result_heads",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.product_ingestion_receipts\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_ingestion_receipts",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.size_availability_observations\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "size_availability_observations",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            }
+          ]
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+          "count": 3,
+          "findings": [
+            {
+              "detail": "Function `public.fitmatch_vnext_find_selected_reference_candidate(p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_find_selected_reference_candidate`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_find_selected_reference_candidate",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Function `public.fitmatch_vnext_get_closet_item(p_closet_item_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_get_closet_item`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_get_closet_item",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "p_closet_item_id uuid",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            },
+            {
+              "detail": "Function `public.fitmatch_vnext_hide_comparison_history(p_client_comparison_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_hide_comparison_history`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_hide_comparison_history",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "p_client_comparison_ids uuid[]",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:50:14.231Z"
+            }
+          ]
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "title": "Leaked Password Protection Disabled",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Leaked password protection is currently disabled.",
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+          "count": 1,
+          "findings": [
+            {
+              "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+              "metadata": {
+                "type": "auth",
+                "entity": "Auth"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "lints": [
+        {
+          "name": "rls_enabled_no_policy",
+          "title": "RLS Enabled No Policy",
+          "level": "INFO",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+          "count": 14,
+          "findings": [
+            {
+              "detail": "Table \\`fitmatch_catalog.comparison_group_policies\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_group_policies",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.comparison_groups\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_groups",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.product_classification_history\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_classification_history",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.product_comparison_group_overrides\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_comparison_group_overrides",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.products\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "products",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.releases\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "releases",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.retailer_observed_categories\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "retailer_observed_categories",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.retailer_observed_category_measurements\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "retailer_observed_category_measurements",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_catalog.source_category_comparison_groups\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "source_category_comparison_groups",
+                "type": "table",
+                "schema": "fitmatch_catalog"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.closet_item_source_measurement_snapshots\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "closet_item_source_measurement_snapshots",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.closet_item_source_measurements\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "closet_item_source_measurements",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.comparison_result_heads\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "comparison_result_heads",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.product_ingestion_receipts\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "product_ingestion_receipts",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Table \\`fitmatch_vnext.size_availability_observations\\` has RLS enabled, but no policies exist",
+              "metadata": {
+                "name": "size_availability_observations",
+                "type": "table",
+                "schema": "fitmatch_vnext"
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            }
+          ]
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+          "count": 3,
+          "findings": [
+            {
+              "detail": "Function `public.fitmatch_vnext_find_selected_reference_candidate(p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_find_selected_reference_candidate`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_find_selected_reference_candidate",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "p_target_product_id uuid, p_target_variant_id uuid, p_reference_closet_item_id uuid, p_requested_group_code text",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Function `public.fitmatch_vnext_get_closet_item(p_closet_item_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_get_closet_item`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_get_closet_item",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "p_closet_item_id uuid",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            },
+            {
+              "detail": "Function `public.fitmatch_vnext_hide_comparison_history(p_client_comparison_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/fitmatch_vnext_hide_comparison_history`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "fitmatch_vnext_hide_comparison_history",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "p_client_comparison_ids uuid[]",
+                "security_definer": true
+              },
+              "observed_at": "2026-10-12T04:52:31.948Z"
+            }
+          ]
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "title": "Leaked Password Protection Disabled",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Leaked password protection is currently disabled.",
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+          "count": 1,
+          "findings": [
+            {
+              "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+              "metadata": {
+                "type": "auth",
+                "entity": "Auth"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "checks": {
+    "target_and_existing_12_function_normalized_hashes": "PASS",
+    "new_tables_rls_owner_select_and_direct_write_denial": "PASS",
+    "rpc_grants_and_invoker_public_wrappers": "PASS",
+    "official_fk_and_separate_recovery_identity": "PASS",
+    "applied_12_function_definition_readback": "PASS",
+    "canonical_acl_parity": "PASS",
+    "new_security_findings": "PASS: 0",
+    "authenticated_recovery_compare_history_e2e": "NOT RUN",
+    "physical_device": "NOT RUN",
+    "live_existing_automatic_compare_e2e": "NOT RUN"
+  },
+  "boundaries": {
+    "production_sql_applied": [],
+    "main_changed": false,
+    "application_code_changed": false,
+    "user_closet_history_or_catalog_rows_intentionally_written": 0,
+    "recovery_rows_at_postflight": 0,
+    "note": "Schema and function deployment plus read-only catalog/ACL verification; no auth impersonation or RLS bypass test. PGlite uses dependency fixtures. Normal authenticated QA app acceptance is still required."
+  },
+  "documentation_sources_checked": [
+    "https://supabase.com/changelog.md",
+    "https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  ],
+  "verified_at": "2026-10-12T13:56:23.734542+09:00",
+  "source_commit": "ea93295306127be107530cecd9a57ac4cfc72766",
+  "applied_sql_sha256": "139cdcdf52ae2e640c35ecb380ae5633f0b91183bccc28146067e4b9c6f8d85f",
+  "verification_sql_sha256": "b2c23edd790046396b319f258b72624bed898dc838bd19787fa42ea7c532ace9",
+  "local_sql_regression": {
+    "status": "PASS",
+    "log": "/private/tmp/bf1012/sql-dev-apply-preflight.log",
+    "output": "PASS: real save/read/accessor/canonical/eligibility/begin/complete/history SQL; immutable retry, active pointer, owner isolation, hierarchy/dictionary rejects, official supplements, unchanged retailer facts, RLS, ACL/security parity, guarded apply/rollback and original official FK. Classification/catalog fixtures, not live authenticated E2E.",
+    "boundary": "PGlite isolated SQL with catalog/classification dependencies; not live authenticated E2E"
+  },
+  "anonymous_https_api": {
+    "target": "hnkplvyegonlhumlejst",
+    "status": "PASS",
+    "checks": [
+      {
+        "rpc": "fitmatch_vnext_get_user_size_recovery",
+        "http_status": 401,
+        "code": "42501",
+        "message": "permission denied for function fitmatch_vnext_get_user_size_recovery"
+      },
+      {
+        "rpc": "fitmatch_vnext_save_user_size_recovery",
+        "http_status": 401,
+        "code": "42501",
+        "message": "permission denied for function fitmatch_vnext_save_user_size_recovery"
+      }
+    ],
+    "initial_probe_error": "Initial save probe used p_payload, resulting in PGRST202. Corrected to actual app/SQL p_request and reran both RPCs. No server source change.",
+    "boundary": "Real HTTPS anonymous public-client RPC denial; not authenticated persistence E2E"
+  }
+}
