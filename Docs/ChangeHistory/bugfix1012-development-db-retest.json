@@ -1,0 +1,638 @@
+{
+  "history_id": [
+    "BF1012-01",
+    "BF1012-06"
+  ],
+  "source_branch": "bugfix1012",
+  "tested_branch": "QA",
+  "tested_source_commit": "fa01c7d771aed079fe9cc3048d9a802a990cdbb9",
+  "work_date": "2026-10-12",
+  "timezone": "Asia/Seoul",
+  "target": {
+    "id": "hnkplvyegonlhumlejst",
+    "ref": "hnkplvyegonlhumlejst",
+    "organization_id": "hodvywkzszrpxkmxggoi",
+    "organization_slug": "hodvywkzszrpxkmxggoi",
+    "name": "FitMatch",
+    "region": "ap-northeast-2",
+    "status": "ACTIVE_HEALTHY",
+    "database": {
+      "host": "db.hnkplvyegonlhumlejst.supabase.co",
+      "version": "17.6.1.147",
+      "postgres_engine": "17",
+      "release_channel": "ga"
+    },
+    "created_at": "2026-07-21T23:36:55.946063Z"
+  },
+  "scope": "Reverify the deployed development recovery contract, QA app build/normal launch, and affected regressions. No repeat migration or Production/main operation.",
+  "build_and_launch": {
+    "status": "PASS",
+    "scheme": "FitMatch-QA",
+    "configuration": "Debug-QA",
+    "bundle_id": "com.ljy4337.fitmatch.qa",
+    "supabase_url": "https://hnkplvyegonlhumlejst.supabase.co",
+    "launch_args": [],
+    "launch_environment_overrides": {},
+    "simulator_id": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+    "simulator_name": "iPhone 17",
+    "build_log": "/Users/jinyoung/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/build_run_sim_2026-10-12T05-22-32-512Z_pid93239_6c59cacd.log",
+    "app_path": "/private/tmp/bf1012/FunctionalRetestFinalBuild/Build/Products/Debug-QA-iphonesimulator/FitMatch.app",
+    "compiler_warnings": 9,
+    "boundary": "Real normal launch with no fake auth; only Apple login screen observed, not authenticated behavior."
+  },
+  "unit_and_scripted_regression": {
+    "status": "PASS",
+    "summary": {
+      "status": "SUCCEEDED",
+      "durationMs": 236870,
+      "counts": {
+        "passed": 198,
+        "failed": 0,
+        "skipped": 0
+      },
+      "target": "simulator"
+    },
+    "artifacts": {
+      "buildLogPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/logs/test_sim_2026-10-12T05-25-42-777Z_pid93239_4262a4ca.log",
+      "xcresultPath": "/private/tmp/bf1012/DevelopmentDBRetest.xcresult",
+      "testProductsPath": "~/Library/Developer/XcodeBuildMCP/workspaces/FitMatch-26291420f5b2/test-products/test_sim_2026-10-12T05-25-42-779Z_pid93239_8e2203b6.xctestproducts"
+    },
+    "selected": [
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/accountDeletionPurgesLocalClosetDataAndResetsSyncState",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/accountSwitchNeverPresentsForeignLocalCacheBeforePreparationCompletes",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/actualImportedPickerEditBecomesUserExplicitButSizeOnlyEditDoesNot",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingAutomaticRemoteHistoryIsRevalidatedThroughActiveRuntime",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingManualSetIsRejectedBeforeServerEvaluator",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/existingRemoteRowRetainsExactIDsAndUsesAtomicOverrideOnly",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/failedListDoesNotRollBackUnsavedLocalInput",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/finalStaleAutomaticHydrationCannotUndoFailedV4Resolve",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/firstLoginEmptyCacheNeverClearsRemoteReferences",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/foreignAccountCacheIsPurgedBeforeRemoteSyncCanExposeIt",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/historyOnlyReferenceSnapshotNeverEntersClosetMutationPipeline",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceFlagsAreHydratedWithoutAnyReferenceMutation",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceFlagsAreNeverWrittenFromLocalState",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/legacyReferenceReplacementIsNotRestoredBySynchronization",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditDoesNotRestoreRetiredReferenceConfirmation",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetEditProjectsExactServerReadBackBeforeReportingSuccess",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/linkedClosetSizeEditRejectsMissingExactObservationBeforeUpdate",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/localHintNeverCreatesOverrideAndServerConfirmedWins",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualClosetFormStampsExplicitUserAuthority",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualCompositeSetCannotBecomeComparisonAuthorityOrReference",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditAppliesVerifiedServerReadback",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotMutateLocalItemWhenServerRejects",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualEditListFailureIsTypedRetryableAndPreservesDraft",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationCancellationDuringReadbackDoesNotPublish",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationDefiniteRejectionAllowsCorrectedInput",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationDoesNotPublishWithoutAuthoritativeReadback",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationPreflightFailureKeepsInputEditable",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationRejectsChangedAccountWithoutLocalSave",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualRegistrationRetriesReadbackWithoutSecondWrite",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/manualSetPickerEditRemainsFailClosed",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/onlyExplicitUserClassificationCreatesServerOverride",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/overlappingAccountSwitchKeepsNewAccountCacheOwnership",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/overlappingSameAccountSyncSharesUnchangedPass",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/ownedReferencePreservesAbsentLengthDespiteSharedProductLength",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/ownerlessLegacyCacheFailsClosedAndPurgesAllUserScopedPresentationState",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/pendingLinkedSizeEditUsesExactServerSizeAndPreservesLocalChoiceUntilReadBack",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/promotionRequiredUsesObservationThenPersistsServerAuthority",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/rejectedBackgroundUpdatePreservesLocalChangesForRetry",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyAutomaticItemRestoresIdentityButWaitsForActiveV4Authority",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyManualOverrideRetainsExplicitUserAuthority",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/remoteOnlyReviewAndNotComparableStatesRemainFailClosed",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/retryKeepsFailureVisibleUntilAuthoritativeSuccess",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/runtimeFailureIsNotSwallowedAndCannotKeepLocalHintEligible",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/rx006OfflineOwnedColdCacheThenReconnectRetainsOwnedRowsAndRecovers",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/serverNotComparableClearsReferenceAndNeverUpsertsLocalClassification",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/serverReviewRequiredClearsReferenceAndNeverUpsertsLocalHint",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/shoppingPersonalAuthorityNeverPromotesASourcedClosetRow",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedReviewRequiredExplicitClosetEditBecomesUserAuthority",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedSetPickerEditRemainsFailClosed",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/sourcedTerminalServerFailuresRemainFailClosedAfterPickerEdits",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/unchangedClosetRowDoesNotIssueUpdateButMeaningfulLocalEditDoes",
+      "FitMatchTests/FitMatchClosetSyncCoordinatorTests/unchangedRemoteLinkedSnapshotHydratesWithoutRuntimeOrMutation",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionKeepsClosetAndHistoryWhenDurableHideFailsThenRetries",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionActionRemovesOnlyTheRequestedActiveItemWhenNoHistoryExists",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/closetDeletionHidesAssociatedCompletedServerHistoryWithoutDeletingRemoteEvidence",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedReplayPreservesBothV1PoliciesAndNewV2",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedReplayRejectsMixedVersionsAndWrongRecommendedIdentity",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideIsIdempotentAndRejectsUnknownIdentity",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/completedServerHistoryHideSurvivesSyncAndModeledSecondSession",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/deletedReferenceHydratesAsHistoryOnlyForEveryAuthoritySource",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/explicitServerTombstoneRemovesOnlyTheMatchingStaleLocalHistory",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/failedServerHistoryHideLeavesLocalCacheUntouchedForRetry",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/historyDeletionActionKeepsLegacyRowsLocalAndDoesNotFabricateServerHide",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/historyUnavailableReceiptKeepsLocalHistoryAndClosetWithoutLoginMessage",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/investigationSameCountHistoryReplacementLeavesCountOnlyCacheStale",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/legacyLocalHistoryIsReadOnlyAndNeverUploaded",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/localOnlyHistoryDoesNotClaimServerVisibilityAuthority",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/locallyPersistedHideBlocksAnAlreadyInFlightStaleHistoryResponse",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/orphanedServerApprovedLocalCacheFailsClosed",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/overlappingAccountSwitchCannotHydrateOutgoingHistoryIntoNewAccount",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/overlappingSameAccountHistorySyncUsesNewestFollowUpSnapshot",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/pendingServerSnapshotRecoversThenHydratesExactlyOnce",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/replayCompatibilityNeverAcceptsCorruptedCompletionEvidence",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryCanRecoverOnlyItsVerifiedServerSizeAnalysis",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRejectsAnotherComparisonAndLateAccountResponse",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/savedHistoryRestoresTwoExactAuthorizedSizeIdentities",
+      "FitMatchTests/FitMatchComparisonSyncCoordinatorTests/schema4HydratedFrozenReferenceResolvesItsOriginalClosetIdentity",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderFactsReachTheFullServerAuthorizedComparisonPath",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderLinkRegistrationsPersistOnlyPresentedSizesAndRejectDuplicateSubmit",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/capturedProviderParserFailureThenRetryResetsStateForEveryApprovedProvider",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr012ClosetLocalFallbackRecoveryRetainsOnlyTheValidatedSelectedSize",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr014ApprovedProviderParserFailuresRetryTheExactRetailerPath",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/cr016CapturedProviderOwnedSizeSelectionNeverFabricatesASize",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/en001ApprovedDirectURLsAndCustomCompareRouteReachTheirExactTargets",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/musinsaCapturedOfficialActualSizeResponseReachesTheLinkRegistrationAction",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/sequentialCapturedProviderLoadsResetCurrentProductStateWithoutProviderLeakage",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/uniqloCapturedOfficialSizeResponseReachesTheLinkRegistrationAction",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/zaraBodyOnlyGuideReachesTheProductionPartialRegistrationRecoveryState",
+      "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests/zaraCapturedGarmentMeasureGuideReachesTheLinkRegistrationActionAndBodyOnlyGuideFailsClosed",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/closetDeletionAccountOwnershipAndStartupActionsCoverManagementRecoveryStates",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm002ManualDetailEditPersistsIdentityClassificationAndSelectedSize",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm004ReferenceMeasurementEditFeedsOnlyTheNextComparisonSnapshot",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm005ManualDetailMemoAndPreferencePersistWithoutClassificationDrift",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm007IndependentTopAndBottomReferencesDoNotConflict",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm009DeletedReferenceCannotReappearOrAuthorizeAfterReconstruction",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm011LegacyHistoryDeletionStaysLocalWithoutATombstoneRequest",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm012ImportedEditPersistenceFailureThenRetryKeepsSourcedAuthority",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm013DuplicateCreationAndInactiveHistoryOnlyFilteringUseProductionActions",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm014ReferenceLifecycleCreatesANewComparisonWithoutRewritingOldHistory",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cm018ClosetPresentationFiltersAndSortsOnlyTheOwnedActiveIdentitySet",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/comparisonProviderSequenceAndNegativeGatesCoverCP001ThroughCP039",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr003KidsAndBabyDirectRegistrationPersistsAudienceWithoutReferencePromotion",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr007ManualMemoAndFitPreferenceSurviveFreshClosetReconstruction",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr019SignedOutOnboardingRouteWaitsForTheCurrentUsersCachePreparation",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr020ReviewRequiredLinkRegistrationRemainsReasonedAndFailClosed",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/cr022ComparedProductSaveFailureThenRetryCreatesExactlyOneClosetRow",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/directClosetRegistrationAndManagementActionsCoverCRAndCMStates",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/en009LegacyMeasurementMigrationFailureThenRetryKeepsExistingRowsSafe",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/en010GlobalSearchUsesExactOwnedVisibleClosetAndHistoryIdentities",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/entryAuthAndPendingShareDataContractsCoverENAndBHeadlessParts",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/frozen137ClassificationReconcilesWithoutAddingOrDroppingAScenario",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi001FreshGlobalHistoryHydrationPreservesExactCompletedSnapshot",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/hi014HistoryToClosetKeepsGlobalAndPersonalAuthorityBoundariesSeparate",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/historyDeletionHydrationAndCurrentAuthorityCoverHIAndResultFlows",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/historyPresentationKeepsSameTargetComparisonIdentitiesSearchableAndDistinct",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/latestHistoricalRowReplacesPriorVisibleProjection",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/providerLinkPreparationAndComparedProductSaveCoverCR011ThroughCR022",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/recoveryManualCrossAndStaleAuthorityPathsCoverTheRemainingComparisonStates",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/resultPresentationHistoryRecomparisonAndOutboundActionsUseCurrentProductionProofs",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/retryRaceAndSyncCoalescingUseProductionAsyncBoundaries",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx004ParserFailureThenRetryRestartsTheSameProductionEntry",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx009AuthorityAndReferenceFailuresRetryThroughTheirExactProductionGates",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/rx010EligibleAndBeginFailuresRetryWithoutUsingStaleCandidates",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/staticContractsCoverOnlyFrozenShellAndGlobalSearchRows",
+      "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests/v4HistoryHydrationKeepsLatestResultPerProduct",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonKeepsExactCandidateReasonCode",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonPreservesPendingDirectPermitIdentities",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRPCFailureProducesNoPermit",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsMalformedStatusAndCompatibility",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/beginAuthorizedComparisonRejectsServerBlock",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/cancellingProductContextClearsRequestedComparisonGroup",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateAggregateStateMismatchFailsClosed",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateHandoffRejectsAnotherProductsAuthority",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/candidateReadinessMismatchFailsClosed",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/changedPreviewPromotesThroughObservationAndRequeriesRuntime",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentMeasurementsRequiredSubmitsAvailableMeasurementsAndRequeries",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentNotComparableNeverPromotesMeasurementObservation",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentPreviewWithoutPersistedAuthorityPromotesBeforeRuntime",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentResolutionReusesRuntimeButPromotionRefreshesIt",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentReviewSubmitsNewCoherentProviderMeasurementsAndRequeries",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/currentReviewWithoutImprovedProviderEvidenceRemainsFailClosed",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/emptyClosetNoticeRequiresVerifiedServerReceiptNotEmptyCandidates",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshRetailerEvidenceIsSubmittedOnceForTheFrozenObservation",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshRetailerProductPersistsObservationBeforeRuntimeRead",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/freshSelectedEvidenceSkipsEligibleRPCButCannotBypassBeginRejection",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/goldProductsUsePersistedServerTuples",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/homewearTopToBottomServerPolicyBlocks",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/initialCandidatePlanReusesExactPreparedTargetAndStillQueriesServerCandidates",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/locallyEditedReferenceCannotReuseStaleServerAuthorization",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/measurementHydrationFailureDoesNotReturnConfirmedAuthority",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/missingServerCandidateRemainsBlocked",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/promotionRequiredRuntimePromotesThenRequeriesPersistedAuthority",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referenceDiscoveryDoesNotRunUntilConfirmedRuntimeIsReady",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanExposesOnlyServerManualCandidatesInServerOrder",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanFailsClosedWhenAutomaticProjectionIsMissing",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsBlockedRepresentativeOutOfEverySelectionSet",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsMeasurementsRequiredOutsideSelectionSets",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanKeepsRepresentativeManualOnly",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanPreservesServerAutomaticCandidateOrder",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanRejectsSelectableCandidateFromAnotherComparisonGroup",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/referencePlanUsesDBAutomaticWhenLocalRepresentativeIsFalse",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/rejectedPromotionFailsClosedWithoutRuntimeFallback",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/requestedComparisonGroupResponseRetainsServerAuthorityContext",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/resultReferencePickerUsesServerAuthorizationForEveryActiveLocalClosetItem",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/sameTypeServerPolicyAllowsAutomaticResponse",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/serverAutomaticCandidateIsAuthorized",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/sourcedReferencePromotionIsRequiredBeforeCandidateAuthorization",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/staleSourcedReferenceWithoutRetailerFactsRemainsBlocked",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/targetClassificationRequiredRetriesCandidateLookupOnce",
+      "FitMatchTests/FitMatchServerAuthorityIntegrationTests/tshirtToBaseLayerTopServerPolicyBlocks",
+      "FitMatchTests/FitMatchShareClosetEntryTests/appRouteAcceptsOnlyOwnShareDestinations",
+      "FitMatchTests/FitMatchShareClosetEntryTests/olderSharePayloadStillOpensComparison",
+      "FitMatchTests/FitMatchShareClosetEntryTests/sharedURLCanChooseClosetWithoutChangingItsIdentity",
+      "FitMatchTests/FitMatchUserSizeRecoveryContractTests/customRecoveryReceiptRetainsUserIdentityAndNullOfficialSize",
+      "FitMatchTests/FitMatchUserSizeRecoveryContractTests/receiptRejectsChangedValuesRawRowsAndObservation",
+      "FitMatchTests/FitMatchUserSizeRecoveryContractTests/receiptRequiresTheExactPersistedRequestAndEveryIdentity",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/ambiguousSaveRejectsChangedInputWithoutCreatingAnotherRequest",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/coordinatorRejectsReadbackIdentityOrPayloadMismatchBeforeRuntime",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/coordinatorRejectsWrongRuntimeIdentityOwnerProvenanceAndValues",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/coordinatorRequiresExplicitReadbackBeforeFreshReadyRuntime",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/customReadbackCannotReplaceTheServerSizeIssuedBySave",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/definiteRejectionPreservesInputAndPermitsAnEditedNewRequest",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/delayedPhotoTransferIsRejectedAfterContextAccountOrCancellationChange",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/delayedRecoveryCannotApplyAfterAccountChangeOrLoadCancellation",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/editedOCRValuesAndOriginalOCRRowsStaySeparateFromRetailerObservation",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/lostSubmitResponseRetriesTheSameRequestAndPreservesEditedInput",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/recoveredAuthorityContinuesThroughUserSelectedCandidateAndCompletion",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/recoveredRuntimeMayRetainDistinctUntouchedOfficialMeasurements",
+      "FitMatchTests/FitMatchUserSizeRecoveryTests/sizesAndMeasurementsRequiredBecomeReadyOnlyAfterPersistedRecovery",
+      "FitMatchTests/TagProductResolverTests/testGeneratedZaraQRDecodesAndPreservesSelectedCatalogEntry",
+      "FitMatchTests/TagProductResolverTests/testInternalRFIDQRDoesNotBecomeProduct",
+      "FitMatchTests/TagProductResolverTests/testMusinsaIntermediateOneLinkResolvesBothSuppliedProducts",
+      "FitMatchTests/TagProductResolverTests/testResolvedLinksEnterExistingProductInputGate",
+      "FitMatchTests/TagProductResolverTests/testSuppliedUniqloBarcodeChecksumAndEndpoint",
+      "FitMatchTests/TagProductResolverTests/testUniqloReceiptPreservesProductColorLengthButDoesNotSelectSize",
+      "FitMatchTests/TagProductResolverTests/testUntrustedAndAmbiguousLinksAreRejected",
+      "FitMatchTests/TagProductResolverTests/testZaraScanRejectsUnknownRoutesAndInvalidVariants"
+    ],
+    "xcresult_summary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "x86_64",
+            "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+            "deviceName": "FitMatch-Regression-20260721",
+            "modelName": "iPhone 17",
+            "osBuildNumber": "23D8133",
+            "osVersion": "26.3.1",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 200,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1791782974.879,
+      "passedTests": 198,
+      "result": "Passed",
+      "skippedTests": 0,
+      "startTime": 1791782886.242,
+      "statistics": [
+        {
+          "subtitle": "4 test runs",
+          "title": "2 tests ran with dynamic parameters"
+        }
+      ],
+      "testFailures": [],
+      "title": "Test - FitMatch-QA",
+      "topInsights": [
+        {
+          "category": "Longest Test Runs",
+          "impact": "93% of duration",
+          "text": "10 longest test runs with outlier durations exceeding 0.72s (three standard deviations)"
+        }
+      ],
+      "totalTestCount": 198
+    },
+    "boundary": "190 Swift Testing + 8 QR XCTest. Scripted remotes/local SwiftData/fixture dependencies, not live authenticated recovery RPCs.",
+    "simulator_id": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E"
+  },
+  "remote_read_only_contract": {
+    "status": "PASS",
+    "existing_migration": "20261012045134_bugfix1012_user_size_recovery",
+    "verify_sql": "supabase/sql/bugfix1012_user_size_recovery_Verify.sql",
+    "statement_count": 4,
+    "catalog": [
+      [
+        {
+          "relname": "active_user_size_recoveries",
+          "relrowsecurity": true,
+          "authenticated_insert": false,
+          "authenticated_update": false,
+          "anon_select": false
+        },
+        {
+          "relname": "user_size_recoveries",
+          "relrowsecurity": true,
+          "authenticated_insert": false,
+          "authenticated_update": false,
+          "anon_select": false
+        }
+      ],
+      [
+        {
+          "nspname": "fitmatch_vnext",
+          "proname": "user_size_recovery_metadata",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": false
+        },
+        {
+          "nspname": "fitmatch_vnext",
+          "proname": "comparison_product_sizes",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": false
+        },
+        {
+          "nspname": "fitmatch_vnext",
+          "proname": "get_user_size_recovery",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": true
+        },
+        {
+          "nspname": "fitmatch_vnext",
+          "proname": "save_user_size_recovery",
+          "prosecdef": true,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": true
+        },
+        {
+          "nspname": "public",
+          "proname": "fitmatch_vnext_save_user_size_recovery",
+          "prosecdef": false,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": true
+        },
+        {
+          "nspname": "public",
+          "proname": "fitmatch_vnext_get_user_size_recovery",
+          "prosecdef": false,
+          "proconfig": [
+            "search_path=\"\""
+          ],
+          "anon_execute": false,
+          "authenticated_execute": true
+        }
+      ],
+      [
+        {
+          "conname": "comparisons_recommended_authority_chk",
+          "definition": "CHECK ((((result_status = 'COMPLETED'::text) AND (COALESCE(recommended_product_size_id, recommended_user_recovery_size_id) IS NOT NULL) AND (recommended_size_label IS NOT NULL) AND (fit_score IS NOT NULL) AND (reliability_level IS NOT NULL) AND (coverage_ratio IS NOT NULL) AND (NULLIF(btrim(engine_version), ''::text) IS NOT NULL) AND (result_payload_hash IS NOT NULL) AND (completed_at IS NOT NULL) AND (jsonb_typeof(result_evidence) = 'object'::text) AND (jsonb_typeof((result_evidence -> 'candidate_size_ranking'::text)) = 'array'::text) AND (jsonb_array_length((result_evidence -> 'candidate_size_ranking'::text)) > 0) AND (jsonb_typeof((result_evidence -> 'metric_evidence'::text)) = 'array'::text) AND (jsonb_array_length((result_evidence -> 'metric_evidence'::text)) > 0) AND (jsonb_typeof(reference_snapshot) = 'object'::text) AND (reference_snapshot <> '{}'::jsonb) AND (jsonb_typeof(target_snapshot) = 'object'::text) AND (target_snapshot <> '{}'::jsonb) AND (jsonb_typeof(authority_snapshot) = 'object'::text) AND (authority_snapshot <> '{}'::jsonb) AND (jsonb_typeof(policy_snapshot) = 'object'::text) AND (policy_snapshot <> '{}'::jsonb)) OR ((result_status <> 'COMPLETED'::text) AND (COALESCE(recommended_product_size_id, recommended_user_recovery_size_id) IS NULL) AND (recommended_size_label IS NULL))))"
+        },
+        {
+          "conname": "comparisons_recommended_product_size_fkey",
+          "definition": "FOREIGN KEY (recommended_product_size_id) REFERENCES fitmatch_vnext.product_sizes(id) ON DELETE RESTRICT"
+        },
+        {
+          "conname": "comparisons_recommended_user_recovery_size_id_fkey",
+          "definition": "FOREIGN KEY (recommended_user_recovery_size_id) REFERENCES fitmatch_vnext.user_size_recoveries(recovery_size_id) ON DELETE RESTRICT"
+        },
+        {
+          "conname": "comparisons_single_recommended_identity_chk",
+          "definition": "CHECK (((recommended_product_size_id IS NULL) OR (recommended_user_recovery_size_id IS NULL)))"
+        }
+      ],
+      [
+        {
+          "object_signature": "comparisons_recommended_authority_chk",
+          "before_hash": "230e9107c24068362e8baa904073a7f4",
+          "applied_hash": null,
+          "still_matches_proposal": null
+        },
+        {
+          "object_signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb,text)",
+          "before_hash": "669db92dfa1baf41dba949d08f6f0fb2",
+          "applied_hash": "0af0ba72be2e57eb89bec393f70532bb",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.authorize_comparison_with_context_v1(uuid,uuid,uuid,boolean,jsonb)",
+          "before_hash": "dcab58b5a92f13e877deaeeaa2eae5a3",
+          "applied_hash": "115d7f319346a29c7874fc0d4d733922",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.canonical_measurements_for_size_with_context(uuid,jsonb)",
+          "before_hash": "ebf0d03b7ddb9e905f5ce3b2f397db14",
+          "applied_hash": "85dcc98af99b9c78f67672823b5657a5",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.comparison_history()",
+          "before_hash": "e7fbfff5b5ad7b2b547e655f1f0e437f",
+          "applied_hash": "dc81454841b29b164e1682ac954d5f04",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.complete_comparison(uuid,jsonb)",
+          "before_hash": "73b596a1bda260e16834b03e9f7368f7",
+          "applied_hash": "05318ab74fb6d67f260d3e8f46bf623e",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean,text)",
+          "before_hash": "175c33b6c57ae5cb72e15ffd38810f22",
+          "applied_hash": "42b3a83c7baef848b8b3d06ed0069375",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.eligible_candidate_sizes(uuid,uuid,uuid,boolean)",
+          "before_hash": "3360061ebd04240f4704a4a1cd117277",
+          "applied_hash": "0a68258da688552eb4bb63b8555acf5f",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.get_product_runtime_base(text,text,boolean)",
+          "before_hash": "fd985da7af3436a0d17477d580d5786e",
+          "applied_hash": "f668e7d19090f02a1adf6a4ace3987ff",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.get_product_runtime_for_swift(text,text)",
+          "before_hash": "385b78f0fea567c0367804260d253ce5",
+          "applied_hash": "882d759fd82d2ce0dd0743f3728a0259",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.product_measurement_readiness(uuid,jsonb)",
+          "before_hash": "a56029a3183772e468a88a97cb195516",
+          "applied_hash": "2f9ccc3324fbe82a57a4b6614f593d59",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.protect_completed_comparison()",
+          "before_hash": "1e6e15dec62d631de4893b95c822e509",
+          "applied_hash": "606c6d044a9a6b9694246b127cdd5043",
+          "still_matches_proposal": true
+        },
+        {
+          "object_signature": "fitmatch_vnext.validate_comparison_completion_payload()",
+          "before_hash": "55feee500250b836bd8a1eec36c4b9e1",
+          "applied_hash": "8298c8af71e3cfd98abb6f27667a6190",
+          "still_matches_proposal": true
+        }
+      ]
+    ],
+    "recovery_row_counts": [
+      {
+        "recovery_rows": 0,
+        "active_recovery_rows": 0
+      }
+    ],
+    "boundary": "Read-only admin catalog verification only. Not owner authenticated persistence or cross-user execution evidence."
+  },
+  "https_public_client_checks": {
+    "work_date": "2026-10-12",
+    "verified_at": "2026-10-12T05:26:41.331313+00:00",
+    "target": "hnkplvyegonlhumlejst",
+    "bundle_id": "com.ljy4337.fitmatch.qa",
+    "anonymous_rpc_checks": [
+      {
+        "rpc": "fitmatch_vnext_get_user_size_recovery",
+        "http_status": 401,
+        "code": "42501",
+        "status": "PASS"
+      },
+      {
+        "rpc": "fitmatch_vnext_save_user_size_recovery",
+        "http_status": 401,
+        "code": "42501",
+        "status": "PASS"
+      }
+    ],
+    "public_auth_settings": {
+      "apple_enabled": true,
+      "email_enabled": true,
+      "anonymous_users_enabled": false
+    },
+    "boundary": "Real public HTTPS denial and public provider flags only; no authenticated save/readback/compare."
+  },
+  "isolated_sql_regression": {
+    "status": "PASS",
+    "log": "/private/tmp/bf1012/sql-dev-retest.log",
+    "output": "PASS: real save/read/accessor/canonical/eligibility/begin/complete/history SQL; immutable retry, active pointer, owner isolation, hierarchy/dictionary rejects, official supplements, unchanged retailer facts, RLS, ACL/security parity, guarded apply/rollback and original official FK. Classification/catalog fixtures, not live authenticated E2E.\n",
+    "boundary": "PGlite executes actual SQL with catalog/classification fixtures. Not remote authenticated E2E."
+  },
+  "authenticated_preflight": {
+    "version": 1,
+    "mode": "preflight",
+    "project": "hnkplvyegonlhumlejst",
+    "timestamp": "2026-10-12T05:28:59.403358+00:00",
+    "status": "BLOCKED",
+    "evidence_kind": "authenticated_http_rpc_contract",
+    "swift_owner_proof": false,
+    "cases": [],
+    "request_count": 0,
+    "reason": "Missing environment: FITMATCH_QA_DB_DEDICATED_USERS, FITMATCH_QA_DB_USER_A_TOKEN, FITMATCH_QA_DB_USER_A_ID, FITMATCH_QA_DB_USER_B_TOKEN, FITMATCH_QA_DB_USER_B_ID",
+    "real_db_case_count": 0,
+    "mock_case_count": 0
+  },
+  "normal_app_login_snapshot": {
+    "summary": {
+      "status": "SUCCEEDED"
+    },
+    "artifacts": {
+      "simulatorId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A"
+    },
+    "capture": {
+      "type": "runtime-snapshot",
+      "rs": "1",
+      "screenHash": "1ndxdnu",
+      "seq": 2,
+      "count": 10,
+      "targets": [
+        "e10|tap|button|Continue with Apple||"
+      ],
+      "scroll": [],
+      "text": [
+        "e8|text|text|FIT MATCH||",
+        "e9|text|text|Find Your Perfect Fit||"
+      ],
+      "udid": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A"
+    }
+  },
+  "required_checks": [
+    {
+      "id": "BF1012-01",
+      "check": "Normal authenticated development save -> independent readback -> fresh runtime -> explicit Closet selection -> complete -> History",
+      "status": "BLOCKED",
+      "reason": "Normal QA app is at Apple login; no dedicated normal authenticated session available."
+    },
+    {
+      "id": "BF1012-01",
+      "check": "Remote retry/idempotency, wrong-owner denial and public catalog invariance",
+      "status": "BLOCKED",
+      "reason": "No dedicated normal sessions A/B. Local/scripted regression PASS does not replace this."
+    },
+    {
+      "id": "BF1012-01",
+      "check": "Normal automatic comparison after deployment",
+      "status": "BLOCKED",
+      "reason": "Normal QA app login unavailable."
+    },
+    {
+      "id": "BF1012-02",
+      "check": "Real extension Close/app activation on physical device",
+      "status": "NOT RUN"
+    },
+    {
+      "id": "BF1012-04",
+      "check": "Normal authenticated Closet retry success and save-failure UI",
+      "status": "BLOCKED",
+      "reason": "Normal QA app login unavailable."
+    },
+    {
+      "id": "BF1012-05",
+      "check": "Live stale History screen after same-count replacement",
+      "status": "NOT RUN",
+      "reason": "Independent fix deferred as requested."
+    }
+  ],
+  "support_needed": {
+    "additional_development_sql_approval": false,
+    "user_sql_execution": false,
+    "first_step": "Directly sign in to FitMatch-QA on the booted iPhone 17 simulator using the QA test account, then tell Codex login is complete.",
+    "cross_owner_step": "A second dedicated normal QA user session is required for real cross-owner isolation validation. Existing secure local session setup may be used; no passwords/tokens in chat.",
+    "apple_provider_enabled": true,
+    "qa_client_id_configuration": "Not verified by public settings; do not infer missing configuration without a real login error.",
+    "secrets_in_chat_required": false
+  },
+  "boundaries": {
+    "migrations_applied_this_run": 0,
+    "accepted_recovery_writes_this_run": 0,
+    "auth_impersonation": false,
+    "rls_bypass": false,
+    "private_app_session_extraction": false,
+    "auth_settings_changed": false,
+    "production_changed": false,
+    "main_changed": false,
+    "application_code_changed": false,
+    "share_controller_11_rerun_this_run": false,
+    "overall_authenticated_e2e": "BLOCKED"
+  },
+  "tool_diagnostics": [
+    "Initial profile restoration used the display label '(default)' which the tool rejected; snapshot then targeted a shutdown regression simulator. Created an explicit bf1012-dev-ui profile for the original booted iPhone 17 and reran the snapshot successfully. No app/server defect or source modification."
+  ],
+  "documentation_sources_checked": [
+    "https://supabase.com/changelog.md",
+    "https://supabase.com/docs/guides/auth/social-login/auth-apple"
+  ],
+  "verified_at": "2026-10-12T05:29:34.879000+00:00"
+}

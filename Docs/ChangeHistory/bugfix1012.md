@@ -255,3 +255,38 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - 개발 DB 적용에 필요한 추가 승인/사용자 SQL 실행은 없다. 정상 로그인한 FitMatch-QA 앱에서 복구 입력→서버 재조회→옷 선택→비교 완료·History 및 기존 자동 비교를 검증해야 한다.
 - 운영 적용은 이번 승인에 포함되지 않으며 NOT APPLIED. 별도 승인과 현시점 사전 검사 필요.
 - 실기기 공유/사진/오류화면, History count-only cache 문제와 기존 명시 보류 항목은 그대로 남는다. 추가 독립 수정 없음.
+
+## BF1012-06 후속 — 개발 DB 적용 후 재검증
+
+브랜치: bugfix1012 (기록) / QA (실행) · 작업일: 2026-10-12 (Asia/Seoul)
+
+### 계획 / 조사 범위
+
+- 현재 QA 소스와 실제 개발 연결을 확인하고, 일반 앱 로그인 상태·원격 계약·실제 API·영향 회귀를 새 실행한다. 실제 인증이 없으면 그 경계를 기록하고 필요한 지원을 요청한다.
+- 기존 문제: BF1012-01 개발 계약은 적용됐지만 정상 인증 앱의 저장·비교 성공 증거가 없다. 이번에는 앱/SQL를 수정하지 않고 실행 결과와 지원 조건만 기록한다.
+- 대상 파일: 이 이력, `Docs/CodexSessionHandoff.md`, 새 `Docs/ChangeHistory/bugfix1012-development-db-retest.json`. 테스트한 QA source는 `fa01c7d771aed079fe9cc3048d9a802a990cdbb9`, 시작 clean. main/운영/DB schema/Auth 설정 변경 없음.
+
+### 실제 실행과 판정
+
+| 항목 | 상태 | 실제 근거 / 경계 |
+| --- | --- | --- |
+| BF1012-06 QA build·install·일반 launch | PASS | FitMatch-QA/Debug-QA, bundle com.ljy4337.fitmatch.qa, 실제 plist URL hnkplvyegonlhumlejst. fake auth/launch override0. iPhone 17에서 Apple 로그인 화면 확인 |
+| BF1012-01/02/03/04/05 영향 회귀·QR | PASS | 새198 methods(190 Swift Testing+8 QR XCTest), 0fail/0skip. DevelopmentDBRetest.xcresult와 별도 summary 확인. scripted remote/SwiftData/fixtures이며 정상 인증 DB 실행이 아님 |
+| BF1012-01 실제 개발 계약 재조회 | PASS | 기존 migration20261012045134 확인, Verify의 4 SELECT 별도 실행. RLS2·RPC/helper6·비교 제약4·적용 함수12 hash 일치. 관리자 catalog 검사와 정상 사용자 저장 검사는 별도 |
+| BF1012-01 실제 HTTPS 익명 저장·조회 거절 | PASS | get(p_request_id)/save(p_request) 모두401/code42501. 수락된 사용자 복구 쓰기0, recovery/active 사후0건 |
+| BF1012-01 격리 SQL 회귀 | PASS | sql-dev-retest.log의 실제 save/read/eligibility/begin/complete/History·retry·owner/원본 불변·rollback 검사 새 실행. PGlite catalog/classification fixture, 원격 인증 성공 증거가 아님 |
+| BF1012-01 정상 로그인 저장→독립 재조회→fresh runtime→사용자 옷 선택→비교·History | BLOCKED | 일반 QA 앱이 Continue with Apple 화면. 전용 정상 사용자 세션 없음. Auth preflight exit2/request0, 개인 앱 token 추출·사칭·RLS 우회 없음 |
+| BF1012-01 원격 retry/응답유실 멱등성·다른 사용자/공용 원본 영향·live 자동 비교 | BLOCKED | 정상 A/B 전용 세션 미제공. fixture PASS를 이 항목 PASS로 사용하지 않음 |
+| BF1012-04 정상 인증 retry 성공·저장 실패 화면 | BLOCKED | 정상 QA 앱 로그인 필요. 현재 로컬 owner 회귀 통과와 별도 |
+| BF1012-02 실제 공유 확장 Close/앱 활성화·실기기 | NOT RUN | 이번 실행하지 않음. 과거 controller harness11을 이번 실행으로 보고하지 않음 |
+| BF1012-05 같은 개수 History 실제 stale 화면 | NOT RUN | 이번 독립 수정/화면 실행0, 명시 보류 유지 |
+| 추가 SQL 적용·운영/main 승격·배포 | NOT RUN | 이번 SQL Apply0. 기존 승인 migration 유지. Verify만 읽기 전용 재실행 |
+
+- 실행 중 도구 profile의 `(default)` 표시명을 복원 이름으로 사용한 검사는 거절되어 shutdown regression simulator snapshot도 실패했다. 명시적 bf1012-dev-ui profile을 기존 booted iPhone 17로 설정하고 snapshot 재실행 성공. 앱/서버 결함으로 분류하지 않는다.
+- 공개 Auth settings에서 Apple provider 활성·anonymous 비활성을 확인했다. QA client ID 허용이나 Apple 로그인 성공은 이 결과로 확인할 수 없다. 실제 오류가 없는 상태에서 provider 설정을 임의 변경하지 않는다.
+
+### 필요한 사용자 지원 / 남은 승인
+
+- **추가 개발 DB 적용 승인이나 사용자 SQL 실행은 필요 없다.** 우선 현재 iPhone 17 Simulator의 FitMatch-QA에 테스트 계정으로 직접 로그인하고 완료를 알려주면 정상 앱 복구/비교 검증을 이어갈 수 있다. 비밀번호·2FA·token은 채팅에 보내지 않는다. 사용자에게 이 지원을 비동기 요청했다.
+- 원격 타 계정 격리 자동 검증에는 별도의 두 번째 정상 전용 QA 사용자 세션이 필요하다. 필요 시 기존 `Docs/QA/ReleasePreparation20261002/SessionSetup.md`의 로컬 비밀 입력 절차를 사용한다. 로그인 세션 연결 없이 계정을 생성하거나 Auth/RLS를 변경하지 않는다.
+- 운영 적용·main 승격·배포는 별도 승인/Release Gate 대상이다. 다른 기기 Closet 삭제 전달, History 삭제 후 복사 정리, 같은 개수 History cache 독립 수정은 이번에도 보류한다.
