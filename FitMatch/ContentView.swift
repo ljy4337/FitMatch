@@ -1483,12 +1483,14 @@ private struct NewTaskLargeButton: View {
                     .background(Color.primary, in: Circle())
 
                 Text(title)
+                    .fitMatchActionText()
                     .font(.headline.weight(.black))
                     .foregroundStyle(.primary)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }
@@ -1587,6 +1589,7 @@ private struct BottomNavigationItem: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 17, weight: .semibold))
                 Text(title)
+                    .fitMatchActionText()
                     .font(.caption2.weight(.bold))
             }
             .foregroundStyle(isSelected ? .primary : .secondary)
@@ -1674,6 +1677,7 @@ private struct LoginButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
+                .fitMatchActionText()
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity)

@@ -227,6 +227,7 @@ struct RecommendationResultView: View {
                     Spacer(minLength: 0)
                     Button(action: openShoppingMall) {
                         Label("쇼핑몰에서 보기", systemImage: "arrow.up.right")
+                            .fitMatchActionText()
                             .font(.subheadline.weight(.bold))
                             .frame(maxWidth: .infinity)
                             .frame(height: 38)
@@ -515,44 +516,14 @@ struct RecommendationResultView: View {
     }
 
     private var reportReferenceCard: some View {
-        CardView(radius: 20, padding: 12, shadowRadius: 10) {
-            VStack(alignment: .leading, spacing: 6) {
-                SectionHeader(title: "선택한 내 옷")
-                HStack(spacing: 14) {
-                    ProductThumbnailView(
-                        imageURLString: referenceImageURLStringForDisplay,
-                        category: currentResult.userFit.category,
-                        width: 48,
-                        height: 54,
-                        cornerRadius: 12,
-                        diagnosticContext: "recommendation_result_reference"
-                    )
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(currentResult.userFit.brandName)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text(currentResult.userFit.productName)
-                            .font(.headline.weight(.bold))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                        Text("옵션 \(currentResult.userFit.sizeName)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 8)
-                    Button(action: showOtherClosetComparison) {
-                        Text("비교할 내 옷 변경")
-                    }
-                    .font(.subheadline.weight(.bold))
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 14)
-                    .frame(height: 38)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
-                }
-            }
-        }
+        ResultClosetReferenceCard(
+            imageURLString: referenceImageURLStringForDisplay,
+            category: currentResult.userFit.category,
+            brandName: currentResult.userFit.brandName,
+            productName: currentResult.userFit.productName,
+            sizeName: currentResult.userFit.sizeName,
+            onChangeCloset: showOtherClosetComparison
+        )
     }
 
     private var reportMetadataCard: some View {
@@ -642,6 +613,7 @@ struct RecommendationResultView: View {
                                 .tint(.white)
                         }
                         Text(alternativeAnalysisButtonTitle)
+                            .fitMatchActionText()
                             .font(.headline.weight(.bold))
                     }
                     .foregroundStyle(alternativeAnalysisHasValidSelection ? Color.white : Color.secondary)
@@ -1299,6 +1271,7 @@ struct RecommendationResultView: View {
                     if let onReselectClassification {
                         Button(action: onReselectClassification) {
                             Label("상품 종류 다시 확인", systemImage: "arrow.triangle.2.circlepath")
+                                .fitMatchActionText()
                                 .font(.subheadline.weight(.bold))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 42)
@@ -1314,6 +1287,7 @@ struct RecommendationResultView: View {
                     if let onClearClassification {
                         Button(role: .destructive, action: onClearClassification) {
                             Text("내 선택 초기화")
+                                .fitMatchActionText()
                                 .font(.subheadline.weight(.bold))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 42)
@@ -1343,6 +1317,7 @@ struct RecommendationResultView: View {
                         isPreparingClosetRegistration ? "등록 정보 확인 중" : "보유한 옷으로 등록",
                         systemImage: "plus"
                     )
+                    .fitMatchActionText()
                 }
                     .font(.headline.weight(.bold))
                     .foregroundStyle(Color(.systemBackground))
@@ -1995,6 +1970,7 @@ private struct AlternativeSizeResultCard: View {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 5) {
                             Text(sizeName)
+                                .fitMatchActionText()
                                 .font(.title2.weight(.black))
                             if isRecommended {
                                 Text("추천")
@@ -3086,4 +3062,74 @@ private extension Double {
     var oneDecimalText: String {
         String(format: "%.1f", self)
     }
+}
+
+/// Presentation only; the result screen retains the selection action and data ownership.
+struct ResultClosetReferenceCard: View {
+    #if DEBUG
+    @Environment(\.fitMatchButtonLayoutObserver) private var buttonLayoutObserver
+    #endif
+    let imageURLString: String?
+    let category: ClothingCategory
+    let brandName: String
+    let productName: String
+    let sizeName: String
+    let onChangeCloset: () -> Void
+
+    var body: some View {
+        CardView(radius: 20, padding: 12, shadowRadius: 10) {
+            VStack(alignment: .leading, spacing: 6) {
+                SectionHeader(title: "선택한 내 옷")
+                HStack(spacing: 14) {
+                    ProductThumbnailView(
+                        imageURLString: imageURLString,
+                        category: category,
+                        width: 48,
+                        height: 54,
+                        cornerRadius: 12,
+                        diagnosticContext: "recommendation_result_reference"
+                    )
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(brandName)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text(productName)
+                            .font(.headline.weight(.bold))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text("옵션 \(sizeName)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer(minLength: 8)
+                    Button(action: onChangeCloset) {
+                        Text("비교할 내 옷 변경")
+                            .fitMatchActionText()
+                    }
+                    .font(.subheadline.weight(.bold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 14)
+                    .frame(height: 38)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+                    .fitMatchInlineAction()
+                    .accessibilityIdentifier("result.changeCloset")
+                    #if DEBUG
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        proxy.frame(in: .global)
+                    } action: { frame in
+                        buttonLayoutObserver?(frame)
+                    }
+                    #endif
+                }
+            }
+        }
+    }
+
 }

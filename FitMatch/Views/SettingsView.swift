@@ -51,10 +51,12 @@ private struct SettingsRow: View {
         } label: {
             HStack {
                 Label(title, systemImage: systemImage)
+                    .fitMatchActionText()
                     .font(.subheadline)
                     .foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "chevron.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }

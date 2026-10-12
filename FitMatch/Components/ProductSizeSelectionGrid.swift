@@ -65,6 +65,8 @@ struct ProductSizeSelectionGrid: View {
                     .font(.headline.weight(.bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
+                    .allowsTightening(true)
+                    .truncationMode(.tail)
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")

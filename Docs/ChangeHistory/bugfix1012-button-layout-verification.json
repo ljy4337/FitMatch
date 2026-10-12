@@ -1,0 +1,121 @@
+{
+  "id": "BF1012-07",
+  "branch": "bugfix1012",
+  "dateAsiaSeoul": "2026-10-12",
+  "baseCommit": "68a716aca6f13a1bc292994a3fc3c220eb428ae8",
+  "environment": {
+    "scheme": "FitMatch-QA",
+    "configuration": "Debug-QA",
+    "simulator": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+    "os": "iOS 26.3.1"
+  },
+  "sourceSHA256": {
+    "FitMatch/Components/ContentFilterBar.swift": "a6aab846c119f288c9680aa04b55bf5c3746a105bd1914bcf05c8b7c62585212",
+    "FitMatch/Components/FitMatchCard.swift": "cd64987d6a5062890054b3145abf4c0d12bec1a2587d9f720eeca3e0e6eba3ad",
+    "FitMatch/Components/ProductSizeSelectionGrid.swift": "c25ede5e10aea3fa75a5f6f34f4b347cf29b80d4c08a58d423d326f6cb478e0b",
+    "FitMatch/ContentView.swift": "b585bf4d00d923a6a853b822e3d5319a1b497952b9c529826deb21d2d058ab8b",
+    "FitMatch/Views/AddClosetItemView.swift": "0ed82b436604227e30e018eb73a9a20edea440ad33bfd9b7d5580937a24fd680",
+    "FitMatch/Views/AddComparedProductToClosetSheet.swift": "40891c0b2851cb575c1ad722e67935c57c8dec616e4007c7ad2f939697ca134d",
+    "FitMatch/Views/ClosetItemDetailView.swift": "c5bf2759de97cdabc51fbcfc6fb5ac36b022a89923faa691e7341a8032094ad8",
+    "FitMatch/Views/CompareFlowSheet.swift": "6822e05bc06d000b1eccbddc2cb8d863d1d74cf50d3bc5619c11719b8272d304",
+    "FitMatch/Views/FitMatchOnboardingView.swift": "93043afd0789d7c0cb776fd16669e49acb722bdcc20cd71b48011a69982e625d",
+    "FitMatch/Views/HomeView.swift": "cd5e8c492eb1c65a3f04a53694e9689f5248ba481a82da83ed0963677049ef45",
+    "FitMatch/Views/LinkClosetRegistrationView.swift": "bb3a637902f01a7de5b86734a3fdc6d52a78454d80365242fcf3f76a85cfcc7c",
+    "FitMatch/Views/MyClosetView.swift": "09443ce90b0079fcf52ed086101a23895c7fa4a99812a4b87499afb1ae18b268",
+    "FitMatch/Views/MyPageView.swift": "069919ccae0eccf383803c1ca37e9b897a0ff5ddee46a428baf03f11c55019ca",
+    "FitMatch/Views/RecommendationResultView.swift": "68b235d890ff97c88bb3953ffcd53c0271ba134f24286c7de953c6775ad03844",
+    "FitMatch/Views/ReleaseInformationView.swift": "27b299a1a6add422418605fc13a16aaf09a9e451be20bbbaf17d146c4738fff9",
+    "FitMatch/Views/SettingsView.swift": "57d1877abfbebd21b98b003b840f4aba4c23543d4e553498fe09c1fefad67c07",
+    "FitMatch/Views/SizeTableRecoveryView.swift": "c255ba51167ec29a4d0fb23760ee87002b6778622eaebdeaf32dcbe292daf49a",
+    "FitMatchTests/FitMatchButtonLayoutTests.swift": "5e6e70748fa472c862ec144750ffdd997b4567bfa9b2b46c678d1e8363534a61"
+  },
+  "results": {
+    "finalFocused": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "x86_64",
+            "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+            "deviceName": "FitMatch-Regression-20260721",
+            "modelName": "iPhone 17",
+            "osBuildNumber": "23D8133",
+            "osVersion": "26.3.1",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 4,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1791812414.123,
+      "passedTests": 4,
+      "result": "Passed",
+      "skippedTests": 0,
+      "startTime": 1791812301.947,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - FitMatch-QA",
+      "topInsights": [],
+      "totalTestCount": 4
+    },
+    "renderRetest": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "x86_64",
+            "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+            "deviceName": "FitMatch-Regression-20260721",
+            "modelName": "iPhone 17",
+            "osBuildNumber": "23D8133",
+            "osVersion": "26.3.1",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 3,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1791812994.378,
+      "passedTests": 3,
+      "result": "Passed",
+      "skippedTests": 0,
+      "startTime": 1791812491.54,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - FitMatch-QA",
+      "topInsights": [],
+      "totalTestCount": 3
+    }
+  },
+  "checks": {
+    "actualCardWidths320_375_430": "PASS",
+    "actionTextWidths80_156_280": "PASS",
+    "existingMountedSelectionScriptedRemote": "PASS",
+    "actualCardImageRendererVisual": "PASS",
+    "commonSecondaryRendererVisual": "NOT RUN: render image ambiguous; not counted as visual success",
+    "physicalDevice": "NOT RUN",
+    "allScreensDirectInteraction": "NOT RUN",
+    "qaIntegration": "NOT RUN",
+    "dbAndSQLChanges": 0,
+    "businessLogicChanges": 0,
+    "protectedScroll": "PASS",
+    "diffCheck": "PASS"
+  },
+  "priorFailedAttempt": "Accessibility enumeration returned nil in hosted unit test; replaced test measurement with DEBUG geometry observer. Initial drawHierarchy black images rejected as evidence."
+}

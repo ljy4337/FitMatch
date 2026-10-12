@@ -682,8 +682,10 @@ private struct ImportedClosetItemEditView: View {
             HStack(spacing: 8) {
                 if isDeleting {
                     ProgressView("삭제 중")
+                        .fitMatchActionText()
                 } else {
                     Text("삭제")
+                        .fitMatchActionText()
                 }
             }
                 .font(.subheadline.weight(.bold))
@@ -747,6 +749,7 @@ private struct ImportedClosetItemEditView: View {
                         ? "등록 결과 다시 확인"
                         : "수정 저장"
                 ))
+                    .fitMatchActionText()
                     .font(.headline.weight(.bold))
                     .foregroundStyle(selectedSize == nil ? .secondary : Color(.systemBackground))
                     .frame(maxWidth: .infinity)

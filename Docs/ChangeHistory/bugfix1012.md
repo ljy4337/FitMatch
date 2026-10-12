@@ -290,3 +290,19 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - **추가 개발 DB 적용 승인이나 사용자 SQL 실행은 필요 없다.** 우선 현재 iPhone 17 Simulator의 FitMatch-QA에 테스트 계정으로 직접 로그인하고 완료를 알려주면 정상 앱 복구/비교 검증을 이어갈 수 있다. 비밀번호·2FA·token은 채팅에 보내지 않는다. 사용자에게 이 지원을 비동기 요청했다.
 - 원격 타 계정 격리 자동 검증에는 별도의 두 번째 정상 전용 QA 사용자 세션이 필요하다. 필요 시 기존 `Docs/QA/ReleasePreparation20261002/SessionSetup.md`의 로컬 비밀 입력 절차를 사용한다. 로그인 세션 연결 없이 계정을 생성하거나 Auth/RLS를 변경하지 않는다.
 - 운영 적용·main 승격·배포는 별도 승인/Release Gate 대상이다. 다른 기기 Closet 삭제 전달, History 삭제 후 복사 정리, 같은 개수 History cache 독립 수정은 이번에도 보류한다.
+
+
+## BF1012-07 — 긴 상품명과 버튼 레이아웃 (UI 후속)
+
+- 브랜치: `bugfix1012`; 작업일: `2026-10-12` (Asia/Seoul).
+- 사용자 승인 범위: 첨부 IMG_2589.PNG의 “비교할 내 옷 변경” 버튼 깨짐 및 앱 내부 버튼의 긴 텍스트 대응. UI만 변경, 기능 변경 금지.
+- 변경 전 문제: 선택한 내 옷의 긴 상품명/브랜드/옵션과 버튼이 가로폭을 경쟁해 버튼 문구가 줄바꿈되고 높이38 밖으로 나옴.
+- 계획: 짧은 인라인 액션의 폭 확보, 옆 상품 텍스트 말줄임, 공통/개별 액션 문구 한 줄·축소·말줄임. 설명을 포함한 카드 전체나 시스템 alert/menu에 한 줄 제한을 걸지 않음.
+- 실제 변경: `FitMatch/Components/FitMatchCard.swift` 공통 액션 텍스트/인라인 레이아웃 modifier 및 Primary/Secondary/EmptyState 버튼. `RecommendationResultView.swift`는 같은 데이터·같은 액션으로 표시하는 `ResultClosetReferenceCard`를 분리해 실제 카드의 레이아웃을 검사할 수 있게 함. 브랜드/상품명/옵션 말줄임, 변경 버튼 우선 폭 확보, 나머지 비교 액션 문구 보정.
+- 대상 파일: Components/{FitMatchCard,ContentFilterBar,ProductSizeSelectionGrid}.swift; ContentView.swift; Views/{AddClosetItemView,AddComparedProductToClosetSheet,ClosetItemDetailView,CompareFlowSheet,FitMatchOnboardingView,HomeView,LinkClosetRegistrationView,MyClosetView,MyPageView,RecommendationResultView,ReleaseInformationView,SettingsView,SizeTableRecoveryView}.swift; FitMatchTests/FitMatchButtonLayoutTests.swift; Docs/CodexSessionHandoff.md.
+- 실제 변경 경계: 버튼 action/조건/상태/선택 identity/저장/RPC/비교/점수/문구 원문 변경0, SQL 준비·적용0, DB 변경0. 기존 줄수 제한·축소가 있는 사이즈 선택은 기준0.72 유지. 카드 설명과 FAQ 본문은 여러 줄 유지. 아이콘 버튼과 시스템 alert/menu의 기존 고유 레이아웃은 유지.
+- **PASS** 최종 앱 build-for-testing / FitMatch-QA·Debug-QA, iPhone 17 Regression Simulator iOS26.3.1. `ButtonLayoutFinal.xcresult`: 신규 UI 검사3 + 기존 실제 mounted 비교 선택 회귀1 =4 PASS/0FAIL/0SKIP. 긴 상품명·브랜드·옵션을 각각10회 반복한 입력과 짧은 입력에서 320/375/430pt 모두 변경 버튼 폭 동일·높이38pt·가로 경계 안 유지. 액션 문구는 80/156/280pt에서 한 줄 높이·가로폭 검사. 기존 선택 회귀는 scripted remote 기반이며 live 서버 검증 아님.
+- 최초 `ButtonLayout.xcresult`는 2PASS/1FAIL: UIHostingController의 접근성 요소 탐색이 nil인 테스트 측정 실패. DEBUG 전용 선택적 geometry observer로 실제 카드의 버튼 좌표를 측정하도록 바꿔 위 최종 실행 PASS. 앱 기능이나 서버 오류로 분류하지 않는다. DEBUG observer는 Release에 포함되지 않음.
+- 캡처 검증: drawHierarchy 이미지가 검게 나와 시각 확인 근거에서 제외. ImageRenderer로 같은 실제 UI 컴포넌트를 렌더링해 재실행: `ButtonLayoutRender.xcresult` UI3 PASS/0FAIL/0SKIP, xcodebuild exit0. 실제 결과 카드의 320/375/430pt 긴 이름 이미지 직접 확인 PASS(버튼 한 줄, 상품 텍스트 말줄임). `/private/tmp/bf1012/button-layout/BF1012-button-{320,375,430}-long.png`. 합성 입력/표시용 카드이며 실제 서버·전체 화면·실기기 증거 아님. 공통 버튼 이미지의 Secondary 렌더는 배경/글자 식별이 불명확해 시각 PASS 근거로 쓰지 않음; 공통 액션의 한 줄·폭 자동 검사는 PASS.
+- **PASS** `git diff --check`, 보호 스크롤 diff0 및 검사, 최종 UI diff에서 기존 action/상태/조건/서버 코드 보존 확인. 재현/검증 증거와 소스 hash: `Docs/ChangeHistory/bugfix1012-button-layout-verification.json`.
+- **NOT RUN** 실기기 UI 확인, 앱 전체 화면의 직접 조작, 이번 UI 변경의 QA merge/push/배포. 정상 인증 DB E2E의 기존 미검증 상태는 이번 UI 검사로 대체하지 않는다. 추가 DB 승인·SQL 적용 필요 없음.

@@ -232,6 +232,7 @@ struct LinkClosetRegistrationView: View {
                         pasteProductURL()
                     } label: {
                         Text("붙여넣기")
+                            .fitMatchActionText()
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
@@ -239,6 +240,7 @@ struct LinkClosetRegistrationView: View {
                             .background(Color.black, in: Capsule())
                     }
                     .buttonStyle(.plain)
+                    .fitMatchInlineAction()
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
