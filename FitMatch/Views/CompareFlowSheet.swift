@@ -242,6 +242,13 @@ struct CompareFlowSheet: View {
                         }
                     }
                 )
+                .onChange(of: viewModel.isSavingSizeRecovery) { _, saving in
+                    guard saving else { return }
+                    invalidateForegroundComparison()
+                    selectedReferenceItemID = nil
+                    serverReferenceSelectionPlan = nil
+                    preparedComparison = nil
+                }
             }
             .presentationDragIndicator(.visible)
         }
@@ -1825,19 +1832,14 @@ private extension CompareFlowSheet {
         switch readiness {
         case .ready:
             return
-        case .sizesRequired:
+        case .sizesRequired, .measurementsRequired:
             statusMessage = readiness.userMessage
             setStep(.categoryConfirmation)
-            if SizeTableRecoveryFeature.isEnabled,
-               viewModel.sizeTableRecoveryContext != nil {
+            if SizeTableRecoveryFeature.isEnabled {
                 isShowingSizeTableRecovery = true
             } else {
                 isShowingManualProductEntry = true
             }
-        case .measurementsRequired:
-            statusMessage = readiness.userMessage
-            setStep(.categoryConfirmation)
-            isShowingManualProductEntry = true
         case .unavailable:
             errorMessage = readiness.userMessage
             setStep(.error)

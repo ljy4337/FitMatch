@@ -456,6 +456,8 @@ private struct ImportedClosetItemEditView: View {
     @State private var isSaving = false
     @State private var isReconcilingAcceptedServerEdit = false
     @State private var saveErrorMessage: String?
+    @State private var hasSaveFailure = false
+    @State private var saveFailureReason: String?
 
     init(
         item: UserFit,
@@ -514,6 +516,21 @@ private struct ImportedClosetItemEditView: View {
         }
         .safeAreaInset(edge: .bottom) {
             bottomSaveBar
+        }
+        .safeAreaInset(edge: .top) {
+            if hasSaveFailure {
+                FitMatchClosetFailureBanner(
+                    message: FitMatchClosetSyncFailure.save.message,
+                    reason: saveFailureReason,
+                    isRetrying: isSaving || currentLinkedEditDraft == nil
+                ) {
+                    guard let draft = currentLinkedEditDraft else { return }
+                    submitLinkedEdit(draft)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .background(Color(.systemGroupedBackground))
+            }
         }
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
@@ -720,8 +737,7 @@ private struct ImportedClosetItemEditView: View {
 
             Button {
                 guard let draft = currentLinkedEditDraft else {
-                    saveErrorMessage = "서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요."
-                    isShowingSaveError = true
+                    showSaveFailure(reason: "서버의 최신 사이즈 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
                     return
                 }
                 submitLinkedEdit(draft)
@@ -786,21 +802,29 @@ private struct ImportedClosetItemEditView: View {
             switch outcome {
             case .saved:
                 isReconcilingAcceptedServerEdit = false
+                hasSaveFailure = false
+                saveFailureReason = nil
                 dismiss()
             case .needsReferenceConfirmation:
-                saveErrorMessage = "이전 옷장 설정을 정리하지 못했어요. 문제가 계속되면 문의해 주세요."
-                isShowingSaveError = true
+                showSaveFailure(reason: "이전 옷장 설정을 정리하지 못했어요. 문제가 계속되면 문의해 주세요.")
             case .reconciliationRequired(let message):
                 isReconcilingAcceptedServerEdit = true
-                saveErrorMessage = message
+                showSaveFailure(reason: message)
                 // Keep the editor on screen and lock the immutable accepted
                 // request. The bottom action remains enabled for read-back.
             case .failed(let message):
                 isReconcilingAcceptedServerEdit = false
-                saveErrorMessage = message
-                isShowingSaveError = true
+                showSaveFailure(reason: message)
+            case .retryableFailure:
+                isReconcilingAcceptedServerEdit = false
+                showSaveFailure()
             }
         }
+    }
+
+    private func showSaveFailure(reason: String? = nil) {
+        saveFailureReason = reason
+        hasSaveFailure = true
     }
 
     private var availableSizes: [ProductSize] {

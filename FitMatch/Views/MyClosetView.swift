@@ -122,7 +122,13 @@ struct MyClosetView: View {
     }
 
     private var closetHeader: some View {
-        ContentFilterBar(filters: closetFilterItems, layout: closetLayoutBinding)
+        VStack(spacing: 8) {
+            if let closetSync {
+                ClosetSyncFailureStatus(coordinator: closetSync)
+                    .padding(.horizontal, 20)
+            }
+            ContentFilterBar(filters: closetFilterItems, layout: closetLayoutBinding)
+        }
     }
 
     @ViewBuilder
@@ -368,6 +374,31 @@ struct MyClosetView: View {
         }
     }
 
+}
+
+private struct ClosetSyncFailureStatus: View {
+    @ObservedObject var coordinator: FitMatchClosetSyncCoordinator
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
+    @Environment(\.modelContext) private var modelContext
+    @State private var isRetrying = false
+
+    var body: some View {
+        if let failure = coordinator.failure {
+            FitMatchClosetFailureBanner(
+                message: failure.message,
+                reason: coordinator.rejectionReason,
+                isRetrying: isRetrying || coordinator.state == .syncing
+            ) {
+                guard !isRetrying,
+                      let userID = authSession.authenticatedUserID else { return }
+                isRetrying = true
+                Task { @MainActor in
+                    defer { isRetrying = false }
+                    await coordinator.retrySynchronization(userID: userID, modelContext: modelContext)
+                }
+            }
+        }
+    }
 }
 
 private extension String {

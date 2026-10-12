@@ -146,6 +146,9 @@ nonisolated struct VNextCanonicalMeasurementDTO: Decodable, Equatable, Sendable 
     let unitCode: String
     let basisCode: String?
     let sourceMeasurementCode: String?
+    var resolutionPath: String? = nil
+    var rawLabel: String? = nil
+    var rawValueText: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case measurementCode = "fitmatch_measurement_code"
@@ -153,6 +156,9 @@ nonisolated struct VNextCanonicalMeasurementDTO: Decodable, Equatable, Sendable 
         case unitCode = "unit_code"
         case basisCode = "basis_code"
         case sourceMeasurementCode = "source_measurement_code"
+        case resolutionPath = "resolution_path"
+        case rawLabel = "raw_label"
+        case rawValueText = "raw_value_text"
     }
 }
 
@@ -184,6 +190,9 @@ nonisolated struct VNextRuntimeSizeDTO: Decodable, Equatable, Sendable {
     let sizeLabel: String
     let availability: VNextAvailabilityDTO
     let canonicalMeasurements: VNextCanonicalMeasurementsDTO
+    var identityKind: String? = nil
+    var recoveryRequestID: UUID? = nil
+    var ownerUserID: UUID? = nil
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -191,6 +200,9 @@ nonisolated struct VNextRuntimeSizeDTO: Decodable, Equatable, Sendable {
         case sizeLabel = "size_label"
         case availability
         case canonicalMeasurements = "canonical_measurements"
+        case identityKind = "identity_kind"
+        case recoveryRequestID = "recovery_request_id"
+        case ownerUserID = "owner_user_id"
     }
 }
 

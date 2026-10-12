@@ -5,6 +5,119 @@ import Testing
 
 @MainActor
 struct FitMatchClosetSyncCoordinatorTests {
+    @Test func rejectedBackgroundUpdatePreservesLocalChangesForRetry() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.FailedUpdate.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let userID = UUID()
+        let item = localReferenceItem(id: UUID(), isReference: false)
+        let remote = ClosetSyncRemoteStub(
+            items: [manualRemoteRecord(clientItemID: item.id)],
+            persistsManualUpdates: true,
+            updateRejectionCount: 1
+        )
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        context.insert(item)
+        item.productName = "저장되지 않은 수정"
+        item.fitMemo = "재시도할 메모"
+        try context.save()
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        #expect(coordinator.state == .pendingRetry)
+        #expect(await remote.updateCallCount() == 1)
+        #expect(item.productName == "저장되지 않은 수정")
+        #expect(item.fitMemo == "재시도할 메모")
+        #expect(coordinator.lastErrorMessage == "변경사항을 저장하지 못했어요.")
+
+        await coordinator.retrySynchronization(userID: UUID(), modelContext: context)
+        #expect(await remote.updateCallCount() == 1)
+        #expect(coordinator.state == .pendingRetry)
+
+        await coordinator.retrySynchronization(userID: userID, modelContext: context)
+        #expect(await remote.updateCallCount() == 2)
+        #expect(item.productName == "저장되지 않은 수정")
+        #expect(item.fitMemo == "재시도할 메모")
+        #expect(coordinator.state == .synced)
+        #expect(coordinator.failure == nil)
+    }
+
+    @Test func failedListDoesNotRollBackUnsavedLocalInput() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.FailedList.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let userID = UUID()
+        let remote = ClosetSyncRemoteStub(items: [], listFailureCount: 1)
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        _ = try coordinator.prepareLocalCache(for: userID, modelContext: context)
+        let item = localReferenceItem(id: UUID(), isReference: false)
+        context.insert(item)
+        try context.save()
+        item.fitMemo = "아직 저장하지 않은 입력"
+
+        await coordinator.synchronize(userID: userID, modelContext: context)
+
+        #expect(coordinator.state == .pendingRetry)
+        #expect(item.fitMemo == "아직 저장하지 않은 입력")
+        #expect(coordinator.lastErrorMessage == "옷장 정보를 업데이트하지 못했어요.")
+    }
+
+    @Test func retryKeepsFailureVisibleUntilAuthoritativeSuccess() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.RetryFailure.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let retryGate = JourneyAsyncGate()
+        let remote = ClosetSyncRemoteStub(items: [], listGates: [2: retryGate], listFailureCount: 1)
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        let userID = UUID()
+        await coordinator.synchronize(userID: userID, modelContext: context)
+        let failure = try #require(coordinator.lastErrorMessage)
+
+        let retry = Task { @MainActor in
+            await coordinator.retrySynchronization(userID: userID, modelContext: context)
+        }
+        await retryGate.waitForArrival(atLeast: 1)
+        #expect(coordinator.state == .syncing)
+        #expect(coordinator.lastErrorMessage == failure)
+        await coordinator.retrySynchronization(userID: userID, modelContext: context)
+        await retryGate.open()
+        await retry.value
+
+        #expect(await remote.listCallCount() == 2)
+        #expect(coordinator.state == .synced)
+        #expect(coordinator.lastErrorMessage == nil)
+    }
+
+    @Test func manualEditListFailureIsTypedRetryableAndPreservesDraft() async throws {
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let userID = UUID()
+        let item = localReferenceItem(id: UUID(), isReference: false)
+        let draft = localReferenceItem(id: UUID(), isReference: false)
+        draft.productName = "입력 중인 수정 내용"
+        let remote = ClosetSyncRemoteStub(items: [], listFailureCount: 1)
+        let defaultsName = "FitMatchClosetSyncCoordinatorTests.EditFailure.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let coordinator = FitMatchClosetSyncCoordinator(remote: remote, defaults: defaults)
+        coordinator.prepareForAuthenticatedUser(userID)
+
+        let outcome = await coordinator.saveManualClosetEdit(
+            item: item, editedItem: draft, userID: userID, modelContext: context
+        )
+
+        #expect(outcome == .retryableFailure)
+        #expect(draft.productName == "입력 중인 수정 내용")
+        #expect(await remote.updateCallCount() == 0)
+    }
+
     @Test func manualEditDoesNotReportSavedWhenReadbackRetainsPreviousValues() async throws {
         let container = try inMemoryContainer()
         let context = ModelContext(container)

@@ -8,6 +8,7 @@ struct SizeTableRecoveryView: View {
     }
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var authSession: FitMatchAuthSessionStore
     @ObservedObject var viewModel: ShoppingProductViewModel
     var purpose: Purpose = .comparison
     let onCancel: () -> Void
@@ -18,9 +19,11 @@ struct SizeTableRecoveryView: View {
     @State private var selectedSizeID: UUID?
     @State private var isAnalyzing = false
     @State private var showsManualEditor = false
-    @State private var isManualEntry = false
+    @State private var isManualEntry = true
     @State private var showsAnalysisFailureAlert = false
     @State private var validationMessage: String?
+    @State private var completionTask: Task<Void, Never>?
+    @State private var imageTask: Task<Void, Never>?
 
     var body: some View {
         ScrollView {
@@ -61,13 +64,14 @@ struct SizeTableRecoveryView: View {
                     PrimaryButton(title: comparisonButtonTitle, systemImage: "sparkles") {
                         complete()
                     }
-                    .disabled(selectedSizeID == nil || isAnalyzing)
+                    .disabled(selectedSizeID == nil || isAnalyzing || viewModel.isSavingSizeRecovery)
                 }
 
                 SecondaryButton(title: "직접 입력하기", systemImage: "square.and.pencil") {
                     prepareManualEntry()
                 }
             }
+            .disabled(viewModel.isSavingSizeRecovery)
             .padding(20)
         }
         .background(Color(.systemGroupedBackground))
@@ -76,6 +80,8 @@ struct SizeTableRecoveryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("취소") {
+                    completionTask?.cancel()
+                    imageTask?.cancel()
                     onCancel()
                     dismiss()
                 }
@@ -83,8 +89,18 @@ struct SizeTableRecoveryView: View {
         }
         .onChange(of: selectedPhotoItems) { _, items in
             guard let item = items.first else { return }
-            Task {
-                guard let data = try? await item.loadTransferable(type: Data.self) else {
+            imageTask?.cancel()
+            let contextID = viewModel.sizeRecoveryContextID
+            let userID = authSession.authenticatedUserID
+            imageTask = Task { @MainActor in
+                let data = await FitMatchSizeTableRecoveryAction.loadImage(
+                    contextID: contextID, viewModel: viewModel, userID: userID,
+                    currentUserID: { authSession.authenticatedUserID },
+                    load: { try await item.loadTransferable(type: Data.self) }
+                )
+                guard !Task.isCancelled, viewModel.sizeRecoveryContextID == contextID,
+                      authSession.authenticatedUserID == userID else { return }
+                guard let data else {
                     viewModel.recoveryErrorMessage = "선택한 사진을 불러오지 못했어요."
                     selectedPhotoItems = []
                     return
@@ -97,8 +113,14 @@ struct SizeTableRecoveryView: View {
                 viewModel.sizeOptions = [ClothingSizeForm()]
                 selectedImageData = data
                 await analyze(data: data)
+                guard !Task.isCancelled, viewModel.sizeRecoveryContextID == contextID,
+                      authSession.authenticatedUserID == userID else { return }
                 selectedPhotoItems = []
             }
+        }
+        .onDisappear {
+            completionTask?.cancel()
+            imageTask?.cancel()
         }
         .alert("이미지를 분석할 수 없어요", isPresented: $showsAnalysisFailureAlert) {
             Button("직접 입력") {
@@ -305,6 +327,7 @@ struct SizeTableRecoveryView: View {
         isAnalyzing = true
         defer { isAnalyzing = false }
         let didAnalyze = await viewModel.analyzeRecoveryImage(data: data)
+        guard !Task.isCancelled else { return }
         if didAnalyze {
             selectedSizeID = nil
             showsManualEditor = true
@@ -316,15 +339,30 @@ struct SizeTableRecoveryView: View {
     }
 
     private func complete() {
-        switch FitMatchSizeTableRecoveryAction.complete(
-            selectedSize: selectedSize,
-            viewModel: viewModel
-        ) {
-        case .blocked(let message):
-            validationMessage = message
-        case .completed:
-            validationMessage = nil
-            onComplete()
+        guard completionTask == nil, !viewModel.isSavingSizeRecovery else { return }
+        let selected = selectedSize
+        let inputSource = isManualEntry ? "USER_MANUAL" : "USER_OCR"
+        let userID = authSession.authenticatedUserID
+        completionTask = Task { @MainActor in
+            defer { completionTask = nil }
+            let outcome: FitMatchSizeTableRecoveryAction.Outcome
+            if purpose == .closetRegistration {
+                outcome = FitMatchSizeTableRecoveryAction.completeForClosetRegistration(
+                    selectedSize: selected, viewModel: viewModel
+                )
+            } else {
+                outcome = await FitMatchSizeTableRecoveryAction.complete(
+                    selectedSize: selected, viewModel: viewModel, userID: userID,
+                    currentUserID: { authSession.authenticatedUserID }, inputSource: inputSource
+                )
+            }
+            guard !Task.isCancelled else { return }
+            switch outcome {
+            case .blocked(let message): validationMessage = message
+            case .completed:
+                validationMessage = nil
+                onComplete()
+            }
         }
     }
 }

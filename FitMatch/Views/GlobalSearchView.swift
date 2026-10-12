@@ -21,7 +21,7 @@ struct GlobalSearchView: View {
                         SearchEmptyCard(
                             systemImage: "tshirt",
                             title: emptyClosetMessage,
-                            message: normalizedSearchText.isEmpty ? "핏이 마음에 드는 옷을 등록하면 검색 결과에 표시됩니다." : "브랜드, 상품명, 카테고리로 다시 검색해보세요."
+                            message: normalizedSearchText.isEmpty ? "핏이 마음에 드는 옷을 등록하면 검색 결과에 표시됩니다." : "상품명 또는 브랜드명으로 다시 검색해보세요."
                         )
                     } else {
                         VStack(spacing: 12) {
@@ -45,7 +45,7 @@ struct GlobalSearchView: View {
                         SearchEmptyCard(
                             systemImage: "clock",
                             title: emptyHistoryMessage,
-                            message: normalizedSearchText.isEmpty ? "상품을 비교하면 기록에서 다시 확인할 수 있습니다." : "상품명, 브랜드, 카테고리로 다시 검색해보세요."
+                            message: normalizedSearchText.isEmpty ? "상품을 비교하면 기록에서 다시 확인할 수 있습니다." : "상품명 또는 브랜드명으로 다시 검색해보세요."
                         )
                     } else {
                         VStack(spacing: 12) {
@@ -71,7 +71,7 @@ struct GlobalSearchView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("검색")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "브랜드, 상품명, 카테고리 검색")
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "상품명 또는 브랜드명을 입력해 주세요.")
         .onAppear {
             favoriteURLs = FavoriteProductStore().favoriteURLs()
         }
@@ -91,8 +91,7 @@ struct GlobalSearchView: View {
     private var historyResults: [RecommendationHistory] {
         FitMatchGlobalSearchPresentation.historyResults(
             from: histories,
-            searchText: searchText,
-            favoriteURLs: favoriteURLs
+            searchText: searchText
         )
     }
 
@@ -128,7 +127,7 @@ private struct SearchIntroCard: View {
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.primary)
 
-                    Text(isSearching ? "내 옷장과 비교 기록을 함께 찾고 있어요." : "브랜드, 상품명, 카테고리를 한 번에 검색하세요.")
+                    Text(isSearching ? "내 옷장과 비교 기록을 함께 찾고 있어요." : "상품명 또는 브랜드명으로 검색하세요.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)

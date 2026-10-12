@@ -58,6 +58,20 @@ enum FitMatchClosetSyncState: Equatable {
     case pendingRetry
 }
 
+enum FitMatchClosetSyncFailure: Equatable {
+    case list
+    case save
+    case unknown
+
+    var message: String {
+        switch self {
+        case .list: return "옷장 정보를 업데이트하지 못했어요."
+        case .save: return "변경사항을 저장하지 못했어요."
+        case .unknown: return "옷장 동기화를 완료하지 못했어요."
+        }
+    }
+}
+
 /// The cache must be claimed by the authenticated user before any user-owned
 /// SwiftData row is allowed to reach presentation.  This is deliberately a
 /// synchronous, production-used boundary: a network sync is too late to
@@ -93,7 +107,9 @@ private enum FitMatchClosetSyncInterruption: Error {
 @MainActor
 final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDeleting {
     @Published private(set) var state: FitMatchClosetSyncState = .idle
-    @Published private(set) var lastErrorMessage: String?
+    @Published private(set) var failure: FitMatchClosetSyncFailure?
+    @Published private(set) var rejectionReason: String?
+    var lastErrorMessage: String? { failure?.message }
 
     private let remote: any FitMatchClosetRemoteServicing
     private let authorityCoordinator: FitMatchServerAuthorityCoordinator
@@ -163,9 +179,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         activeSyncFingerprint = nil
         blockedMutationFingerprints.removeAll()
         needsAnotherPass = false
+        failure = nil
+        rejectionReason = nil
         if userID == nil {
             state = .idle
-            lastErrorMessage = nil
         }
     }
 
@@ -349,7 +366,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         activeSyncFingerprint = nil
         blockedMutationFingerprints.removeAll()
         state = .idle
-        lastErrorMessage = nil
+        failure = nil
+        rejectionReason = nil
     }
 
     enum ManualRegistrationFailure: Error {
@@ -359,6 +377,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     enum ManualClosetEditSaveOutcome: Equatable {
         case saved
         case failed(String)
+        case retryableFailure
         case reconciliationRequired(String)
     }
 
@@ -381,7 +400,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 isBusy: { self.isSynchronizing }
             )
         } catch {
-            return .failed("서버의 저장 상태를 확인하지 못했어요. 다시 시도해 주세요.")
+            return .retryableFailure
         }
         isSynchronizing = true
         defer { isSynchronizing = false }
@@ -430,7 +449,10 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         } catch is CancellationError {
             return .failed("수정이 취소되었습니다. 입력한 내용은 유지됩니다.")
         } catch {
-            return .failed(linkedEditErrorMessage(for: error))
+            if let reason = editableSaveFailureMessage(for: error) {
+                return .failed(reason)
+            }
+            return .retryableFailure
         }
     }
 
@@ -794,7 +816,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         do {
             rows = try await remote.listClosetItems()
         } catch {
-            return .failed(linkedEditErrorMessage(for: error))
+            return linkedEditFailure(for: error)
         }
         guard isCurrentSyncUser(userID), rows.state == "ready" else {
             return .failed("서버의 현재 옷장 정보를 확인하지 못했어요. 새로고침 후 문제가 계속되면 문의해 주세요.")
@@ -837,7 +859,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 closetItemID: currentRow.closetItemID
             )
         } catch {
-            return .failed(linkedEditErrorMessage(for: error))
+            return linkedEditFailure(for: error)
         }
         guard updateResponse.clientItemID == request.clientItemID,
               updateResponse.closetItemID == currentRow.closetItemID else {
@@ -1109,7 +1131,14 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         try modelContext.save()
     }
 
-    private func linkedEditErrorMessage(for error: Error) -> String {
+    private func linkedEditFailure(for error: Error) -> FitMatchLinkedClosetEditSaveOutcome {
+        if let reason = editableSaveFailureMessage(for: error) {
+            return .failed(reason)
+        }
+        return .retryableFailure
+    }
+
+    private func editableSaveFailureMessage(for error: Error) -> String? {
         if let payloadError = error as? FitMatchClosetPayloadContractError {
             return payloadError.errorDescription
                 ?? "입력한 분류 또는 실측 정보를 서버에 저장할 수 없습니다. 입력한 내용은 유지됩니다."
@@ -1118,36 +1147,36 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
         if text.contains("usable canonical measurement") {
             return "선택한 사이즈는 실측 정보가 없어 내 옷장에 등록할 수 없습니다."
         }
-        if isTransientTransportError(error) {
-            return "일시적인 연결 문제예요. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
-        }
         if let resolverError = error as? FitMatchSupabaseProductResolverError,
            case .authenticationRequired = resolverError {
             return FitMatchFailureCopy.loginRequired
         }
-        return "서버 수정 서비스에 문제가 있어요. 입력한 내용은 유지됩니다. 문제가 계속되면 문의해 주세요."
-    }
-
-    private func isTransientTransportError(_ error: Error) -> Bool {
-        if error is URLError {
-            return true
+        if isDeterministicMutationContractError(error) {
+            return "입력한 분류 또는 실측 정보를 확인한 뒤 다시 저장해 주세요."
         }
-        let nsError = error as NSError
-        if nsError.domain == NSURLErrorDomain {
-            return true
+        let rejectionCode: String?
+        if case let FitMatchClosetRegistrationRPCError.rejected(sqlState, _) = error {
+            rejectionCode = sqlState.uppercased()
+        } else {
+            rejectionCode = (error as? PostgrestError)?.code?.uppercased()
         }
-        return (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)?.domain
-            == NSURLErrorDomain
+        if let rejectionCode,
+           rejectionCode == "P0001" || rejectionCode.hasPrefix("22")
+            || rejectionCode.hasPrefix("23") {
+            return "입력한 분류 또는 실측 정보를 확인한 뒤 다시 저장해 주세요."
+        }
+        return nil
     }
 
     private func synchronizeOnce(userID: UUID, modelContext: ModelContext) async {
         guard isCurrentSyncUser(userID) else { return }
         state = .syncing
-        lastErrorMessage = nil
+        var failedOperation: FitMatchClosetSyncFailure = .unknown
 
         do {
             try prepareLocalCache(for: userID, modelContext: modelContext)
             guard isCurrentSyncUser(userID) else { return }
+            failedOperation = .list
             var remoteResponse = try await remote.listClosetItems()
             guard isCurrentSyncUser(userID) else { return }
             guard remoteResponse.state == "ready" else {
@@ -1155,6 +1184,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             }
 
             remoteItemsByClientID = try validatedClosetIndex(remoteResponse)
+            failedOperation = .unknown
             let deletedPendingRows = try await flushPendingDeletes(
                 userID: userID,
                 modelContext: modelContext
@@ -1173,6 +1203,8 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 .filter(\.isActiveClosetItem)
             var failedUpsert = false
             var blockedDeterministicMutation = false
+            var failedMutationIDs = Set<UUID>()
+            var editableRejectionReason: String?
             var didMutateCloset = false
             var failedAutomaticAuthorityValidationIDs = Set<UUID>()
             for localItem in localItems {
@@ -1216,6 +1248,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                         == mutationFingerprint(for: localItem) {
                         failedUpsert = true
                         blockedDeterministicMutation = true
+                        failedMutationIDs.insert(localItem.id)
                     }
                     continue
                 }
@@ -1246,9 +1279,11 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
                 } catch {
                     guard isCurrentSyncUser(userID) else { return }
                     failedUpsert = true
+                    failedMutationIDs.insert(localItem.id)
                     if isDeterministicMutationContractError(error) {
                         blockedMutationFingerprints[localItem.id] = fingerprint
                         blockedDeterministicMutation = true
+                        editableRejectionReason = editableSaveFailureMessage(for: error)
                     }
                     if localItem.sourceProduct != nil,
                        localItem.classificationAuthorityProvenance == .serverUnavailable {
@@ -1265,6 +1300,7 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             // synchronization must never set or clear them.
             let authoritative: FitMatchClosetItemsResponse
             if didMutateCloset {
+                failedOperation = .save
                 authoritative = try await remote.listClosetItems()
                 guard isCurrentSyncUser(userID) else { return }
                 guard authoritative.state == "ready" else {
@@ -1288,6 +1324,9 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
             for remoteItem in authoritative.items {
                 guard isCurrentSyncUser(userID) else { return }
                 if let localItem = currentByID[remoteItem.clientItemID] {
+                    // A rejected update leaves this server receipt older than
+                    // the local input. Keep the exact local edit for retry.
+                    guard !failedMutationIDs.contains(localItem.id) else { continue }
                     let pendingEdit = validPendingSizeEdit(
                         for: localItem,
                         userID: userID
@@ -1335,21 +1374,22 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
 
             if failedUpsert || hasUnacknowledgedSizeEdit {
                 state = .pendingRetry
-                lastErrorMessage = blockedDeterministicMutation
-                    ? "일부 옷장 변경사항이 서버 계약과 맞지 않아 저장하지 못했습니다. 입력은 유지됩니다. 내용을 수정한 뒤 다시 저장해 주세요."
-                    : hasUnacknowledgedSizeEdit
-                    ? "변경한 사이즈의 서버 확인을 기다리고 있습니다. 자동으로 다시 시도합니다."
-                    : "일부 옷장 변경사항을 서버에 저장하지 못했습니다. 자동으로 다시 시도합니다."
+                failure = .save
+                rejectionReason = blockedDeterministicMutation
+                    ? editableRejectionReason ?? rejectionReason
+                        ?? "입력한 내용을 확인한 뒤 다시 저장해 주세요."
+                    : nil
             } else {
                 state = .synced
+                failure = nil
+                rejectionReason = nil
             }
         } catch {
             guard isCurrentSyncUser(userID) else { return }
             modelContext.rollback()
             state = .pendingRetry
-            lastErrorMessage = isTransientTransportError(error)
-                ? FitMatchFailureCopy.transientNetwork
-                : FitMatchFailureCopy.serviceInspection
+            failure = failedOperation
+            rejectionReason = nil
             #if DEBUG
             print("[FitMatchClosetSync] sync failed: \(error.localizedDescription)")
             #endif
@@ -1463,6 +1503,12 @@ final class FitMatchClosetSyncCoordinator: ObservableObject, FitMatchClosetDelet
     /// unchanged contract failure cannot produce an endless update loop.
     func retryBlockedMutations() {
         blockedMutationFingerprints.removeAll()
+    }
+
+    func retrySynchronization(userID: UUID, modelContext: ModelContext) async {
+        guard isCurrentSyncUser(userID), !isSynchronizing else { return }
+        retryBlockedMutations()
+        await synchronize(userID: userID, modelContext: modelContext)
     }
 
     private func synchronizationFingerprint(in modelContext: ModelContext) throws -> String {

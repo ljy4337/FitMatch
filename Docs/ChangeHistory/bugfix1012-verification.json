@@ -1,0 +1,137 @@
+{
+  "branch": "bugfix1012",
+  "verified_at": "2026-10-12T11:50:51.456663+09:00",
+  "base_commit": "2d01ea4cc0dd245f9406a9f3e80e2f50711d485d",
+  "qa_commit": "1580aa358486c6dc2a24fbd51d3c550059667545",
+  "focused_xcode": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+          "deviceName": "FitMatch-Regression-20260721",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 192,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791773379.804,
+    "passedTests": 190,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791773185.557,
+    "statistics": [
+      {
+        "subtitle": "4 test runs",
+        "title": "2 tests ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "100% of duration",
+        "text": "11 longest test runs with outlier durations exceeding 0.75s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 190
+  },
+  "share_controller_harness": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+          "deviceName": "iPhone 17",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 11,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "ShareCancellationTests · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791771621.247,
+    "passedTests": 11,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791771602.751,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - ShareCancellationTests",
+    "topInsights": [],
+    "totalTestCount": 11
+  },
+  "sql_isolated_result": "PASS: real save/read/accessor/canonical/eligibility/begin/complete/history SQL; immutable retry, active pointer, owner isolation, hierarchy/dictionary rejects, official supplements, unchanged retailer facts, RLS, ACL/security parity, guarded apply/rollback and original official FK. Classification/catalog fixtures, not live authenticated E2E.",
+  "remote_sql_applied": [],
+  "development_target": "hnkplvyegonlhumlejst",
+  "production_changes": false,
+  "physical_device": "NOT RUN",
+  "qa_integration_build": "NOT RUN",
+  "source_sha256": {
+    "FitMatch/Components/FitMatchCard.swift": "dae6288ebdec90e9d8c4190c807dcaaa84bdabff94039c580ed93a0624e77225",
+    "FitMatch/Services/FitMatchClosetSyncCoordinator.swift": "20c1541b1a1e2f32713998208b3bc997e00ffe5433564019ca097b2c6cb67ed5",
+    "FitMatch/Services/FitMatchHistoryPresentation.swift": "61d8dea9a7efc4c09a22ac48e8fb86197c4c7b6251fcf4e3115fe700d6cb77a0",
+    "FitMatch/Services/FitMatchLinkedSizeEditIntent.swift": "4dc17cbf8d8e33c17eea6a02602e34d66a85c76933d1f3d3baa0588a05c3496e",
+    "FitMatch/Services/FitMatchServerAuthorityCoordinator.swift": "9a45bf1d4ffb4ac894f96995f1d52b62792b5c4eff5b13604371eec3fa23f094",
+    "FitMatch/Services/FitMatchSupabaseProductResolver.swift": "bb3a9064237dc57b68a519e989e0b74e990ccfce53f1859ae227ebf7d0ca0dd1",
+    "FitMatch/Services/FitMatchUserSizeRecovery.swift": "d2a96dbad973e924ae94e1d040a6944223fa3c3818e7f2a0dc0f7f7be06971b2",
+    "FitMatch/Services/FitMatchVNextDTOs.swift": "2111e9fafffa0216a4199fdb54cc14d4a9ef630f3d06ffbfc590401f15d637be",
+    "FitMatch/Services/SizeTableRecoveryFeature.swift": "5efd2b14b8ceedd735df73a823cce7888f649c6149bbbde6259e09ad9eb8d695",
+    "FitMatch/ViewModels/ShoppingProductViewModel.swift": "26caac7c2bb7cc0dce8e2835f08b71dc1df3dd1413a43805efec3d87ea5d2c5c",
+    "FitMatch/Views/AddClosetItemView.swift": "63d70cf6045ac6a8f3211ab54f6eadbb958a78357cb3ce47174e3005684cc2e2",
+    "FitMatch/Views/ClosetItemDetailView.swift": "d6bc97334b621f429336e111678ee33a251e9234e1c249e7e0e7420c7d90de36",
+    "FitMatch/Views/CompareFlowSheet.swift": "98af92e5e97584a6e8d5dd09656255ce699bdb251b71f5e8ce04120a5374b0d3",
+    "FitMatch/Views/GlobalSearchView.swift": "6cbfdb04c9846e2a5233fd8ed5f15c374dce0c09e049a1747036be0c4430bd33",
+    "FitMatch/Views/MyClosetView.swift": "fac4414af2fc076ed5f748a34d4d7ab52971fcff27fa8ab48553ee2db0d657f0",
+    "FitMatch/Views/SizeTableRecoveryView.swift": "b26340d015c36c65a5ccb8ceb28cdafca5ddd6eb886ff2867210a1871c0a7627",
+    "FitMatchShareExtension/ShareViewController.swift": "d9fac92fa1d52ac5b01c90f0e3436d5318e60291980fc3bb64c9e1a46ce6686f",
+    "FitMatchTests/FitMatchClosetSyncCoordinatorTests.swift": "c735ecc2f5e4aa40328024404f9441acb6f261ddf6ade185e1c24ffdf02904fb",
+    "FitMatchTests/FitMatchComparisonSyncCoordinatorTests.swift": "fb4e560869740e4881c69f335d5421eb3830e8db04f28d3ed05d64d6660509b0",
+    "FitMatchTests/FitMatchFinalReleaseProviderSnapshotTests.swift": "122878b5507229a640030ee8fa75332fb16fa7283e44d721447f8eba6a75783d",
+    "FitMatchTests/FitMatchFinalReleaseScenarioExecutionTests.swift": "ab410215df4afbae2530474f2d599406c6ecf705449351efb7515a33f767688e",
+    "FitMatchTests/FitMatchUserSizeRecoveryContractTests.swift": "9ae57af0beedefc56fed9083471261d8e82742ff348a88f67f59bc222c52fb5f",
+    "FitMatchTests/FitMatchUserSizeRecoveryTests.swift": "02fcdd39980122d26f631400374b0b949a6c4039f8a862eb5458ee16aa610465",
+    "Shared/FitMatchSharedURLHandoff.swift": "ab4dd35dc2b7cf970fbc53a0d52f68c23bc613b60e8716a81a5335f15a898d88",
+    "scripts/test-share-cancellation.sh": "d690324eaac6bbe26ea41c76dd8968346972ce41e80a3452f23576fb6b34fc9a",
+    "scripts/tests/share-cancellation/ShareCancellationTests.swift": "eb9d251f45a9c01ef286c9473a05c949dfda1bee72fc024e94693671f7f6a51c",
+    "supabase/sql/bugfix1012_user_size_recovery_Apply.sql": "139cdcdf52ae2e640c35ecb380ae5633f0b91183bccc28146067e4b9c6f8d85f",
+    "supabase/sql/bugfix1012_user_size_recovery_Rollback.sql": "bfadf5dec0b9f55acc7fb79d1914569e8cd5b48246ecf4fed8bc54019d508d9f",
+    "supabase/sql/bugfix1012_user_size_recovery_Verify.sql": "b2c23edd790046396b319f258b72624bed898dc838bd19787fa42ea7c532ace9",
+    "supabase/sql/tests/bugfix1012_user_size_recovery.mjs": "5b5da0531dfea8ff7ece847d34fda302831a3eb3813dec28361c24ebbab13249",
+    "supabase/sql/tests/bugfix1012_user_size_recovery_baseline.sql": "484491270812c97a3e00a428d2fd497876eb1eff12b665ffb1e3591de61aed98",
+    "supabase/sql/tests/bugfix1012_user_size_recovery_tables.sql": "2a448dc8d8e5f65263a46d4028fd5aafdbccdebcecd3908b759bbecbe62acfcf"
+  },
+  "logs": {
+    "focused": "/private/tmp/bf1012/reviewed.log",
+    "focused_xcresult": "/private/tmp/bf1012/Reviewed.xcresult",
+    "share": "/private/tmp/fitmatch-share-cancel-final.log",
+    "share_xcresult": "/tmp/fitmatch-share-cancellation.RNUppj/result.xcresult",
+    "red_closet": "/private/tmp/bf1012/closet-red-suite.log",
+    "initial_fixture_failures": "/private/tmp/bf1012/focused-green.log"
+  }
+}

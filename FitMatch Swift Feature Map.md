@@ -436,6 +436,8 @@ User-facing size-table recovery UI.
 
 Recovery-domain support.
 
+Comparison completion awaits `ShoppingProductViewModel.completeSizeRecovery` and the independent server receipt/runtime validation in `FitMatchServerAuthorityCoordinator`. DTO: `FitMatch/Services/FitMatchUserSizeRecovery.swift`. Local Closet-registration selection uses the separate `completeForClosetRegistration` action and does not prove server persistence of a recovery.
+
 Recovery must preserve the distinction between:
 
 • retailer facts

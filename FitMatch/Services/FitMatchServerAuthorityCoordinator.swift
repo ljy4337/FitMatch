@@ -26,6 +26,9 @@ nonisolated enum FitMatchFailureCopy {
 }
 
 protocol FitMatchServerAuthorityRemoteServicing: Sendable {
+    func saveUserSizeRecovery(_ request: FitMatchUserSizeRecoveryRequest) async throws
+        -> FitMatchUserSizeRecoveryReceipt
+    func userSizeRecovery(requestID: UUID) async throws -> FitMatchUserSizeRecoveryReceipt
     func resolve(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductResolutionResponse
     func resolveWithRuntime(_ request: FitMatchProductResolutionRequest) async throws
@@ -76,6 +79,14 @@ protocol FitMatchServerAuthorityRemoteServicing: Sendable {
 extension FitMatchSupabaseDomainClient: FitMatchServerAuthorityRemoteServicing {}
 
 extension FitMatchServerAuthorityRemoteServicing {
+    func saveUserSizeRecovery(_ request: FitMatchUserSizeRecoveryRequest) async throws
+        -> FitMatchUserSizeRecoveryReceipt {
+        throw FitMatchUserSizeRecoveryError.unavailable
+    }
+
+    func userSizeRecovery(requestID: UUID) async throws -> FitMatchUserSizeRecoveryReceipt {
+        throw FitMatchUserSizeRecoveryError.unavailable
+    }
     func getClosetItem(closetItemID: UUID) async throws -> FitMatchClosetItemsResponse {
         let receipt = try await listClosetItems()
         return FitMatchClosetItemsResponse(
@@ -737,6 +748,54 @@ actor FitMatchServerAuthorityCoordinator {
             )
         }
         return result
+    }
+
+    /// Saving alone cannot complete recovery. Verify an independent receipt
+    /// read and fresh policy/runtime before publishing any new authority.
+    func recoverUserSize(
+        request: FitMatchUserSizeRecoveryRequest,
+        targetRequest: FitMatchProductResolutionRequest
+    ) async throws -> (receipt: FitMatchUserSizeRecoveryReceipt, authority: FitMatchServerProductAuthority) {
+        guard ["USER_OCR", "USER_MANUAL"].contains(request.inputSource),
+              !request.sizeLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !request.measurements.isEmpty,
+              Set(request.measurements.map(\.fitmatchMeasurementCode)).count == request.measurements.count,
+              request.measurements.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.unitCode == "cm" }) else {
+            throw FitMatchUserSizeRecoveryError.invalidMeasurements
+        }
+        let saved = try await remote.saveUserSizeRecovery(request)
+        try saved.validate(for: request)
+        try Task.checkCancellation()
+        let receipt = try await remote.userSizeRecovery(requestID: request.requestID)
+        try receipt.validate(for: request)
+        guard receipt == saved else { throw FitMatchUserSizeRecoveryError.invalidReceipt }
+        try Task.checkCancellation()
+        let runtime = try await remote.fetchProductRuntime(targetRequest)
+        try Task.checkCancellation()
+        let authority = try validatedAuthority(
+            runtime, request: targetRequest, expectedProductID: request.productID,
+            sourceObservationID: request.sourceObservationID
+        )
+        let variants = runtime.vnext?.variants.filter { $0.id == request.variantID } ?? []
+        guard variants.count == 1,
+              variants[0].sizes.filter({ $0.id == receipt.sizeID }).count == 1,
+              let size = variants[0].sizes.first(where: { $0.id == receipt.sizeID }),
+              size.recoveryRequestID == request.requestID,
+              size.ownerUserID == request.ownerID,
+              size.identityKind == receipt.identityKind,
+              size.canonicalMeasurements.semanticConflictCount == 0,
+              Set(size.canonicalMeasurements.measurements.map(\.measurementCode)).count
+                  == size.canonicalMeasurements.measurements.count,
+              request.measurements.allSatisfy({ row in
+                  size.canonicalMeasurements.measurements.contains {
+                      $0.measurementCode == row.fitmatchMeasurementCode
+                          && $0.value == row.value && $0.unitCode == row.unitCode
+                          && $0.resolutionPath == request.inputSource
+                          && (row.basisCode == nil || row.basisCode == $0.basisCode)
+                  }
+              }),
+              authority.comparisonReady else { throw FitMatchUserSizeRecoveryError.invalidReceipt }
+        return (receipt, authority)
     }
 
     func resolveProductAuthority(

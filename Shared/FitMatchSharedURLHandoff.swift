@@ -117,8 +117,17 @@ struct FitMatchSharedURLHandoffStore {
         _ url: URL,
         destination: FitMatchSharedURLHandoff.Destination = .compare
     ) -> Bool {
+        saveHandoff(url, destination: destination) != nil
+    }
+
+    /// Return the generation written inside the coordinated save, rather than
+    /// reading back a potentially newer share from another extension instance.
+    func saveHandoff(
+        _ url: URL,
+        destination: FitMatchSharedURLHandoff.Destination = .compare
+    ) -> Handoff? {
         guard FitMatchProductURLRouting.provider(for: url) != nil else {
-            return false
+            return nil
         }
 
         return (try? coordinateWrite { coordinatedURL in
@@ -130,6 +139,28 @@ struct FitMatchSharedURLHandoffStore {
             )
             let data = try FitMatchSharedURLHandoff.makeEncoder().encode(payload)
             try data.write(to: coordinatedURL, options: .atomic)
+            return Handoff(
+                urlString: payload.urlString,
+                token: payload.generation,
+                destination: payload.destination
+            )
+        }) ?? nil
+    }
+
+    /// Explicit Share Close owns only its exact URL and saved generation.
+    /// Unlike an app read, cancellation must not clean up a replacement share.
+    @discardableResult
+    func cancel(urlString: String, generation: String) -> Bool {
+        (try? coordinateWrite { coordinatedURL in
+            guard let data = try? Data(contentsOf: coordinatedURL),
+                  let payload = try? FitMatchSharedURLHandoff.makeDecoder().decode(
+                    FitMatchSharedURLHandoff.Payload.self, from: data
+                  ),
+                  payload.urlString == urlString,
+                  payload.generation == generation else {
+                return false
+            }
+            try removePayload(at: coordinatedURL)
             return true
         }) ?? false
     }

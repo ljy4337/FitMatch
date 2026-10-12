@@ -68,10 +68,8 @@ enum FitMatchHistoryPresentation {
 
             guard !normalizedQuery.isEmpty else { return true }
             let searchableValues = [
-                history.productBrandNameForDisplay,
-                history.productNameForDisplay,
-                history.product.sourceDisplayName,
-                history.product.productCode ?? ""
+                history.productBrandNameSnapshot ?? history.product.brand?.name ?? "",
+                history.productNameForDisplay
             ]
             return searchableValues.contains { value in
                 value.folding(
@@ -116,16 +114,12 @@ enum FitMatchGlobalSearchPresentation {
         return active.filter { item in
             item.brandName.lowercased().contains(normalized)
                 || item.productName.lowercased().contains(normalized)
-                || item.category.rawValue.lowercased().contains(normalized)
-                || item.detailCategory.rawValue.lowercased().contains(normalized)
-                || item.sizeName.lowercased().contains(normalized)
         }
     }
 
     static func historyResults(
         from histories: [RecommendationHistory],
         searchText: String,
-        favoriteURLs: Set<String>,
         limit: Int = 8
     ) -> [RecommendationHistory] {
         let normalized = normalizedQuery(searchText)
@@ -135,13 +129,8 @@ enum FitMatchGlobalSearchPresentation {
 
         return histories.filter { history in
             let product = history.product
-            let isFavorite = product.sourceURLString.map(favoriteURLs.contains) ?? false
-            return product.displayName.lowercased().contains(normalized)
+            return product.name.lowercased().contains(normalized)
                 || (product.brand?.name.lowercased().contains(normalized) ?? false)
-                || product.category.rawValue.lowercased().contains(normalized)
-                || history.productDetailCategory.rawValue.lowercased().contains(normalized)
-                || product.sourceDisplayName.lowercased().contains(normalized)
-                || (isFavorite && "관심상품".contains(normalized))
         }
     }
 

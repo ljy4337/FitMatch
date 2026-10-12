@@ -67,6 +67,8 @@ READ FIRST: `FitMatchShareExtension/ShareViewController.swift`, `FitMatch/Servic
 
 Read URL/plain text → App Group pending URL + destination (legacy default Compare) → active app reads SharedURLStore → Compare or linked Closet registration routing. The Share UI sets the destination against the exact URL/generation before opening its route. Closet entry passes that URL to the existing LinkClosetRegistrationView and begins its normal product load once; it does not create a separate parser or persistence path. Verify consumption/routing separately from physical Share Sheet handoff.
 
+Close cancels only this extension's saved URL/generation through `Shared/FitMatchSharedURLHandoff.swift`; cancelled extraction callbacks cannot save or open it again.
+
 ### FLOW-PRODUCT-LOAD — 상품 링크 불러오기
 
 READ FIRST: `FitMatch/Services/ProductURLParserService.swift`, `FitMatch/ViewModels/ShoppingProductViewModel.swift`, `FitMatch/Services/FitMatchServerAuthorityCoordinator.swift`, `FitMatch/Services/FitMatchSupabaseProductResolver.swift`.
@@ -76,6 +78,8 @@ Provider resolver → details/measurements → ParsedProductInfo → fitMatchPro
 Downstream: `supabase/functions/product-observation/index.ts`, `FitMatch/Services/FitMatchVNextDTOs.swift`, `FitMatch/Services/FitMatchVNextContractValidator.swift`. Replay payload owner: `FitMatch/Services/FitMatchProductAuthorityPayloadBuilder.swift`; preserve retailer variant identity across persistence/replay. Storage: products, product_variants, product_sizes, product_size_measurements, product_ingestion_receipts, size_availability_observations in fitmatch_vnext.
 
 Runtime optimization: `get_product_runtime_for_swift` calls private `get_product_runtime_base(..., false)` to skip the initial canonical/readiness fields it replaces. Final context canonical and effective readiness remain unchanged; legacy/base `get_product_runtime` requests full derived fields. No authority roundtrip removed.
+
+Size recovery for comparison: `SizeTableRecoveryFeature` → `ShoppingProductViewModel.completeSizeRecovery` → `FitMatchServerAuthorityCoordinator.recoverUserSize` → owner-scoped save/get recovery RPCs → fresh runtime validation → explicit Closet selection → existing begin/complete. `FitMatchUserSizeRecovery.swift` owns the receipt contract. Keep the frozen retailer observation unchanged; user transcriptions are separate immutable owner/request records, with explicit `USER_RECOVERY` size identity when no official size exists. SQL is prepared in `supabase/sql/bugfix1012_user_size_recovery_Apply.sql`; deployment status and evidence are in `Docs/ChangeHistory/bugfix1012.md`.
 
 ### FLOW-GROUP-AUTHORITY — Comparison Group 판정
 
@@ -175,6 +179,8 @@ The legacy list RPC returns active rows only; it is not authority to delete an a
 READ FIRST: `FitMatch/Views/GlobalSearchView.swift`, `FitMatch/Services/FavoriteProductStore.swift`.
 
 Search app content → display matching items → URL favorite state. Inspect concrete result sources in the view before assuming remote catalog search.
+
+`FitMatchHistoryPresentation.swift` owns Closet/History matching: trimmed, case-insensitive product/brand substrings only. Empty-query preview and result limits retain their existing behavior; favorite/category/retailer/size labels do not provide searchable fields.
 
 ### FLOW-MY-ACCOUNT — My·계정 관리
 

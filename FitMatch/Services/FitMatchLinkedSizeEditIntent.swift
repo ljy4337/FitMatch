@@ -117,6 +117,7 @@ enum FitMatchLinkedClosetEditSaveOutcome {
     case needsReferenceConfirmation
     case reconciliationRequired(String)
     case failed(String)
+    case retryableFailure
 }
 
 /// A user-confirmed size change for an already linked Closet row.  This is a

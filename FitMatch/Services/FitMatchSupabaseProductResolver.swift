@@ -2209,6 +2209,27 @@ actor FitMatchSupabaseDomainClient: FitMatchDatabaseDomainServicing {
             .value
     }
 
+    func saveUserSizeRecovery(_ request: FitMatchUserSizeRecoveryRequest) async throws
+        -> FitMatchUserSizeRecoveryReceipt {
+        struct Parameters: Encodable { let p_request: FitMatchUserSizeRecoveryRequest }
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_save_user_size_recovery") {
+            try await client.rpc(
+                "fitmatch_vnext_save_user_size_recovery", params: Parameters(p_request: request)
+            ).execute().value
+        }
+    }
+
+    func userSizeRecovery(requestID: UUID) async throws -> FitMatchUserSizeRecoveryReceipt {
+        struct Parameters: Encodable { let p_request_id: UUID }
+        let client = try await authenticatedClient()
+        return try await timedDatabaseCall("rpc.fitmatch_vnext_get_user_size_recovery") {
+            try await client.rpc(
+                "fitmatch_vnext_get_user_size_recovery", params: Parameters(p_request_id: requestID)
+            ).execute().value
+        }
+    }
+
     func fetchProductRuntime(_ request: FitMatchProductResolutionRequest) async throws
         -> FitMatchProductRuntimeResponse {
         try Self.mapRuntime(try await fetchVNextRuntime(request))
