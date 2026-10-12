@@ -1532,6 +1532,7 @@ nonisolated struct VNextComparisonCompletionPayload: Codable, Equatable, Sendabl
     let engineVersion: String
     let candidateSizeRanking: [VNextCandidateRankingDTO]
     let metricEvidence: [VNextMetricEvidenceDTO]
+    var rankingMeasurementCodes: [String]? = nil
 
     enum CodingKeys: String, CodingKey {
         case recommendedProductSizeID = "recommended_product_size_id"
@@ -1539,6 +1540,7 @@ nonisolated struct VNextComparisonCompletionPayload: Codable, Equatable, Sendabl
         case engineVersion = "engine_version"
         case candidateSizeRanking = "candidate_size_ranking"
         case metricEvidence = "metric_evidence"
+        case rankingMeasurementCodes = "ranking_measurement_codes"
     }
 }
 

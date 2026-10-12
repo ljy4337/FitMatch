@@ -258,6 +258,7 @@ struct RetailerComparisonMeasurementContractFact: Equatable, Sendable {
              .chestWidthPitToPit,
              .chestCircumferenceGarment,
              .chestWidthUniqloBodyWidth,
+             .bodyLengthFrontShoulderSeamToHem,
              .bodyLengthHPSToHemFront,
              .bodyLengthBackNeckToHem,
              .bodyLengthMusinsaType5,

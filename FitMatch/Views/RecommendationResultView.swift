@@ -79,6 +79,7 @@ struct RecommendationResultView: View {
     }
 
     #if DEBUG
+    var releaseSizeDecisionCard: some View { reportRecommendationCard }
     var releaseSelectedSizeID: UUID? { selectedAlternativeSizeID }
     var releaseDisplayedServerSizeID: UUID? { displayedServerProductSizeID }
     var releaseAnalysisCount: Int { temporaryAnalysisCache.count }
@@ -299,7 +300,7 @@ struct RecommendationResultView: View {
 
                     HStack(alignment: .top, spacing: 0) {
                         CenteredMetricColumn(
-                            title: temporarySizeAnalysis == nil ? "추천 사이즈" : "비교 사이즈",
+                            title: temporarySizeAnalysis == nil ? displayedSizeDecision.sizeTitle : "비교 사이즈",
                             value: temporarySizeAnalysis?.productSize.name.displaySizeName ?? recommendedSizeName
                         ) {
                             Button {
@@ -326,19 +327,19 @@ struct RecommendationResultView: View {
                         .frame(width: primaryMetricWidth, height: 132)
                         Divider().frame(width: dividerWidth, height: 132)
                         CenteredMetricColumn(
-                            title: "사이즈 유사도",
-                            value: "\(displayedRecommendationScore)%"
+                            title: "치수 유사도",
+                            value: displayedSizeDecision.scoreText
                         ) {
                             Text(fitMatchDescription)
                                 .font(.caption.weight(.bold))
-                                .foregroundStyle(fitMatchColor(for: displayedRecommendationScore))
+                                .foregroundStyle(displayedSizeDecision.overallScore.map(fitMatchColor(for:)) ?? .secondary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                                 .allowsTightening(true)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
                                 .background(
-                                    fitMatchColor(for: displayedRecommendationScore).opacity(0.1),
+                                    (displayedSizeDecision.overallScore.map(fitMatchColor(for:)) ?? .secondary).opacity(0.1),
                                     in: Capsule()
                                 )
                         }
@@ -346,14 +347,14 @@ struct RecommendationResultView: View {
                         Divider().frame(width: dividerWidth, height: 132)
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
-                                Text("신뢰도")
+                                Text("확인 범위")
                                     .font(.caption.weight(.bold))
                                     .foregroundStyle(.secondary)
                                 Button { isShowingReliabilityInfo = true } label: {
                                     Image(systemName: "info.circle")
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("신뢰도 산정 기준")
+                                .accessibilityLabel("치수 비교 기준")
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: 18)
@@ -400,6 +401,12 @@ struct RecommendationResultView: View {
                     }
                 }
                 .frame(height: 132)
+
+                Text(displayedSizeDecision.explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("sizeDecisionExplanation")
 
                 if let temporarySizeAnalysis {
                     Text("\(temporarySizeAnalysis.productSize.name.displaySizeName) 사이즈를 임시로 비교한 결과예요.")
@@ -448,7 +455,7 @@ struct RecommendationResultView: View {
                     VStack(spacing: 4) {
                         HStack(spacing: 6) {
                             Image(systemName: "ruler")
-                            Text(displayedComparisonBasisTitle)
+                            Text("내 옷과의 차이")
                             if displayedVerifiedConversionCount > 0 {
                                 Text("환산 \(displayedVerifiedConversionCount)개")
                                     .font(.caption2.weight(.bold))
@@ -474,7 +481,7 @@ struct RecommendationResultView: View {
                             )
                         }
                         if measurements.contains(where: \.isSupplemental) {
-                            Text("같은 쇼핑몰의 동일한 측정 기준 항목은 참고값으로 함께 표시하며, 추천 점수에는 반영하지 않습니다.")
+                            Text("추가로 확인한 치수는 참고값이며, 사이즈 순위와 점수에는 포함하지 않아요.")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -484,7 +491,8 @@ struct RecommendationResultView: View {
 
                 if !measurementExclusions.isEmpty {
                     Divider().padding(.vertical, 3)
-                    VStack(alignment: .leading, spacing: 8) {
+                    DisclosureGroup("비교 기준 자세히") {
+                        VStack(alignment: .leading, spacing: 8) {
                         ForEach(measurementExclusions, id: \.kind) { exclusion in
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack(spacing: 6) {
@@ -507,6 +515,7 @@ struct RecommendationResultView: View {
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
+                        }
                         }
                     }
                 }
@@ -580,16 +589,16 @@ struct RecommendationResultView: View {
     private var reliabilityInfoSheet: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
-                Text("사이즈 유사도는 선택한 상품 사이즈와 선택한 내 옷의 실측이 얼마나 비슷한지 나타냅니다.")
-                Text("신뢰도는 이번 비교에 실제로 사용한 서버 승인 실측 항목 수를 보여줍니다. 사이즈 유사도 점수와는 별개예요.")
+                Text("치수 유사도는 내 옷과 실측이 가까운 정도를 나타내는 점수예요. 몸에 잘 맞을 확률은 아니에요.")
+                Text("상의는 품과 길이, 하의는 허리·엉덩이·길이를 확인해야 전체 점수를 표시해요. 소재와 착용감은 이 점수에 포함되지 않아요.")
                     .foregroundStyle(.secondary)
                 Divider()
-                InfoRow(title: "현재 신뢰도", value: comparisonReliability.displayValue)
+                InfoRow(title: "확인한 실측", value: comparisonReliability.displayValue)
                 Spacer()
             }
             .font(.subheadline)
             .padding(20)
-            .navigationTitle("신뢰도 산정 기준")
+            .navigationTitle("치수 비교 기준")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -780,15 +789,7 @@ struct RecommendationResultView: View {
     }
 
     private func fitMatchDescription(for score: Int) -> String {
-        switch score {
-        case 90...: return "거의 완벽한 핏"
-        case 80..<90: return "매우 잘 맞는 편"
-        case 70..<80: return "잘 맞는 편"
-        case 60..<70: return "약간의 차이가 있어요"
-        case 50..<60: return "핏 차이를 확인해 보세요"
-        case 40..<50: return "핏 차이가 큰 편이에요"
-        default: return "추천하기 어려워요"
-        }
+        SizeComparisonDecision.distanceDescription(score)
     }
 
     private func fitMatchColor(for score: Int) -> Color {
@@ -860,6 +861,16 @@ struct RecommendationResultView: View {
         return difference > 0 ? "많이 커요" : "많이 작아요"
     }
 
+    private var displayedSizeDecision: SizeComparisonDecision {
+        SizeComparisonDecision.make(
+            group: currentResult.userFit.comparisonGroup,
+            score: displayedRecommendationScore,
+            status: temporarySizeAnalysis?.comparisonResult.status ?? currentResult.comparisonStatus,
+            measurements: displayedCalculationSnapshot?.usedMeasurements ?? [],
+            additionalMeasurements: displayedCalculationSnapshot?.additionalMeasurements ?? []
+        )
+    }
+
     private var displayedRecommendationScore: Int {
         temporarySizeAnalysis?.recommendationScore ?? currentResult.recommendationScore
     }
@@ -929,7 +940,17 @@ struct RecommendationResultView: View {
                 isSupplemental: false
             )
         }
-        result.append(contentsOf: supplementalMeasurementItems.map { item in
+        let usedKinds = Set(result.map(\.kind))
+        result.append(contentsOf: (displayedCalculationSnapshot?.additionalMeasurements ?? [])
+            .filter { !usedKinds.contains($0.kind) }.map { item in
+                ReportMeasurementPresentation(
+                    kind: item.kind, title: item.displayTitle ?? item.kind.title,
+                    productValue: item.productValue, referenceValue: item.referenceValue,
+                    difference: item.signedDifference, inputMode: .canonicalExact, isSupplemental: true
+                )
+            })
+        let displayedKinds = Set(result.map(\.kind))
+        result.append(contentsOf: supplementalMeasurementItems.filter { !displayedKinds.contains($0.kind) }.map { item in
             ReportMeasurementPresentation(
                 kind: item.kind,
                 title: item.displayTitle ?? item.kind.title,
@@ -1012,9 +1033,9 @@ struct RecommendationResultView: View {
         analysis: TemporarySizeAnalysis?
     ) -> Int? {
         if size.id == currentResult.recommendedSize.id {
-            return currentResult.recommendationScore
+            return currentResult.sizeComparisonDecision.overallScore
         }
-        return analysis?.recommendationScore
+        return SizeComparisonDecision.make(group: currentResult.userFit.comparisonGroup, result: analysis?.comparisonResult).overallScore
     }
 
     private func cachedAnalysis(for size: ProductSize) -> TemporarySizeAnalysis? {
@@ -1250,9 +1271,9 @@ struct RecommendationResultView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("비교 정보 \(presentation.coveragePercent)%")
+                Text("확인한 실측 \(snapshot.usedMeasurements.count)개")
                     .font(.headline.weight(.bold))
-                Text("추천 판단에 필요한 치수 중 실제로 비교한 정보의 비율이에요.")
+                Text(displayedSizeDecision.explanation)
                     .foregroundStyle(.secondary)
             }
 
@@ -1415,9 +1436,7 @@ struct RecommendationResultView: View {
     }
 
     private var confidenceText: String {
-        comparedMeasurementKinds.isEmpty
-            ? "사이즈 유사도 계산 불가"
-            : "사이즈 유사도 \(displayedRecommendationScore)%"
+        "치수 유사도 \(displayedSizeDecision.scoreText)"
     }
 
     private var isFavorite: Bool {
@@ -1426,7 +1445,7 @@ struct RecommendationResultView: View {
     }
 
     private var heroSummary: String {
-        strongestMeasurementReasons.first ?? "내 옷장 기준으로 가장 가까운 사이즈예요."
+        displayedSizeDecision.explanation
     }
 
     private var recommendedSizeName: String {
@@ -1519,7 +1538,7 @@ struct RecommendationResultView: View {
     }
 
     private var fitMatchDescription: String {
-        fitMatchDescription(for: displayedRecommendationScore)
+        displayedSizeDecision.badge
     }
 
     private var comparisonReliability: ComparisonReliability {
@@ -1680,9 +1699,7 @@ struct RecommendationResultView: View {
     }
 
     private var legacyConfidenceText: String {
-        displayedRecommendationScore > 0
-            ? "사이즈 유사도 \(displayedRecommendationScore)%"
-            : "사이즈 유사도 정보 부족"
+        "치수 유사도 \(displayedSizeDecision.scoreText)"
     }
 
     private var recommendationReasons: [String] {
@@ -1997,18 +2014,20 @@ private struct AlternativeSizeResultCard: View {
                             Text(sizeName)
                                 .font(.title2.weight(.black))
                             if isRecommended {
-                                Text("추천")
+                                Text(score == nil ? "참고" : "가까운 사이즈")
                                     .font(.caption2.weight(.bold))
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(score == nil ? Color.secondary : Color.green)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 3)
-                                    .background(.green.opacity(0.12), in: Capsule())
+                                    .background((score == nil ? Color.secondary : Color.green).opacity(0.12), in: Capsule())
                             }
                         }
                         if let score {
-                            Text("\(score)%")
+                            Text("\(score)점")
                                 .font(.title3.weight(.black))
                                 .monospacedDigit()
+                        } else {
+                            Text("부분 비교").font(.subheadline.weight(.bold))
                         }
                         if let fitDescription, let fitColor {
                             Text(fitDescription)
@@ -2060,13 +2079,13 @@ private struct AlternativeSizeResultCard: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                isRecommended ? Color.green.opacity(0.08) : Color(.secondarySystemGroupedBackground),
+                (isRecommended && score != nil) ? Color.green.opacity(0.08) : Color(.secondarySystemGroupedBackground),
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(
-                        isSelected ? Color.primary : (isRecommended ? Color.green : Color.secondary.opacity(0.18)),
+                        isSelected ? Color.primary : ((isRecommended && score != nil) ? Color.green : Color.secondary.opacity(0.18)),
                         lineWidth: isSelected ? 2 : 1
                     )
             }
@@ -2079,9 +2098,9 @@ private struct AlternativeSizeResultCard: View {
 
     private var accessibilityText: String {
         var parts = ["\(sizeName) 사이즈"]
-        if isRecommended { parts.append("핏매치 추천 사이즈") }
+        if isRecommended { parts.append(score == nil ? "참고 사이즈" : "가까운 사이즈") }
         if isSelected { parts.append("선택됨") }
-        if let score { parts.append("사이즈 유사도 \(score)퍼센트") }
+        if let score { parts.append("치수 유사도 \(score)점") }
         if let fitDescription { parts.append(fitDescription) }
         parts.append(contentsOf: measurements.map { "\($0.title), \($0.message)" })
         return parts.joined(separator: ", ")
@@ -2752,7 +2771,7 @@ private struct FitMatchRankRow: View {
                     .lineLimit(2)
 
                 HStack(spacing: 6) {
-                    Text("추천 \(recommendedSizeName)")
+                    Text("참고 \(recommendedSizeName)")
                         .font(.caption2.weight(.bold))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 4)
@@ -2771,7 +2790,7 @@ private struct FitMatchRankRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("\(candidate.matchRate)%")
+            Text("실측 \(candidate.compatibleMeasurementCount)개")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.primary)
                 .monospacedDigit()

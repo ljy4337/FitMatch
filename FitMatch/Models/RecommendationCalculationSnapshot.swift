@@ -44,6 +44,8 @@ struct RecommendationCalculationSnapshot: Codable, Equatable {
     /// Present only for a completed vNext comparison after the server has
     /// accepted the engine payload. Legacy snapshots intentionally omit it.
     let serverApprovedReliability: Int?
+    /// Optional for backward decoding of immutable v1/v2 local snapshots.
+    var additionalMeasurements: [UsedMeasurementCalculationSnapshot]? = nil
 
     var usages: [MeasurementComparisonUsage] {
         usedMeasurements.map {
@@ -76,7 +78,15 @@ struct RecommendationCalculationSnapshot: Codable, Equatable {
             },
             excludedMeasurements: comparison.exclusions,
             comparisonCoverage: comparison.comparisonCoverage,
-            serverApprovedReliability: serverApprovedReliability
+            serverApprovedReliability: serverApprovedReliability,
+            additionalMeasurements: comparison.additionalItems.isEmpty ? nil : comparison.additionalItems.map {
+                UsedMeasurementCalculationSnapshot(
+                    kind: $0.kind, measurementCode: $0.measurementCode, displayTitle: $0.displayTitle,
+                    productValue: $0.productValue, referenceValue: $0.referenceValue,
+                    signedDifference: $0.signedDifference, absoluteDifference: $0.absoluteDifference,
+                    itemScore: $0.score, effectiveWeight: $0.weight
+                )
+            }
         )
     }
 }

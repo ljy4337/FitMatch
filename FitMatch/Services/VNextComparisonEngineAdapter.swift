@@ -10,6 +10,9 @@ enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
     case excludedMetricUsed(String)
     case invalidEvidence(UUID)
     case policySnapshotInvalid
+    case noCommonRankingEvidence
+    case inconsistentRankingEvidence
+    case unsupportedEngineVersion
 
     var errorDescription: String? {
         switch self {
@@ -29,6 +32,12 @@ enum VNextComparisonEngineAdapterError: LocalizedError, Equatable {
             return "서버 실측 스냅샷을 검증할 수 없습니다."
         case .policySnapshotInvalid:
             return "서버 비교 정책 스냅샷이 올바르지 않습니다."
+        case .noCommonRankingEvidence:
+            return "모든 사이즈에서 함께 확인할 수 있는 치수가 없어 순위를 정할 수 없어요."
+        case .inconsistentRankingEvidence:
+            return "사이즈별 비교 기준이 달라 순위를 정할 수 없어요."
+        case .unsupportedEngineVersion:
+            return "이 비교 기록의 계산 버전을 지원하지 않습니다."
         }
     }
 }
@@ -71,7 +80,10 @@ struct VNextComparisonEngineAdapter {
         self.scoreCache = scoreCache
     }
 
-    func analyze(_ begin: VNextBeginComparisonDTO) throws -> VNextComparisonBatchAnalysis {
+    func analyze(_ begin: VNextBeginComparisonDTO, engineVersion: String = Self.engineVersion) throws -> VNextComparisonBatchAnalysis {
+        guard VNextCompletedReplayPolicy.supportedVersions.contains(engineVersion) else {
+            throw VNextComparisonEngineAdapterError.unsupportedEngineVersion
+        }
         // Decoder callers are not the only callers: a test seam or a future
         // in-memory recovery path can construct this DTO directly. Validate
         // the immutable replay contract here before any engine calculation.
@@ -117,6 +129,8 @@ struct VNextComparisonEngineAdapter {
             throw VNextComparisonEngineAdapterError.policySnapshotInvalid
         }
 
+        let rankingCodes = engineVersion == VNextCompletedReplayPolicy.currentVersion
+            ? try VNextRankingEvidence.commonCodes(begin.snapshot.target.candidates) : nil
         var unranked: [(candidate: VNextAuthorizedCandidateDTO, result: MeasurementComparisonResult)] = []
         for candidate in begin.snapshot.target.candidates {
             guard candidate.authorization.allowed else {
@@ -129,7 +143,7 @@ struct VNextComparisonEngineAdapter {
                 .first(where: excluded.contains) {
                 throw VNextComparisonEngineAdapterError.excludedMetricUsed(excludedCode)
             }
-            guard let result = scoreCache.compare(
+            guard let fullResult = scoreCache.compare(
                 candidate.comparisonMeasurements,
                 minimum: candidate.authorization.minimumCommon
                     ?? begin.snapshot.authorization.minimumCommon
@@ -138,6 +152,20 @@ struct VNextComparisonEngineAdapter {
                 throw VNextComparisonEngineAdapterError.invalidEvidence(
                     candidate.productSizeID
                 )
+            }
+            let result: MeasurementComparisonResult
+            if let rankingCodes {
+                guard var commonResult = VNextRankingEvidence.compare(
+                    candidate.comparisonMeasurements.filter { rankingCodes.contains($0.measurementCode) },
+                    cache: scoreCache
+                ) else { throw VNextComparisonEngineAdapterError.invalidEvidence(candidate.productSizeID) }
+                let additionalEvidence = candidate.comparisonMeasurements.filter { !rankingCodes.contains($0.measurementCode) }
+                if !additionalEvidence.isEmpty {
+                    commonResult.additionalItems = scoreCache.compare(additionalEvidence, minimum: 1)?.comparedItems ?? []
+                }
+                result = commonResult
+            } else {
+                result = fullResult
             }
             unranked.append((
                 candidate,
@@ -189,7 +217,7 @@ struct VNextComparisonEngineAdapter {
                 )
             }
         }
-        let recommendedEvidenceCount = begin.snapshot.target.candidates
+        let recommendedEvidenceCount = rankingCodes?.count ?? begin.snapshot.target.candidates
             .first(where: { $0.productSizeID == recommended.productSizeID })?
             .comparisonMeasurements.count ?? 0
         let coverage = (Double(recommendedEvidenceCount) / Double(activePolicyMetricCount))
@@ -200,7 +228,7 @@ struct VNextComparisonEngineAdapter {
             score: Double(recommended.result.score),
             reliability: reliability,
             coverage: coverage,
-            engineVersion: Self.engineVersion,
+            engineVersion: engineVersion,
             candidateSizeRanking: analyses.map {
                 VNextCandidateRankingDTO(
                     productSizeID: $0.productSizeID,
@@ -208,7 +236,8 @@ struct VNextComparisonEngineAdapter {
                     score: Double($0.result.score)
                 )
             },
-            metricEvidence: evidence
+            metricEvidence: evidence,
+            rankingMeasurementCodes: rankingCodes?.sorted()
         )
         return VNextComparisonBatchAnalysis(
             comparisonID: begin.comparisonID,
@@ -309,7 +338,8 @@ struct VNextComparisonEngineAdapter {
             minimumRequiredKindCount: result.minimumRequiredKindCount,
             requiredAllKinds: result.requiredAllKinds,
             expectedWeightSum: result.expectedWeightSum,
-            usedWeightSum: result.usedWeightSum
+            usedWeightSum: result.usedWeightSum,
+            additionalItems: result.additionalItems
         )
     }
 }

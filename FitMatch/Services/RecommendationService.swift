@@ -52,7 +52,7 @@ struct FitMatchClosetComparisonSummary: Identifiable, Equatable {
         self.rank = rank
         switch comparisonResult?.status {
         case .confirmed:
-            self.similarityPercent = comparisonResult?.score
+            self.similarityPercent = SizeComparisonDecision.make(group: comparisonGroup, result: comparisonResult).overallScore
             self.evidenceState = .comparable
         case .insufficientEvidence:
             self.similarityPercent = nil
@@ -144,15 +144,19 @@ struct RecommendationService {
                !preview.authorizedCandidateProductSizeIDs.isEmpty,
                Set(preview.authorizedCandidateProductSizeIDs)
                     == Set(preview.candidates.map(\.productSizeID)),
-               Set(preview.candidates.map(\.productSizeID)).count == preview.candidates.count {
+               Set(preview.candidates.map(\.productSizeID)).count == preview.candidates.count,
+               let rankingCodes = try? VNextRankingEvidence.commonCodes(preview.candidates) {
                 for candidate in preview.candidates {
                     guard candidate.authorization.allowed,
                           let minimum = candidate.authorization.minimumCommon,
                           minimum > 0,
                           Set(candidate.authorization.excludedMeasurementCodes)
                             .isDisjoint(with: candidate.comparisonMeasurements.map(\.measurementCode)),
-                          let result = authorizedScoreCache.compare(
+                          authorizedScoreCache.compare(
                             candidate.comparisonMeasurements, minimum: minimum
+                          ) != nil,
+                          let result = VNextRankingEvidence.compare(
+                            candidate.comparisonMeasurements.filter { rankingCodes.contains($0.measurementCode) }, cache: authorizedScoreCache
                           ) else {
                         ranked.removeAll()
                         break

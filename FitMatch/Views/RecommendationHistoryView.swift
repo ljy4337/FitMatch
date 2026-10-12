@@ -627,7 +627,7 @@ private struct HistoryCard: View {
 
                 HStack(alignment: .top, spacing: 0) {
                     RecommendationMetricColumn(
-                        title: "추천 사이즈",
+                        title: history.sizeComparisonDecision.sizeTitle,
                         value: history.recommendedSize.name.displaySizeName,
                         detail: nil,
                         isPrimary: true,
@@ -637,8 +637,8 @@ private struct HistoryCard: View {
                         .frame(width: primaryMetricWidth)
                     Divider().frame(width: dividerWidth, height: 88)
                     RecommendationMetricColumn(
-                        title: "사이즈 유사도",
-                        value: "\(history.recommendationScore)%",
+                        title: "치수 유사도",
+                        value: history.sizeComparisonDecision.scoreText,
                         detail: fitMatchBadge,
                         isPrimary: true,
                         style: .historyCompact
@@ -676,14 +676,14 @@ private struct HistoryCard: View {
             title: title,
             value: value,
             detail: badge ?? " ",
-            isPrimary: title == "추천 사이즈",
+            isPrimary: title == history.sizeComparisonDecision.sizeTitle,
             style: .historyCompact
         )
     }
 
     private func reliabilityMetric(comparedKinds: [MeasurementKind]) -> some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("신뢰도")
+            Text("확인 범위")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.secondary)
             Text("사용한 실측 \(comparedKinds.count)개")
@@ -725,8 +725,8 @@ private struct HistoryCard: View {
                 }
             }
             HStack {
-                historyMetric(title: "추천 사이즈", value: history.recommendedSize.name.displaySizeName)
-                historyMetric(title: "사이즈 유사도", value: "\(history.recommendationScore)%")
+                historyMetric(title: history.sizeComparisonDecision.sizeTitle, value: history.recommendedSize.name.displaySizeName)
+                historyMetric(title: "치수 유사도", value: history.sizeComparisonDecision.scoreText)
             }
             .padding(14)
             .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -754,15 +754,7 @@ private struct HistoryCard: View {
     }
 
     private var fitMatchBadge: String {
-        switch history.recommendationScore {
-        case 90...: return "거의 완벽한 핏"
-        case 80..<90: return "매우 잘 맞는 편"
-        case 70..<80: return "잘 맞는 편"
-        case 60..<70: return "약간의 차이가 있어요"
-        case 50..<60: return "핏 차이를 확인해 보세요"
-        case 40..<50: return "핏 차이가 큰 편이에요"
-        default: return "추천하기 어려워요"
-        }
+        history.sizeComparisonDecision.badge
     }
 
     private var relativeDateText: String {
@@ -922,9 +914,9 @@ private struct HistoryGridCard: View {
                 .overlay(.secondary.opacity(0.12))
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                gridResult(title: "추천", value: history.recommendedSize.name.displaySizeName)
+                gridResult(title: history.sizeComparisonDecision.sizeTitle, value: history.recommendedSize.name.displaySizeName)
                 Spacer(minLength: 4)
-                gridResult(title: "사이즈 유사도", value: "\(history.recommendationScore)%")
+                gridResult(title: "치수 유사도", value: history.sizeComparisonDecision.scoreText)
             }
         }
     }
@@ -972,7 +964,7 @@ private struct HistoryGridCard: View {
             Text(history.productNameForDisplay)
                 .font(.subheadline.weight(.bold))
                 .lineLimit(2)
-            Text("추천 \(history.recommendedSize.name.displaySizeName) · 사이즈 유사도 \(history.recommendationScore)%")
+            Text("\(history.sizeComparisonDecision.sizeTitle) \(history.recommendedSize.name.displaySizeName) · \(history.sizeComparisonDecision.scoreText)")
                 .font(.caption.weight(.bold))
         }
     }

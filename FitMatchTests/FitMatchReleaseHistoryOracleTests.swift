@@ -71,6 +71,8 @@ struct FitMatchReleaseHistoryOracleTests {
         #expect(history.userFit.chest == 50)
         #expect(history.recommendedSize.chest == 52)
         #expect(history.recommendationScore == 90)
+        #expect(history.sizeComparisonDecision.overallScore == nil)
+        #expect(history.sizeComparisonDecision.scoreText == "부분 비교")
         #expect(history.chestDifference == 2)
         #expect(history.totalDifference == 2)
         #expect(history.serverApprovedVNextReliability == 1)
