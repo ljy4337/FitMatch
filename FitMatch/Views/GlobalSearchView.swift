@@ -71,7 +71,7 @@ struct GlobalSearchView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("검색")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "상품명 또는 브랜드명을 입력해 주세요.")
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "상품명 또는 브랜드명을 입력해 주세요")
         .onAppear {
             favoriteURLs = FavoriteProductStore().favoriteURLs()
         }
