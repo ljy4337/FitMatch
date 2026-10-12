@@ -1,0 +1,113 @@
+{
+  "dateAsiaSeoul": "2026-10-12",
+  "historyID": "BF1012-07",
+  "uiCommit": "0a5801927981a694725de66a783c5a101faf97c8",
+  "testedQASourceCommit": "e9ddb2a503fcee4e74a3fdefd2c99242ae1435e8",
+  "algorithmCommit": "89e601424245cd8be4cb6240c5aff8551c6cbe7f",
+  "qaSummary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+          "deviceName": "FitMatch-Regression-20260721",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 12,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791816038.211,
+    "passedTests": 12,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791815944.718,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [],
+    "totalTestCount": 12
+  },
+  "algorithmSummary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+          "deviceName": "FitMatch-Regression-20260721",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 63,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791816229.357,
+    "passedTests": 48,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791816133.053,
+    "statistics": [
+      {
+        "subtitle": "17 test runs",
+        "title": "2 tests ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "76% of duration",
+        "text": "1 longest test run with outlier durations exceeding 1.36s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 48
+  },
+  "isolatedSQL": {
+    "developmentDefinitionFixture": {
+      "status": "PASS",
+      "scenarios": 31,
+      "log": "Verified 31 SQL scenarios: v3 scores/ranks, missing-data fairness, spoof rejection, ownership, old clients, idempotency, ACLs and exact rollback.\n"
+    },
+    "productionDefinitionFixture": {
+      "status": "PASS",
+      "scenarios": 31,
+      "log": "Verified 31 SQL scenarios: v3 scores/ranks, missing-data fairness, spoof rejection, ownership, old clients, idempotency, ACLs and exact rollback.\n"
+    },
+    "liveApplied": false,
+    "authAndDigest": "local test stand-ins"
+  },
+  "remaining": {
+    "liveV3DevelopmentDB": "NOT RUN; requires separate approval",
+    "authenticatedComparisonHistory": "NOT RUN",
+    "physicalDevice": "NOT RUN",
+    "algorithmIntegrationIntoQA": "NOT RUN",
+    "productionAndMain": "NOT RUN"
+  },
+  "localCheckout": "exact algorithm commit, detached HEAD, clean; existing named feature worktree preserved",
+  "businessLogicModifiedThisTurn": false
+}

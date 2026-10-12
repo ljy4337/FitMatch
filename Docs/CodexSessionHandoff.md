@@ -1,3 +1,13 @@
+## 2026-10-12 BF1012-07 — 버튼 UI QA 반영 / 89e6014 독립 재검증
+
+- 사용자 승인 “버튼 깨짐까지 QA 반영” 실행. bugfix1012 UI 커밋 `0a58019`, QA 정상 merge `e9ddb2a` 및 두 브랜치 원격 push 완료. QR `5606119`/`1580aa3`와 기존 BF1012-01~06 포함 확인. main/운영/DB/배포 변경0. 아래 BF1012-07의 QA NOT RUN은 당시 상태이며 이번 기록으로 대체한다.
+- **PASS** QA 통합 소스 FitMatch-QA/Debug-QA/iPhone17 Regression(iOS26.3.1) 새 build/test12: 버튼UI3+실제 mounted 선택 owner1+QR8, 0fail/0skip. `/private/tmp/bf1012/ButtonLayoutQAMerged.xcresult`, summary 독립 확인. QR 고정 입력/생성 이미지·scripted remote 검사이며 실기기/인증DB E2E 증거 아님. diff-check/보호 스크롤 PASS. 신규 비즈니스 로직 수정0.
+- 사용자 로컬 전환 요청에 따라 기본 폴더는 정확히 `89e6014` detached HEAD/clean. 기존 feature/size-decision-20261012는 별도 worktree에서 동일 commit/clean 유지; 새 브랜치·삭제·이력 재작성0. QA 반영분과 bugfix1012 원격 보존.
+- **PASS** 89e6014 동일 clean source의 기존 전용 worktree에서 계산/공통근거·계약/핵심부위/기록 복원·디스크 재열기/실제 SwiftUI 카드 focused48 새 실행, 0fail/0skip. `/private/tmp/bf1012/SizeDecision89e6014Recheck.xcresult`의 summary 독립 확인. 과거 48 수치 재사용 아님. 계산/기록은 synthetic authorized snapshot·scripted remote, 실사용 정확도나 인증 DB E2E PASS 아님.
+- **PASS** 89e6014 SQL은 기존 개발/운영 completion 정의 fixture 각각 독립 PGlite에서31개씩 재실행(exit0). `size-decision-recheck-dev.log`, `size-decision-recheck-prod.log`. 테스트 로컬 auth/digest 대역 사용, 실제 환경에 SQL 적용0.
+- 검증 실패0으로 후보를 폐기하지 않았다. **NOT RUN** v3 실제 개발 DB 적용/정상 인증 비교·History, QR/버튼 실기기, 알고리즘과 QR/BF1012 조합 통합, 운영/main 승격·배포. 구버전 앱의 v3 History 전방 호환 불가와 부분 비교의 참고 사이즈 표시는 현재 구현의 알려진 경계다. 해당 후보의 QA merge·DB 적용·정책 변경은 이번 지시에 포함하지 않았다.
+- 증거: `Docs/ChangeHistory/bugfix1012-qa-ui-and-size-decision-recheck.json`; 중앙 이력 BF1012-07 후속. 추가 v3 개발 DB 적용은 별도 승인 후 수행한다.
+
 ## 2026-10-12 BF1012-07 — 긴 상품명과 버튼 레이아웃 (UI 후속)
 
 - 사용자 첨부 IMG_2589.PNG의 “비교할 내 옷 변경” 버튼 깨짐과 앱 내부 버튼의 긴 텍스트 대응을 UI 범위로 명시 승인. 기존 clean bugfix1012=`68a716a`에서 작업, 브랜치 변경0.

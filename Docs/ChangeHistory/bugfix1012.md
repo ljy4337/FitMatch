@@ -306,3 +306,13 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - 캡처 검증: drawHierarchy 이미지가 검게 나와 시각 확인 근거에서 제외. ImageRenderer로 같은 실제 UI 컴포넌트를 렌더링해 재실행: `ButtonLayoutRender.xcresult` UI3 PASS/0FAIL/0SKIP, xcodebuild exit0. 실제 결과 카드의 320/375/430pt 긴 이름 이미지 직접 확인 PASS(버튼 한 줄, 상품 텍스트 말줄임). `/private/tmp/bf1012/button-layout/BF1012-button-{320,375,430}-long.png`. 합성 입력/표시용 카드이며 실제 서버·전체 화면·실기기 증거 아님. 공통 버튼 이미지의 Secondary 렌더는 배경/글자 식별이 불명확해 시각 PASS 근거로 쓰지 않음; 공통 액션의 한 줄·폭 자동 검사는 PASS.
 - **PASS** `git diff --check`, 보호 스크롤 diff0 및 검사, 최종 UI diff에서 기존 action/상태/조건/서버 코드 보존 확인. 재현/검증 증거와 소스 hash: `Docs/ChangeHistory/bugfix1012-button-layout-verification.json`.
 - **NOT RUN** 실기기 UI 확인, 앱 전체 화면의 직접 조작, 이번 UI 변경의 QA merge/push/배포. 정상 인증 DB E2E의 기존 미검증 상태는 이번 UI 검사로 대체하지 않는다. 추가 DB 승인·SQL 적용 필요 없음.
+
+
+### BF1012-07 후속 — QA 반영 및 별도 알고리즘 후보 재검증
+
+- 브랜치 `bugfix1012`, 작업일 `2026-10-12`(Asia/Seoul). 사용자 버튼 UI QA 반영 및 89e6014 전환·검증 승인에 따라 실행.
+- 실제 UI 변경 파일은 BF1012-07 목록과 동일. UI commit `0a58019` → QA merge `e9ddb2a`, 원격 QA/bugfix1012 push 완료. QR 두 commit과 기존 수정 모두 ancestry 확인. source 충돌0, main/DB/운영 변경0.
+- **PASS** 병합한 QA 소스로 새 build/test12(버튼3+mounted 선택1+QR8), 실패/skip0; diff-check/보호 스크롤 확인. 과거 검사 수치를 이번 결과로 사용하지 않음. 해당 UI·QR 검사는 고정 입력/생성 QR 및 scripted remote이며 인증/실기기 PASS 아님.
+- 기본 폴더 HEAD를 정확히 `89e6014`로 전환(detached/clean). feature 브랜치는 기존 별도 worktree/동일 HEAD/clean 보존. QA와 후보 알고리즘을 합치지 않음.
+- **PASS** 후보 fresh48 focused 앱 검사, 개발/운영 completion 정의 fixture 각각31 PGlite SQL 시나리오. 실패가 없어 후보 폐기0. 알고리즘 소스 수정0. 대상/근거/미검증 경계는 최신 Handoff 및 `bugfix1012-qa-ui-and-size-decision-recheck.json`에 기록.
+- **NOT RUN** 실제 v3 DB 적용/정상 인증 비교·기록, 구버전 앱 혼용 E2E, 실기기, 후보+QA 통합, 운영/main/배포. v3 적용은 별도 승인 필요. 이전 BF1012-07의 QA 미반영 기록은 당시 상태이며 이번 후속으로 대체.
