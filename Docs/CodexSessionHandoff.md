@@ -1,3 +1,11 @@
+## 2026-10-12 BF1012-06 — 개발 DB 재검증 / 실제 로그인 지원 필요
+
+- 사용자 개발 DB 재테스트 요청에 따라 clean QA `fa01c7d771aed079fe9cc3048d9a802a990cdbb9`를 고정해 FitMatch-QA/Debug-QA를 새 빌드·설치·일반 실행했다. 실제 번들 URL은 개발 `hnkplvyegonlhumlejst`, bundle `com.ljy4337.fitmatch.qa`; fake auth/launch override 없음. iPhone 17 Simulator에서 `Continue with Apple` 로그인 화면 확인. 개발 SQL 재적용0, 앱/SQL 소스 변경0, 운영/main 변경0.
+- **PASS** 새 영향 회귀198(190 Swift Testing+QR XCTest8, 0fail/0skip). 결과 `/private/tmp/bf1012/DevelopmentDBRetest.xcresult`와 xcresult summary를 독립 확인. 복구16/Closet53/History25/authority45/search scenario 등을 scripted remote/SwiftData 의존성으로 검증한 결과이며 실제 인증 DB E2E가 아니다.
+- **PASS** 개발 Verify 4 SELECT 재실행: RLS2·직접 쓰기/anon 거절, RPC/helper6 ACL, 공식/복구 FK와 check4, 적용 함수12 정의 일치. 실제 HTTPS 익명 get/save는 각각401/42501. 공개 Auth settings의 Apple=true, anonymous=false 확인은 QA client ID 허용/로그인 성공을 증명하지 않는다. PGlite SQL 회귀 새 실행 PASS, remote recovery/active rows0.
+- **BLOCKED** 정상 인증 복구 저장→재조회→옷 선택→비교·History, live 자동 비교 및 Closet retry 성공. 현재 일반 앱은 로그인 화면이고 자동 Auth preflight도 전용 A/B 세션·identity 미제공으로 request0/exit2. 토큰 추출·사용자 사칭·RLS 우회·Auth 설정 변경 없음. 추가 개발 SQL 승인/사용자 SQL 실행은 필요 없으며, 사용자에게 iPhone 17의 FitMatch-QA 직접 로그인을 비동기 요청했다. 실제 타 계정 격리에는 두 번째 정상 전용 계정 세션도 필요하다. 비밀번호·인증 코드·토큰은 채팅으로 받지 않는다.
+- 실행 증거 `Docs/ChangeHistory/bugfix1012-development-db-retest.json`, 중앙 이력 BF1012-06 개발 DB 재검증 후속. **NOT RUN** 이번 실기기/시스템 Share Close/동일 개수 History stale 화면; 공유 controller11은 이번 재실행하지 않았고 과거 PASS를 이번 결과로 사용하지 않는다. 사용자 지원 후 남은 인증 검증을 이어가야 한다.
+
 ## 2026-10-12 BF1012-01/06 — 개발 복구 계약 적용 완료 / 인증 앱 검증 남음
 
 - 사용자 “개발디비에 먼저 적용해. 승인한다”로 BF1012-01 준비 SQL의 개발 적용을 명시 승인. QA 빌드 환경 문서와 실제 project metadata로 개발 FitMatch `hnkplvyegonlhumlejst`/ACTIVE_HEALTHY/서울 확인. 운영 적용 승인 아님.
