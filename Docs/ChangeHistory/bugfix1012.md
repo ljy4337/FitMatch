@@ -62,6 +62,13 @@
 - 검증: 실제 presentation 코드 standalone RED 9 failures→GREEN PASS. 전체 Xcode 결과는 BF1012-06. 기존 identity 검색 회귀의 size query는 새 승인 검색 범위에 맞춰 product query로 변경한다.
 - 실제 화면 문구·키보드 상호작용 **NOT RUN**.
 
+### BF1012-03 후속 기능 재검증 — 2026-10-12
+
+- 브랜치: bugfix1012. 대상 파일: `FitMatch/Views/GlobalSearchView.swift`.
+- 실제 QA `92cacd6` 시뮬레이터 검색 입력칸의 runtime snapshot에서 요청 문구와 달리 끝 마침표가 있는 것을 확인했다. 정확한 문자열 검증 **FAIL** (`상품명 또는 브랜드명을 입력해 주세요.`).
+- 변경: 입력칸 안내의 마침표 한 글자만 제거. 검색 조건·레이아웃·정책 변경 없음.
+- 계획: 기존 승인에 따라 QA에 통합하고 동일 화면의 정확한 문자열·입력/초기화 및 기능 회귀를 재검증한다. 이 시점 후속 수정 소스의 검증은 **NOT RUN**이며 최종 실행 결과는 BF1012-06 후속 기능 재검증에 기록한다.
+
 ## BF1012-04 — 옷장 동기화 실패와 수정값 보존
 
 브랜치: bugfix1012 · 작업일: 2026-10-12
