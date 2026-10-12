@@ -71,7 +71,7 @@ Read URL/plain text → App Group pending URL + destination (legacy default Comp
 
 READ FIRST: `FitMatch/Views/TagScannerSheet.swift`, `FitMatch/Services/TagProductResolver.swift`, `FitMatch/Views/CompareFlowSheet.swift`, `FitMatch/Views/MyClosetView.swift`, `FitMatch/ContentView.swift`.
 
-Compare start URL card / AddClosetMethodSheet → shared camera sheet (QR/EAN-13) → UNIQLO KR commerce `/l3s/{EAN13}` or MUSINSA short-link intermediate redirect → validated product URL. Scanner dismissal then invokes existing `startCompareTask(with:)` or `LinkClosetRegistrationView(initialURL:)` auto-load. No new parser, server authority, comparison, or persistence path. Scanned options do not select a size; user selection remains required. Non-product RFID QR and unknown hosts are rejected; cancellation discards pending lookup.
+Compare start URL card / AddClosetMethodSheet → shared camera sheet (QR/EAN-13) → UNIQLO KR commerce `/l3s/{EAN13}` or MUSINSA short-link intermediate redirect → validated product URL. ZARA accepts an HTTPS Korean product-page QR and preserves the original URL including exact `v1`; the existing ZARA parser resolves page identity. Unverified store QR/short-link formats remain unsupported. Scanner dismissal then invokes existing `startCompareTask(with:)` or `LinkClosetRegistrationView(initialURL:)` auto-load. No new parser, server authority, comparison, or persistence path. Scanned options do not select a size; user selection remains required. Non-product RFID QR and unknown hosts are rejected; cancellation discards pending lookup.
 
 ### FLOW-PRODUCT-LOAD — 상품 링크 불러오기
 

@@ -6,7 +6,7 @@ nonisolated struct TagProductResolver {
         case unsupported, invalidBarcode, notFound, invalidResponse
         var errorDescription: String? {
             switch self {
-            case .unsupported: "유니클로 바코드 또는 무신사 상품 안내 QR을 스캔해 주세요."
+            case .unsupported: "유니클로 바코드 또는 무신사·자라 상품 QR을 스캔해 주세요."
             case .invalidBarcode: "바코드를 확인하지 못했어요. 다시 스캔해 주세요."
             case .notFound: "이 태그의 상품을 찾지 못했어요. 상품 링크로 다시 시도해 주세요."
             case .invalidResponse: "상품 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
@@ -21,6 +21,10 @@ nonisolated struct TagProductResolver {
             let (data, _) = try await fetch(endpoint)
             try Task.checkCancellation()
             return try Self.uniqloProductURL(data)
+        }
+        if let url = URL(string: payload), Self.isZaraProductURL(url) {
+            // Preserve the exact selected v1/catalog entry for the existing ZARA parser.
+            return url
         }
         guard var url = URL(string: payload), Self.isMusinsaURL(url) else {
             throw ScanError.unsupported
@@ -42,6 +46,20 @@ nonisolated struct TagProductResolver {
             url = next
         }
         throw ScanError.notFound
+    }
+
+    static func isZaraProductURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "https",
+              ["www.zara.com", "zara.com"].contains(url.host?.lowercased() ?? ""),
+              url.user == nil, url.password == nil, url.port == nil || url.port == 443,
+              matches(url.path, "/kr/ko/[^/]+-p[0-9]{8}\\.html") else { return false }
+        let variants = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? [])
+            .filter { $0.name == "v1" }
+        guard variants.count <= 1 else { return false }
+        if let variant = variants.first {
+            guard let value = variant.value, matches(value, "[0-9]+") else { return false }
+        }
+        return true
     }
 
     static func uniqloEndpoint(_ barcode: String) throws -> URL {

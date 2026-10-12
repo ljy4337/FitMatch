@@ -16,7 +16,7 @@ struct TagScannerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("유니클로 바코드 또는 무신사 상품 안내 QR을 비춰 주세요.")
+                Text("유니클로 바코드 또는 무신사·자라 상품 QR을 비춰 주세요.")
                     .font(.subheadline)
                     .padding(.horizontal)
                 if isResolving {

@@ -1,3 +1,15 @@
+## 2026-10-12 태그 스캔 QA 통합 검증
+
+- 사용자 QA 머지 승인. UNIQLO/MUSINSA 스캔 및 공통 버튼 커밋 5606119와 후속 ZARA 한국 상품 URL QR 지원을 통합 대상으로 고정. fetch 후 QA=origin/QA=main=origin/main(2d01ea4), QA 작업 폴더 clean 확인. main 승격/DB 변경 없음.
+- 이번 통합 대상 FitMatch-QA/Debug-QA/iPhone17 Simulator build 및 TagProductResolverTests 8개 PASS(0fail, exit0). 로그 /tmp/FitMatchTagScan-QAMerge.log, xcresult /tmp/FitMatchTagScanBuild/Logs/Test/Test-FitMatch-QA-2026.10.12_10-36-20-+0900.xcresult. diff-check/보호 scroll PASS. QA fast-forward 통합 대상은 검증한 동일 앱 소스이며 문서만 추가했다.
+- 실제 앱 UI 테스트 모드에서 상품 비교 시작/내 옷 추가 화면을 열어 태그 스캔 버튼 캡처 완료. 실기기 카메라, 실제 자라 매장 QR, 인증 등록·비교 E2E 및 전체 Release Gate NOT RUN. QA 통합은 출시 승인이나 main 승격이 아니다.
+
+## 2026-10-11 자라 상품 URL QR 지원
+
+- 사용자 구현 요청에 따라 기존 태그 스캔 resolver에 HTTPS zara.com/www.zara.com 한국 상품 페이지(/kr/ko/*-pNNNNNNNN.html) 입력 추가. 원문 URL 및 v1/catalog entry 보존; internalProductID로 대체하거나 v1을 임의 생성하지 않는다. 스캐너 성공 이후 기존 비교/옷장 불러오기 경로 재사용, 자라 parser/서버/측정/저장 수정0.
+- 스캔 안내와 내 옷 추가 스캔 설명에 자라 표시. 미확인 단축링크/내부코드/매장 QR 형식은 추측 지원하지 않음. 실제 자라 태그 미제공이므로 매장 QR 호환성/실기기 카메라/E2E NOT RUN.
+- 추가 전 standalone resolver가 자라 URL을 unsupported로 거절함을 확인; 추가 후 같은 URL 원문 보존 PASS. 최종 FitMatch-QA/Debug-QA/iPhone17 Simulator build+집중 테스트 8개 PASS(0fail, exit0, /tmp/FitMatchZaraTagScan-cpu.log). 초기 생성 QR 테스트는 simulator Vision inference context 오류/인식 nil로 FAIL; 흰 여백 포함 생성 QR 및 simulator 전용 CPU/revision1 테스트 설정으로 최종 통과. 앱의 DataScanner 설정 변경0. macOS Vision 기본 인식 및 CPU/revision1로도 원문 QR decode PASS(/tmp/zara-qr-check.swift, /tmp/zara-qr-cpu.swift). 테스트는 생성 QR의 Vision decode→resolver→기존 입력 gate, v1 보존 및 잘못된 URL 거절을 포함하며 live 상품 조회 증거가 아니다. 커밋/푸시0.
+
 ## 2026-10-11 상품 비교 시작 스캔 버튼 스타일 정렬
 
 - 사용자 요청으로 CompareFlowSheet의 태그 스캔만 시스템 bordered Button에서 기존 공통 SecondaryButton으로 교체. 전체 너비/48pt 높이/16pt 모서리/공통 보조 버튼 배경·글꼴 사용. 액션/disabled/accessibility ID 및 스캔 이후 흐름 유지. 기존 미커밋 스캔 작업 보존.

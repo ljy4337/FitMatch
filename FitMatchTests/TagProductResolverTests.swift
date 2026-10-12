@@ -1,4 +1,6 @@
 import XCTest
+import CoreImage
+import Vision
 @testable import FitMatch
 
 final class TagProductResolverTests: XCTestCase {
@@ -55,6 +57,56 @@ final class TagProductResolverTests: XCTestCase {
             }
             XCTAssertEqual(url.absoluteString, link)
         }
+    }
+
+    @MainActor
+    func testGeneratedZaraQRDecodesAndPreservesSelectedCatalogEntry() async throws {
+        // Synthetic product URL QR; not a photograph of a retail tag or a live product lookup.
+        let payload = "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346&v2=2436873"
+        let filter = try XCTUnwrap(CIFilter(name: "CIQRCodeGenerator"))
+        filter.setValue(Data(payload.utf8), forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
+        let output = try XCTUnwrap(filter.outputImage).transformed(by: CGAffineTransform(scaleX: 8, y: 8))
+        // A QR needs a quiet zone; the generator emits only the symbol itself.
+        let bounds = output.extent.insetBy(dx: -40, dy: -40)
+        let background = CIImage(color: CIColor.white).cropped(to: bounds)
+        let padded = output.composited(over: background)
+        let image = try XCTUnwrap(CIContext().createCGImage(padded, from: bounds))
+        let request = VNDetectBarcodesRequest()
+        request.symbologies = [.qr]
+        #if targetEnvironment(simulator)
+        request.revision = VNDetectBarcodesRequestRevision1
+        request.usesCPUOnly = true
+        #endif
+        try VNImageRequestHandler(cgImage: image).perform([request])
+        let decoded = try XCTUnwrap(request.results?.first?.payloadStringValue)
+        XCTAssertEqual(decoded, payload)
+        let url = try await TagProductResolver().resolve(decoded)
+        XCTAssertEqual(url.absoluteString, payload)
+        XCTAssertEqual(ZARAProductPageParser.variantID(from: url), "545490346")
+        XCTAssertTrue(FitMatchProductLinkInput.validate(url.absoluteString).canStartLoad)
+    }
+
+    func testZaraScanRejectsUnknownRoutesAndInvalidVariants() async throws {
+        for payload in [
+            "https://www.zara.com/kr/ko/",
+            "https://www.zara.com.evil.test/kr/ko/item-p04166166.html?v1=545490346",
+            "https://user@www.zara.com/kr/ko/item-p04166166.html",
+            "https://www.zara.com/kr/ko/item-p04166166.html?v1=abc",
+            "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346&v1=1",
+            "https://www.zara.com/kr/ko/item-p04166166.html?v1=545490346%0A",
+            "https://www.zara.com/kr/ko/qr/unknown"
+        ] {
+            do {
+                _ = try await TagProductResolver().resolve(payload)
+                XCTFail("Unverified Zara input accepted: \(payload)")
+            } catch {
+                XCTAssertTrue(error is TagProductResolver.ScanError)
+            }
+        }
+        let payload = "https://www.zara.com/kr/ko/item-p04166166.html"
+        let url = try await TagProductResolver().resolve(payload)
+        XCTAssertEqual(url.absoluteString, payload, "Do not invent v1; existing parser resolves it from the page")
     }
 
     func testInternalRFIDQRDoesNotBecomeProduct() async {

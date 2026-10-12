@@ -495,7 +495,7 @@ struct AddClosetMethodSheet: View {
                 }
                 AddClosetMethodRow(
                     title: "태그 스캔",
-                    subtitle: "유니클로 바코드 · 무신사 상품 QR로 불러오기",
+                    subtitle: "유니클로 바코드 · 무신사·자라 상품 QR로 불러오기",
                     systemImage: "qrcode.viewfinder",
                     isPrimary: false
                 ) {
