@@ -1,3 +1,9 @@
+## 2026-10-12 BF1012-06 — 사용자 승인 QA 병합 / 통합 조합 PASS
+
+- 사용자 QA merge 요청에 따라 bugfix1012 `a676ab8`를 기존 QA `1580aa3`에 정상 merge, 소스 병합 `32d34804d68b4a88b2c882a23fab9da27194b1f5`. 앱 소스 충돌0. Handoff/Behavior Map 문서 충돌2개는 QR/bugfix 이력 모두 보존하여 해결. main/DB/배포 변경0.
+- **PASS** 실제 QA 조합 FitMatch-QA simulator build+198 tests(회귀190+QR8, 0fail/0skip), diff/보호 scroll 및 QR resolver/scanner/권한/test 원본 유지 확인. 증거 `Docs/ChangeHistory/bugfix1012-qa-verification.json`; 소스 검증 후 추가 변경은 이 문서 기록뿐이다.
+- 원격 QA 반영 후 최종 SHA를 직접 확인하여 보고한다. 아래 최초 구현 보고의 QA 통합 NOT RUN/merge0는 당시 이력이며 이번 승인/실행으로 대체한다. 신규 개발 SQL 적용0/별도 승인 대기, 인증 앱 E2E·실기기·전체 ReleaseGate NOT RUN/BLOCKED 유지.
+
 ## 2026-10-12 bugfix1012 — 복구 서버 연결 준비 / 개발 SQL 승인 대기
 
 - 이력/완료 보고의 단일 진입점: `Docs/ChangeHistory/bugfix1012.md` (BF1012-01~06), 실제 최종 결과와 source hash: `Docs/ChangeHistory/bugfix1012-verification.json`.

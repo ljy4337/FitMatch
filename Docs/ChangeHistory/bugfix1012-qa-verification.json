@@ -1,0 +1,60 @@
+{
+  "branch": "QA",
+  "source_branch": "bugfix1012",
+  "merge_commit": "32d34804d68b4a88b2c882a23fab9da27194b1f5",
+  "implementation_commit": "a676ab88197827daf952dfa662296136383eac4f",
+  "verified_at": "2026-10-12T12:05:03.177168+09:00",
+  "summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "2D3180C9-2B32-4B9B-A8CB-0D40CB0FCB5E",
+          "deviceName": "FitMatch-Regression-20260721",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 200,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791774253.459,
+    "passedTests": 198,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791773956.601,
+    "statistics": [
+      {
+        "subtitle": "4 test runs",
+        "title": "2 tests ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "99% of duration",
+        "text": "12 longest test runs with outlier durations exceeding 0.91s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 198
+  },
+  "log": "/private/tmp/bf1012/qa-merged.log",
+  "xcresult": "/private/tmp/bf1012/QAMerged.xcresult",
+  "database_sql_applied": [],
+  "physical_device": "NOT RUN",
+  "release_gate": "NOT RUN",
+  "conflict_resolution": "Both QR and bugfix1012 history retained in Handoff/Behavior Map; app source merged automatically."
+}

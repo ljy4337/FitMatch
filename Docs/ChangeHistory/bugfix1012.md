@@ -170,3 +170,9 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 2. 명시 승인 후 Apply를 실행하고 Verify 결과의 RLS/권한/기존 official FK/새 recovery FK/함수 hash를 확인한다.
 3. 정상 QA 사용자 세션으로 sizesRequired·measurementsRequired, USER_OCR·USER_MANUAL, 응답 유실 재시도, 다른 계정·공용 원본 영향, 사용자 선택 비교·History를 검증한다. DB 관리자의 격리 SQL 테스트를 인증 앱 성공으로 표현하지 않는다.
 4. 별도 승인된 QA 통합 이후 QR+복구/옷장 source combination 검증. 필수 ReleaseGate 통과 전 main 승격/배포 금지.
+
+### BF1012-06 후속 실행 완료 — 2026-10-12 QA 병합 검증
+
+- 브랜치: bugfix1012 → QA. 구현 커밋 `a676ab88197827daf952dfa662296136383eac4f`, QA 소스 병합 `32d34804d68b4a88b2c882a23fab9da27194b1f5` (기존 QA `1580aa3`). 기존 QR source 보존, 앱 소스 자동 병합. Handoff/Behavior Map 두 문서 충돌은 양쪽 전체 이력을 보존해 해결했다.
+- **PASS** 실제 병합 소스 FitMatch-QA simulator build/test: 총198개(기존 회귀190 + QR XCTest8), 0fail/0skip, exit0. `bugfix1012-qa-verification.json`, `/private/tmp/bf1012/qa-merged.log`, `/private/tmp/bf1012/QAMerged.xcresult`. 보호 scroll/diff 검사 PASS. 아래 결과가 최초 완료 보고의 QA integration NOT RUN 상태를 대체한다.
+- 최종 검증 후 문서 이력만 추가한다. 원격 QA 반영 대상이며 최종 local/remote SHA는 push 후 직접 확인한다. main 변경·DB 적용·배포 없음. 신규 개발 SQL 승인은 여전히 별도이며 인증 앱/실기기/전체 ReleaseGate는 미검증이다.
