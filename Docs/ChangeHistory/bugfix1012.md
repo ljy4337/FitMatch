@@ -177,3 +177,31 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 2. 명시 승인 후 Apply를 실행하고 Verify 결과의 RLS/권한/기존 official FK/새 recovery FK/함수 hash를 확인한다.
 3. 정상 QA 사용자 세션으로 sizesRequired·measurementsRequired, USER_OCR·USER_MANUAL, 응답 유실 재시도, 다른 계정·공용 원본 영향, 사용자 선택 비교·History를 검증한다. DB 관리자의 격리 SQL 테스트를 인증 앱 성공으로 표현하지 않는다.
 4. 별도 승인된 QA 통합 이후 QR+복구/옷장 source combination 검증. 필수 ReleaseGate 통과 전 main 승격/배포 금지.
+
+## BF1012-06 후속 기능 재검증 — 2026-10-12
+
+브랜치: bugfix1012 → QA · 작업일: 2026-10-12 (Asia/Seoul)
+
+- 요청에 따라 이전 결과를 재사용하지 않고 QA `92cacd6`에서 회귀198·공유11·격리 SQL을 새로 실행했다. 실제 검색 화면에서 BF1012-03 안내의 끝 마침표 불일치 **FAIL** 확인 → bugfix1012 `1fa0f62`에서 한 글자 수정 → QA 소스 `aac49221aa5b678ca17c1f8a16430c9115e1ecf5`에 정상 병합했다. 최종 QA 조합도 다시 빌드/검증했다.
+- 대상 파일: `FitMatch/Views/GlobalSearchView.swift` (문구만), 이 이력, `Docs/CodexSessionHandoff.md`, 새 실행 보고 `Docs/ChangeHistory/bugfix1012-functional-retest.json` 및 같은 이름 폴더의 화면 증거3개. 테스트/SQL/비교 정책 변경 없음. 보고 JSON에 실제 source hash와 runtime snapshot을 보존했다.
+- 이 후속 기록은 BF1012-03의 과거 화면 문구·키보드 NOT RUN 중 아래 실행한 범위만 대체한다. 원격 DB 적용 승인과 실기기 미검증 상태는 유지한다.
+
+| 항목 | 상태 | 이번 실행 근거 / 경계 |
+| --- | --- | --- |
+| BF1012-01 복구 저장→독립 재조회→fresh runtime→사용자 옷 선택→비교 완료 | PASS | 실제 DTO/coordinator/ViewModel 16개 포함. scripted remote. sizesRequired/measurementsRequired, 실패 입력 보존, 응답 유실 동일 요청 재시도, 늦은 상품/계정 응답 거절 포함 |
+| BF1012-01 실제 SQL 저장·재조회·후보·begin·complete·History / 멱등성·RLS·원본 불변 | PASS | PGlite에서 신규 실행 exit0. 실제 함수 SQL과 catalog/classification dependency fixture. 원격 DB 또는 정상 인증 앱 E2E 증거 아님 |
+| BF1012-02 저장 후 Close·추출 중 취소·새 공유 보호·Compare/Closet 목적지 | PASS | 실제 controller/shared store simulator harness11, 0fail/0skip. visibility/AppGroup test adapter 사용 |
+| BF1012-03 상품명/브랜드/부분 일치·trim/case·관심상품 구분어 및 제거 조건 제외·빈 preview | PASS | Scenario36 및 Provider12 안의 실제 presentation 회귀. populated 화면 검색 E2E는 NOT RUN |
+| BF1012-03 정확한 입력칸 문구·ABC 입력·Clear→빈 preview | PASS | 최종 QA 설치/실행 후 runtime snapshot과 screenshot. 마침표 수정 전 FAIL→수정 후 동일 정확 문자열 PASS. 빈 데이터 UI 모드 |
+| BF1012-03 한글 입력 도구 | BLOCKED | runtime UI 자동 입력은 US/ASCII만 지원하여 한글 입력을 실행하지 못했다. 한글 검색 조건은 위 기능 테스트로 검증 |
+| BF1012-04 typed 실패·입력 보존·현재 사용자/중복 retry·실제 성공 후 해제 | PASS | Closet53 tests 새 실행. 실패한 update 뒤 stale projection이 로컬 이름·메모를 덮지 않음 |
+| BF1012-04 실제 조회 실패 안내/다시 시도/재실패 안내 유지 | PASS | 시뮬레이터 UI 테스트 모드(유효 Supabase 인증 없음)에서 목록 조회 실패와 버튼 탭 확인. 기술 오류/반복 팝업 관측 없음 |
+| BF1012-04 정상 인증 retry 성공·저장 실패 banner 화면 | NOT RUN | 정상 인증/해당 상태의 직접 화면 실행 안 함. coordinator 테스트 성공을 화면 성공으로 확대하지 않음 |
+| BF1012-05 같은 개수 교체 조건 / 실패 저장 입력 보존 | PASS | ComparisonSync25 및 Closet53 새 실행. History count-only 무효화 누락 조건은 계속 재현됨. 독립 History 수정 없음 |
+| BF1012-06 최종 QA 빌드·회귀·QR | PASS | 최종 총198개(190 Swift Testing+QR XCTest8), 0fail/0skip, xcodebuild exit0. `/private/tmp/bf1012/FunctionalRetestFinal.xcresult` |
+| BF1012-02 시스템 공유 시트→QA 확장 Close→앱 활성화 | BLOCKED | Safari 시스템 공유 시트까지 screenshot 확인. runtime snapshot이 확장 선택 항목을 노출하지 않아 확장 진입/Close/활성화 실행 안 함 |
+| 실제 인증 복구 E2E / 개발 신규 SQL 적용 | BLOCKED | 개발 hnkplvyegonlhumlejst 적용 승인 대기, 실제 SQL 적용0. 운영 변경0 |
+| 실기기 Share·카메라·복구·오류화면 / 실제 stale History 화면 / 전체 ReleaseGate | NOT RUN | 이번 시뮬레이터·fixture 결과로 대신하지 않음 |
+
+- 보류 유지: 다른 기기 Closet 삭제 전달, History 삭제 후 복사 데이터 정리. 같은 개수 History 화면 cache 수정도 별도 범위이다.
+- 최종 검증 이후 추가 변경은 실행 보고/이력/화면 증거뿐이다. main 승격·DB 적용·배포 없음. bugfix1012 및 QA의 원격 반영은 push 후 SHA를 직접 확인한다.
