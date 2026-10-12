@@ -211,6 +211,34 @@ struct SecondaryButton: View {
     }
 }
 
+struct FitMatchClosetFailureBanner: View {
+    let message: String
+    var reason: String?
+    let isRetrying: Bool
+    let retry: () -> Void
+
+    var body: some View {
+        CardView(radius: 16, padding: 12, shadowRadius: 0) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(message)
+                        .font(.subheadline.weight(.semibold))
+                    if let reason {
+                        Text(reason)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                SecondaryButton(title: "다시 시도", action: retry)
+                    .frame(width: 100)
+                    .disabled(isRetrying)
+            }
+        }
+        .accessibilityIdentifier("closet.failureBanner")
+    }
+}
+
 struct SectionHeader: View {
     let title: String
     var subtitle: String?

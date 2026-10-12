@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Supabase
 
 enum FitMatchIOSServerAuthorityState: Equatable {
     case idle
@@ -71,6 +72,7 @@ final class ShoppingProductViewModel: ObservableObject {
     @Published var isAnalyzingRecoveryImage = false
     @Published var recoveryErrorMessage: String?
     @Published var recoverySelectedSizeID: UUID?
+    @Published private(set) var isSavingSizeRecovery = false
     @Published var isNetworkFailure = false
     @Published var analysisPhase: ProductAnalysisPhase = .loadingProductInfo
     @Published private(set) var productAnalysisRecoveryAction: ProductAnalysisRecoveryAction?
@@ -118,6 +120,9 @@ final class ShoppingProductViewModel: ObservableObject {
     /// comparison authorization in that context reuse the same observed_at
     /// and exact retailer response bytes.
     private var frozenProductObservation: FitMatchProductObservationRequest?
+    private var pendingSizeRecovery: FitMatchUserSizeRecoveryRequest?
+    private var sizeRecoveryGeneration = UUID()
+    var sizeRecoveryContextID: UUID { sizeRecoveryGeneration }
     private var parsedProductMeasurementPresence: FitMatchProductMeasurementPresence = .unknown
     /// These keys are the parser observation's source-size identities. They
     /// are intentionally matched only to runtime source_size_key values, not
@@ -170,6 +175,7 @@ final class ShoppingProductViewModel: ObservableObject {
 
     private func isCurrentComparison(_ requestID: UUID?) -> Bool {
         !Task.isCancelled
+            && pendingSizeRecovery == nil
             && (requestID == nil || activeComparisonRequestID == requestID)
     }
 
@@ -916,7 +922,8 @@ final class ShoppingProductViewModel: ObservableObject {
     private func applyServerRuntime(
         _ runtime: FitMatchProductRuntimeResponse,
         allowsCanonicalMeasurementPresence: Bool,
-        preferredProductSizeID: UUID? = nil
+        preferredProductSizeID: UUID? = nil,
+        preservesRetailerDisplayIdentity: Bool = true
     ) {
         let retailerDisplayIDsBySizeKey = Dictionary(
             grouping: sizeOptions,
@@ -960,34 +967,39 @@ final class ShoppingProductViewModel: ObservableObject {
                         ?? .unknown
                     let hasKnownLocalProjection = code != .unknown
                         && code != .legacyUnknown
+                    let isUserRecovery = measurement.resolutionPath == "USER_OCR"
+                        || measurement.resolutionPath == "USER_MANUAL"
                     return ParsedMeasurement(
                         value: measurement.value,
                         unit: .centimeter,
                         unitRawValue: measurement.unitCode,
                         measurementCode: code,
                         displayKind: displayKind,
-                        methodSource: "fitmatch_vnext_runtime",
+                        methodSource: isUserRecovery ? "user_size_recovery" : "fitmatch_vnext_runtime",
                         methodProfile: exact.product?.resolverVersion,
-                        inputSource: .importedSizeChart,
+                        inputSource: isUserRecovery ? .transcribedSizeChart : .importedSizeChart,
                         standardVersion: nil,
                         mappingVersion: exact.product?.resolverVersion
                             ?? "fitmatch-vnext-runtime-v1",
                         rawCode: measurement.sourceMeasurementCode,
-                        rawLabel: measurement.sourceMeasurementCode
+                        rawLabel: (isUserRecovery ? measurement.rawLabel : nil) ?? measurement.sourceMeasurementCode
                             ?? measurement.measurementCode,
                         rawInfo: measurement.basisCode,
-                        rawValueText: String(measurement.value),
-                        evidenceLevel: .officialText,
+                        rawValueText: (isUserRecovery ? measurement.rawValueText : nil) ?? String(measurement.value),
+                        evidenceLevel: isUserRecovery ? .fitmatchDefined : .officialText,
                         semanticStatus: hasKnownLocalProjection ? .mapped : .unknownDefinition,
                         canonicalMeasurementCode: measurement.measurementCode
                     )
                 }
-                let parsedRecords = Self.registrationPresentationMeasurementRecords(
+                let retailerRecords = retailerMeasurementRecords(
+                    sourceSizeKey: size.sourceSizeKey,
+                    sizeLabel: size.sizeLabel
+                )
+                let parsedRecords = size.recoveryRequestID != nil
+                    ? canonicalRecords + retailerRecords
+                    : Self.registrationPresentationMeasurementRecords(
                     runtimeRecords: canonicalRecords,
-                    retailerRecords: retailerMeasurementRecords(
-                        sourceSizeKey: size.sourceSizeKey,
-                        sizeLabel: size.sizeLabel
-                    )
+                    retailerRecords: retailerRecords
                 )
                 // Runtime canonical facts remain useful for CONFIRMED products
                 // even when an unfamiliar server measurement code has no
@@ -1027,16 +1039,21 @@ final class ShoppingProductViewModel: ObservableObject {
                 )
                 let sourceSizeKey = normalizedSourceSizeKey(size.sourceSizeKey)
                     ?? normalizedSourceSizeKey(size.sizeLabel)
-                form.id = sourceSizeKey.flatMap { retailerDisplayIDsBySizeKey[$0] }
-                    ?? size.id
-                closetRegistrationIdentitiesByDisplaySizeID[form.id] =
-                    FitMatchClosetRegistrationServerIdentity(
-                        productID: runtime.product.productID,
-                        productVariantID: variant.id,
-                        productSizeID: size.id
-                    )
-                if hasParsedGarmentMeasurement(sourceSizeKey: size.sourceSizeKey)
-                    || (allowsCanonicalMeasurementPresence && hasCanonicalMeasurement) {
+                form.id = preservesRetailerDisplayIdentity
+                    ? (sourceSizeKey.flatMap { retailerDisplayIDsBySizeKey[$0] } ?? size.id) : size.id
+                // A user's recovered size is not an official retailer size
+                // eligible for the linked Closet registration contract.
+                if size.identityKind != "USER_RECOVERY" {
+                    closetRegistrationIdentitiesByDisplaySizeID[form.id] =
+                        FitMatchClosetRegistrationServerIdentity(
+                            productID: runtime.product.productID,
+                            productVariantID: variant.id,
+                            productSizeID: size.id
+                        )
+                }
+                if size.recoveryRequestID == nil,
+                   (hasParsedGarmentMeasurement(sourceSizeKey: size.sourceSizeKey)
+                    || (allowsCanonicalMeasurementPresence && hasCanonicalMeasurement)) {
                     closetRegisterableDisplaySizeIDs.insert(form.id)
                 }
                 return form
@@ -1215,6 +1232,9 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     private func resetMeasurementPresenceState() {
+        sizeRecoveryGeneration = UUID()
+        pendingSizeRecovery = nil
+        recoverySelectedSizeID = nil
         productMeasurementPresence = .unknown
         parsedProductMeasurementPresence = .unknown
         parsedGarmentMeasurementSourceSizeKeys.removeAll()
@@ -1399,11 +1419,11 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     var serverComparisonReadiness: FitMatchServerComparisonReadiness? {
-        confirmedServerAuthority?.comparisonReadiness
+        pendingSizeRecovery == nil ? confirmedServerAuthority?.comparisonReadiness : .measurementsRequired
     }
 
     var hasServerComparisonReadyAuthority: Bool {
-        confirmedServerAuthority?.comparisonReadiness.isReady == true
+        pendingSizeRecovery == nil && confirmedServerAuthority?.comparisonReadiness.isReady == true
     }
 
     var hasActiveUserExplicitClassification: Bool {
@@ -1928,6 +1948,114 @@ final class ShoppingProductViewModel: ObservableObject {
         }
     }
 
+    /// Keeps the immutable retailer observation and stores a separate user
+    /// supplement. An ambiguous retry keeps the same request and payload.
+    func completeSizeRecovery(
+        selectedSize: ClothingSizeForm,
+        inputSource: String,
+        userID: UUID,
+        currentUserID: @MainActor () -> UUID?
+    ) async -> Bool {
+        guard !isSavingSizeRecovery, currentUserID() == userID,
+              let authority = confirmedServerAuthority,
+              let exact = authority.runtime.vnext,
+              let variant = selectedRuntimeVariant(
+                in: exact, observationVariantID: observationVariantID,
+                preferredProductSizeID: closetRegistrationIdentitiesByDisplaySizeID[selectedSize.id]?.productSizeID
+              ),
+              let observationID = authority.sourceObservationID,
+              let targetRequest = parsedProductForServerAuthority?.fitMatchDatabaseResolutionRequest(),
+              let coordinator = serverAuthorityCoordinator else {
+            recoveryErrorMessage = FitMatchUserSizeRecoveryError.unavailable.errorDescription
+            return false
+        }
+        let loadID = activeLoadID
+        let generation = sizeRecoveryGeneration
+        let sourceRows = inputSource == "USER_OCR" ? selectedSize.parsedMeasurementRecords : []
+        let kinds = category.measurementKinds(detailCategory: detailCategory, gender: .unisex)
+        guard kinds.allSatisfy({ kind in
+            let text = selectedSize.value(for: kind).trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty || Double(text).map { $0.isFinite && $0 > 0 } == true
+        }), sourceRows.allSatisfy({ $0.value.isFinite }) else {
+            recoveryErrorMessage = FitMatchUserSizeRecoveryError.invalidMeasurements.errorDescription
+            return false
+        }
+        // Editors own these explicit measurement fields. OCR records remain
+        // separate evidence; their original values must not replace edits.
+        var edited = selectedSize
+        edited.parsedMeasurementRecords = []
+        guard let size = edited.makeSizeOption(category: category, detailCategory: detailCategory) else {
+            recoveryErrorMessage = FitMatchUserSizeRecoveryError.invalidMeasurements.errorDescription
+            return false
+        }
+        do {
+            let measurements = try size.measurementRecords.map { record in
+                guard let code = FitMatchCanonicalMeasurementCode.canonicalCode(for: record.measurementCode) else {
+                    throw FitMatchUserSizeRecoveryError.invalidMeasurements
+                }
+                return FitMatchUserSizeRecoveryRequest.Measurement(
+                    fitmatchMeasurementCode: code, value: record.value,
+                    unitCode: record.unitRawValue, basisCode: nil,
+                    rawLabel: record.rawLabel, rawValueText: record.rawValueText ?? String(record.value)
+                )
+            }.sorted { $0.fitmatchMeasurementCode < $1.fitmatchMeasurementCode }
+            let candidate = FitMatchUserSizeRecoveryRequest(
+                requestID: pendingSizeRecovery?.requestID ?? UUID(), ownerID: userID,
+                productID: authority.productID, variantID: variant.id,
+                officialSizeID: closetRegistrationIdentitiesByDisplaySizeID[selectedSize.id]?.productSizeID,
+                sourceObservationID: observationID, inputSource: inputSource,
+                sizeLabel: selectedSize.sizeName.trimmingCharacters(in: .whitespacesAndNewlines),
+                measurements: measurements,
+                originalRows: sourceRows.isEmpty ? size.measurementRecords.map {
+                    .init(rawCode: $0.measurementCode.rawValue, rawLabel: $0.rawLabel,
+                          rawValueText: $0.rawValueText, value: $0.value,
+                          unitCode: $0.unitRawValue)
+                } : sourceRows.map {
+                    .init(rawCode: $0.rawCode, rawLabel: $0.rawLabel,
+                          rawValueText: $0.rawValueText, value: $0.value,
+                          unitCode: $0.unitRawValue ?? $0.unit.rawValue)
+                }
+            )
+            if let pendingSizeRecovery, pendingSizeRecovery != candidate {
+                throw FitMatchUserSizeRecoveryError.pendingInputChanged
+            }
+            pendingSizeRecovery = candidate
+            isSavingSizeRecovery = true
+            defer { isSavingSizeRecovery = false }
+            recoveryErrorMessage = nil
+            recoverySelectedSizeID = nil
+            invalidateComparisonRequest()
+            serverClosetIDsByClientID.removeAll()
+            resetClosetComparisonBatch()
+            recommendation = nil
+            let result = try await coordinator.recoverUserSize(request: candidate, targetRequest: targetRequest)
+            guard !Task.isCancelled, activeLoadID == loadID,
+                  sizeRecoveryGeneration == generation, currentUserID() == userID else { return false }
+            applyServerClassification(result.authority.classification)
+            applyServerRuntime(result.authority.runtime, allowsCanonicalMeasurementPresence: true,
+                               preferredProductSizeID: result.receipt.sizeID,
+                               preservesRetailerDisplayIdentity: false)
+            serverAuthorityState = .confirmed(result.authority)
+            recoverySelectedSizeID = result.receipt.sizeID
+            pendingSizeRecovery = nil
+            recoveryErrorMessage = nil
+            return true
+        } catch {
+            guard !Task.isCancelled, activeLoadID == loadID,
+                  sizeRecoveryGeneration == generation, currentUserID() == userID else { return false }
+            // A definite input rejection is editable. Transport/unknown errors
+            // retain the request UUID because the response may have been lost.
+            if let rejection = error as? PostgrestError, rejection.code == "22023" {
+                pendingSizeRecovery = nil
+                recoveryErrorMessage = FitMatchUserSizeRecoveryError.invalidMeasurements.errorDescription
+            } else {
+                recoveryErrorMessage = (error as? FitMatchUserSizeRecoveryError)?.errorDescription
+                    ?? FitMatchUserSizeRecoveryError.unavailable.errorDescription
+            }
+            return false
+        }
+    }
+
     func analyzeRecoveryImage(url: URL) async -> Bool {
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
@@ -1943,6 +2071,8 @@ final class ShoppingProductViewModel: ObservableObject {
     }
 
     func analyzeRecoveryImage(data: Data) async -> Bool {
+        let loadID = activeLoadID
+        let recoveryGeneration = sizeRecoveryGeneration
         recoveryErrorMessage = nil
         isAnalyzingRecoveryImage = true
         defer { isAnalyzingRecoveryImage = false }
@@ -1960,6 +2090,8 @@ final class ShoppingProductViewModel: ObservableObject {
                 )
             )
         }.value.sizes
+        guard !Task.isCancelled, activeLoadID == loadID,
+              sizeRecoveryGeneration == recoveryGeneration else { return false }
         guard !parsed.isEmpty else {
             recoveryErrorMessage = "표를 확정하지 못했어요. 값을 직접 입력해 주세요."
             return false

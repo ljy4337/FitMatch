@@ -1,3 +1,14 @@
+## 2026-10-12 bugfix1012 — 복구 서버 연결 준비 / 개발 SQL 승인 대기
+
+- 이력/완료 보고의 단일 진입점: `Docs/ChangeHistory/bugfix1012.md` (BF1012-01~06), 실제 최종 결과와 source hash: `Docs/ChangeHistory/bugfix1012-verification.json`.
+- fetch 후 기존 local/remote bugfix1012와 최신 origin/main=`2d01ea4cc0dd245f9406a9f3e80e2f50711d485d` 확인, 기존 branch 재생성/reset0. 시작 clean. QA=`1580aa358486c6dc2a24fbd51d3c550059667545` QR2commit 앞섬. QA source patch `git apply --check` PASS만 수행, merge/commit/push/배포0.
+- BF1012-01: frozen retailer observation 보존, 사용자 OCR/직접값 별도 immutable owner/request 저장→독립 readback→fresh exact runtime 검증→기존 명시적 Closet 선택/begin/complete. 공식 size 없는 경우 서버 USER_RECOVERY identity. permit/후보/cache 무효화, 동일 요청 retry·stale 상품/계정/사진 응답 거절. 사용자 raw/수정 canonical과 공식 facts 출처 분리. 신규 Apply/Verify/Rollback SQL 준비만; 기존 정책/점수/official FK 보존.
+- 개발 `hnkplvyegonlhumlejst` 읽기 전용 project/catalog 확인. **이번 실제 SQL 적용0**, 신규 적용 명시 승인 대기. 이전 승인 기록은 새 계약 승인 아님. 운영 `aqhrupgjpmrtnystottx` 변경0. 원격 앱 E2E BLOCKED; 기존 semantic conflict safety gate 유지.
+- BF1012-02: 공유 Close는 이번 URL/generation만 취소, 늦은 추출 재저장 방지, 두 목적지 유지. BF1012-03: 실제 product/brand 검색만, 승인 안내 문구, 빈 preview/기존 개수 유지. BF1012-04: typed inline 실패/현재 사용자 retry/실제 성공 해제, 실패 update 후 stale list가 이름·메모를 덮는 재현 경로 최소 보존 수정.
+- **PASS** 최종 FitMatch-QA simulator build+190 methods/8 suites(0fail/0skip), 별도 실제 Share controller/store harness11(0fail/0skip), proposed SQL PGlite 실제 save/read/eligible/begin/complete/History·RLS/멱등성/공용원본불변/automatic parity/guarded rollback, diff/보호scroll/QA patch 검사. 수정 전 Closet52tests/3issues FAIL; 최초 신규 fixture 오류는 수정 후 재실행 결과로 대체. 독립 검토에서 사진 전송 stale 경로 수정 후 추가 Critical/Important 없음.
+- BF1012-05: failed update 입력 손실 재현→BF04 수정. 목록 예외 rollback 독립 손실 미재현. supported schema4 same-target History A→B/count1 유지 및 count-only cache 무효화 누락 조건 재현; **History production 수정0 / 실제 stale 화면 재현 NOT RUN**. legacy schema3 fixture count1→2는 다른 조건. 다른 기기 Closet 삭제·History 복사 정리는 명시 보류.
+- 남음: 개발 신규 SQL 승인→Apply/Verify→정상 QA 인증 복구/비교/History 검증, 실기기 Share/사진·오류 화면, 별도 QR+변경조합 QA 통합 및 ReleaseGate/main승격/배포. 로컬 fixture 성공을 인증/실기기/ReleaseGate PASS로 확대하지 않는다. 아래 기록은 과거 이력으로 보존한다.
+
 ## 2026-10-12 태그 스캔 QA 통합 검증
 
 - 사용자 QA 머지 승인. UNIQLO/MUSINSA 스캔 및 공통 버튼 커밋 5606119와 후속 ZARA 한국 상품 URL QR 지원을 통합 대상으로 고정. fetch 후 QA=origin/QA=main=origin/main(2d01ea4), QA 작업 폴더 clean 확인. main 승격/DB 변경 없음.

@@ -23,6 +23,8 @@ struct AddClosetItemView: View {
     @State private var pendingManualItem: UserFit?
     @State private var pendingManualUserID: UUID?
     @State private var saveErrorMessage = "내 옷장에 저장하지 못했습니다. 입력한 내용은 유지됩니다. 다시 시도해 주세요."
+    @State private var hasSaveFailure = false
+    @State private var saveFailureReason: String?
 
     let onSave: ((UserFit) -> Bool)?
     let onSaveAsync: ((UserFit) async -> FitMatchClosetSyncCoordinator.ManualClosetEditSaveOutcome)?
@@ -106,6 +108,19 @@ struct AddClosetItemView: View {
         }
         .safeAreaInset(edge: .bottom) {
             bottomSaveBar
+        }
+        .safeAreaInset(edge: .top) {
+            if hasSaveFailure {
+                FitMatchClosetFailureBanner(
+                    message: FitMatchClosetSyncFailure.save.message,
+                    reason: saveFailureReason,
+                    isRetrying: isSaving || (!viewModel.canSave && pendingManualItem == nil),
+                    retry: saveItemAndDismiss
+                )
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .background(Color(.systemGroupedBackground))
+            }
         }
         .alert("이 옷을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) {}
@@ -395,7 +410,7 @@ struct AddClosetItemView: View {
     }
 
     private func saveItemAndDismiss() {
-        guard !isSaving else { return }
+        guard !isSaving, viewModel.canSave || pendingManualItem != nil else { return }
         if isEditing {
             if let onSaveAsync, let draft = viewModel.makeUserFit() {
                 isSaving = true
@@ -407,8 +422,9 @@ struct AddClosetItemView: View {
                     case .saved:
                         finishSave(.saved(draft))
                     case .failed(let message), .reconciliationRequired(let message):
-                        saveErrorMessage = message
-                        isShowingSaveError = true
+                        showSaveFailure(reason: message)
+                    case .retryableFailure:
+                        showSaveFailure()
                     }
                 }
                 return
@@ -418,8 +434,7 @@ struct AddClosetItemView: View {
             return
         }
         guard let userID = authSession.authenticatedUserID, let closetSync else {
-            saveErrorMessage = "로그인 상태를 확인한 뒤 다시 시도해 주세요."
-            isShowingSaveError = true
+            showSaveFailure(reason: "로그인 상태를 확인한 뒤 다시 시도해 주세요.")
             return
         }
         guard pendingManualUserID == nil || pendingManualUserID == userID else { return }
@@ -442,11 +457,10 @@ struct AddClosetItemView: View {
                 if case FitMatchClosetSyncCoordinator.ManualRegistrationFailure.rejected = error {
                     pendingManualItem = nil
                     pendingManualUserID = nil
-                    saveErrorMessage = "입력한 옷 정보를 저장하지 못했어요. 내용을 확인한 뒤 다시 시도해 주세요."
+                    showSaveFailure(reason: "입력한 옷 정보를 확인한 뒤 다시 저장해 주세요.")
                 } else {
-                    saveErrorMessage = "서버의 저장 결과를 확인하지 못했어요. 입력한 내용은 유지됩니다. ‘등록 결과 다시 확인’을 눌러 주세요."
+                    showSaveFailure()
                 }
-                isShowingSaveError = true
             }
         }
     }
@@ -454,6 +468,8 @@ struct AddClosetItemView: View {
     private func finishSave(_ outcome: FitMatchClosetFormAction.Outcome) {
         switch outcome {
         case .saved(let item):
+            hasSaveFailure = false
+            saveFailureReason = nil
             if !isEditing {
                 FitMatchMetricsRecorder.shared.record(
                     .closetCreated(
@@ -464,11 +480,16 @@ struct AddClosetItemView: View {
             }
             onSaved?(item)
             dismiss()
-        case .blocked:
-            return
+        case .blocked(let reason):
+            showSaveFailure(reason: reason)
         case .persistenceFailed:
-            isShowingSaveError = true
+            showSaveFailure()
         }
+    }
+
+    private func showSaveFailure(reason: String? = nil) {
+        saveFailureReason = reason
+        hasSaveFailure = true
     }
 
     private var serviceCategories: [TaxonomyCategory] {

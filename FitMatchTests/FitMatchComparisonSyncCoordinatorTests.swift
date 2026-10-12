@@ -5,6 +5,57 @@ import Testing
 
 @MainActor
 struct FitMatchComparisonSyncCoordinatorTests {
+    /// BF1012-05 investigation probe: exercise real immutable hydration, then
+    /// measure the count-only invalidation used by RecommendationHistoryView.
+    /// This records cache invalidation evidence; it does not mount the view
+    /// or change History behavior.
+    @Test func investigationSameCountHistoryReplacementLeavesCountOnlyCacheStale() async throws {
+        let original = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT", snapshotSchemaVersion: 4
+        )
+        let replacement = try ComparisonHistoryFixture(
+            classificationSource: "USER_EXPLICIT", snapshotSchemaVersion: 4,
+            completedJSONTransform: { json in
+                let root = try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any]
+                let targetID = root["target_product_id"] as! String
+                return json.replacingOccurrences(of: targetID, with: original.targetProductID.uuidString)
+            }
+        )
+        let container = try inMemoryContainer()
+        let context = ModelContext(container)
+        let hydrator = VNextHistoryCacheHydrator()
+        _ = try hydrator.hydrateCompleted(
+            [original.completed], existingHistories: [], existingProducts: [],
+            existingClosetItems: [], modelContext: context
+        )
+        try context.save()
+        let before = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let existing = try #require(before.first)
+        #expect(RecommendationHistoryStore.targetProductID(for: existing) == original.targetProductID)
+        #expect(replacement.completed.targetProductID == original.targetProductID)
+        let previousCount = before.count
+        let cachedIDs = FitMatchHistoryPresentation.displayedHistories(
+            from: before, searchText: "", scope: .all, category: nil,
+            favoriteURLs: [], sort: .latest
+        ).map(\.id)
+
+        _ = try hydrator.hydrateCompleted(
+            [replacement.completed], existingHistories: before, existingProducts: [],
+            existingClosetItems: [], modelContext: context
+        )
+        try context.save()
+        let after = try context.fetch(FetchDescriptor<RecommendationHistory>())
+        let currentIDs = after.map(\.id)
+
+        #expect(previousCount == 1)
+        #expect(after.count == previousCount)
+        #expect(cachedIDs == [original.clientComparisonID])
+        #expect(currentIDs == [replacement.clientComparisonID])
+        #expect(cachedIDs != currentIDs)
+        // The view's histories.count onChange receives no changed value.
+        #expect(!(after.count != previousCount))
+    }
+
     @Test func savedHistoryCanRecoverOnlyItsVerifiedServerSizeAnalysis() async throws {
         let fixture = try ComparisonHistoryFixture(
             classificationSource: "USER_EXPLICIT",

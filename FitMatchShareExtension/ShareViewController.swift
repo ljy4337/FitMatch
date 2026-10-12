@@ -35,6 +35,7 @@ final class ShareViewController: UIViewController {
     private let closetButton = UIButton(type: .system)
     private let closeButton = UIButton(type: .system)
     private var isAttemptingOpen = false
+    private var isCancelled = false
     private var savedURL: URL?
     private var savedGeneration: String?
 
@@ -116,25 +117,25 @@ final class ShareViewController: UIViewController {
         }
 
         FitMatchShareAttachmentExtractor.loadFirstSupportedURL(from: attachments) { [weak self] url in
-            if let url, self?.savePendingURL(url) == true {
-                self?.showCompletedState()
+            guard let self, !self.isCancelled else { return }
+            if let url, self.savePendingURL(url) {
+                self.showCompletedState()
             } else {
-                self?.showFailureState()
+                self.showFailureState()
             }
         }
     }
 
     @discardableResult
     private func savePendingURL(_ url: URL) -> Bool {
-        guard let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(
+        guard !isCancelled,
+              let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(
             identifier: AppGroup.identifier
         ) else {
             return false
         }
         let store = FitMatchSharedURLHandoffStore(fileURL: handoffURL)
-        guard store.save(url),
-              let handoff = store.pendingHandoff(),
-              handoff.urlString == url.absoluteString else {
+        guard let handoff = store.saveHandoff(url) else {
             return false
         }
         savedURL = url
@@ -204,7 +205,7 @@ final class ShareViewController: UIViewController {
     }
 
     private func startOpening(_ destination: FitMatchSharedURLHandoff.Destination) {
-        guard !isAttemptingOpen else { return }
+        guard !isCancelled, !isAttemptingOpen else { return }
         guard let savedURL,
               let savedGeneration,
               let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(
@@ -230,6 +231,17 @@ final class ShareViewController: UIViewController {
 
     @objc
     private func closeButtonTapped() {
+        isCancelled = true
+        isAttemptingOpen = false
+        if let savedURL, let savedGeneration,
+           let handoffURL = FitMatchSharedURLHandoff.appGroupFileURL(identifier: AppGroup.identifier) {
+            FitMatchSharedURLHandoffStore(fileURL: handoffURL).cancel(
+                urlString: savedURL.absoluteString,
+                generation: savedGeneration
+            )
+        }
+        savedURL = nil
+        savedGeneration = nil
         completeRequest()
     }
 
@@ -292,7 +304,7 @@ final class ShareViewController: UIViewController {
         canTryExtensionContext: Bool
     ) {
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+            guard let self, !self.isCancelled else { return }
             #if DEBUG
             print("[FitMatchShareExtension] containing app open success: \(success)")
             #endif

@@ -97,7 +97,7 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
 
         let searched = FitMatchHistoryPresentation.displayedHistories(
             from: histories,
-            searchText: "E450259",
+            searchText: "동일 상품",
             scope: .all,
             category: .top,
             favoriteURLs: [],
@@ -118,16 +118,16 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
 
     /// EN-010: Global Search uses the same production projection as its View.
     /// It must expose only active owned Closet rows, preserve the exact visible
-    /// History identities, and keep the favorite-only query user-visible.
+    /// History identities, and search only product names and brands.
     @Test func en010GlobalSearchUsesExactOwnedVisibleClosetAndHistoryIdentities() throws {
         let active = makeManualItem(
-            name: "검색되는 내 상의",
+            name: "검색되는 내 상품",
             category: .top,
             detail: .shortSleeve,
             createdAt: 10
         )
         active.brandName = "Fit 브랜드"
-        active.sizeName = "M"
+        active.sizeName = "XL"
         let inactive = makeManualItem(
             name: "삭제된 내 상의",
             category: .top,
@@ -137,12 +137,28 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         inactive.markAsHistoryOnlyReferenceSnapshot()
         let closet = FitMatchGlobalSearchPresentation.closetResults(
             from: [inactive, active],
-            searchText: "fit 브랜드"
+            searchText: "  fIT 브랜드\n"
         )
         #expect(closet.map(\.id) == [active.id])
+        #expect(FitMatchGlobalSearchPresentation.closetResults(
+            from: [inactive, active], searchText: "  검색되는 내  "
+        ).map(\.id) == [active.id])
+        for query in [active.category.rawValue, active.detailCategory.rawValue, "XL"] {
+            #expect(FitMatchGlobalSearchPresentation.closetResults(
+                from: [active], searchText: query
+            ).isEmpty)
+        }
+        #expect(FitMatchGlobalSearchPresentation.closetResults(
+            from: [inactive] + Array(repeating: active, count: 10), searchText: " \n "
+        ).count == 8)
+        #expect(FitMatchGlobalSearchPresentation.closetResults(
+            from: Array(repeating: active, count: 10), searchText: "검색되는"
+        ).count == 10)
 
         let product = makeSourcedProduct(authority: .serverConfirmed)
         product.name = "검색되는 비교 상품"
+        product.brand?.name = "SearchBrand"
+        product.sourceName = "검색 제외 판매처"
         product.sourceURLString = "https://www.uniqlo.com/kr/ko/products/E450259"
         let reference = makeManualItem(
             name: "검색 기준옷",
@@ -161,20 +177,42 @@ struct FitMatchFinalReleaseScenarioExecutionTests {
         )
         let historyByName = FitMatchGlobalSearchPresentation.historyResults(
             from: [visibleHistory],
-            searchText: "비교 상품",
-            favoriteURLs: []
+            searchText: "  비교 상품\n"
         )
         #expect(historyByName.map(\.id) == [visibleHistory.id])
         let historyByFavorite = FitMatchGlobalSearchPresentation.historyResults(
             from: [visibleHistory],
-            searchText: "관심상품",
-            favoriteURLs: ["https://www.uniqlo.com/kr/ko/products/E450259"]
+            searchText: "관심상품"
         )
-        #expect(historyByFavorite.map(\.id) == [visibleHistory.id])
+        #expect(historyByFavorite.isEmpty)
+        #expect(FitMatchGlobalSearchPresentation.historyResults(
+            from: [visibleHistory], searchText: "  sEARCHbRaNd  "
+        ).map(\.id) == [visibleHistory.id])
+        for query in [product.category.rawValue, visibleHistory.productDetailCategory.rawValue,
+                      product.sourceDisplayName, product.productCode ?? "", "XL"] {
+            #expect(FitMatchGlobalSearchPresentation.historyResults(
+                from: [visibleHistory], searchText: query
+            ).isEmpty)
+            #expect(FitMatchHistoryPresentation.displayedHistories(
+                from: [visibleHistory], searchText: query, scope: .all,
+                category: nil, favoriteURLs: [], sort: .latest
+            ).isEmpty)
+        }
+        #expect(FitMatchGlobalSearchPresentation.historyResults(
+            from: Array(repeating: visibleHistory, count: 10), searchText: " \n "
+        ).count == 8)
+        #expect(FitMatchGlobalSearchPresentation.historyResults(
+            from: Array(repeating: visibleHistory, count: 10), searchText: "비교 상품"
+        ).count == 10)
         #expect(FitMatchGlobalSearchPresentation.historyResults(
             from: [visibleHistory],
-            searchText: "없는 검색어",
-            favoriteURLs: []
+            searchText: "없는 검색어"
+        ).isEmpty)
+        product.brand = nil
+        visibleHistory.productBrandNameSnapshot = nil
+        #expect(FitMatchHistoryPresentation.displayedHistories(
+            from: [visibleHistory], searchText: product.sourceDisplayName, scope: .all,
+            category: nil, favoriteURLs: [], sort: .latest
         ).isEmpty)
     }
 

@@ -394,9 +394,10 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
     /// CR-012: the MUSINSA recovery corridor starts with a captured official
     /// product, parses a repository fallback size table with the production
     /// parser, and completes through the same selected-size action used by
-    /// the recovery view. An invalid recovery row remains blocked rather than
+    /// the Closet recovery view. This local fixture is not server recovery
+    /// persistence or comparison-readiness evidence. An invalid row remains blocked rather than
     /// being turned into a guessed owned size.
-    @Test func cr012MusinsaCapturedFallbackRecoveryPersistsOnlyTheValidatedSelectedSize() async throws {
+    @Test func cr012ClosetLocalFallbackRecoveryRetainsOnlyTheValidatedSelectedSize() async throws {
         let captured = try ProviderReleaseSnapshot.musinsaTShirt()
         let viewModel = ShoppingProductViewModel(
             initialURL: captured.sourceURL.absoluteString,
@@ -420,14 +421,14 @@ struct FitMatchFinalReleaseProviderSnapshotTests {
         )
         viewModel.sizeOptions = [selected]
 
-        #expect(FitMatchSizeTableRecoveryAction.complete(
+        #expect(FitMatchSizeTableRecoveryAction.completeForClosetRegistration(
             selectedSize: selected,
             viewModel: viewModel
         ) == .completed(selectedSizeID: selected.id))
         #expect(viewModel.recoverySelectedSizeID == selected.id)
 
         let invalid = ClothingSizeForm(sizeName: "M")
-        #expect(FitMatchSizeTableRecoveryAction.complete(
+        #expect(FitMatchSizeTableRecoveryAction.completeForClosetRegistration(
             selectedSize: invalid,
             viewModel: viewModel
         ) == .blocked("각 사이즈 행에 비교 가능한 치수를 입력해 주세요."))
