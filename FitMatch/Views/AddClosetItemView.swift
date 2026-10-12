@@ -345,8 +345,10 @@ struct AddClosetItemView: View {
                 HStack(spacing: 8) {
                     if isDeleting {
                         ProgressView("삭제 중")
+                            .fitMatchActionText()
                     } else {
                         Text("삭제")
+                            .fitMatchActionText()
                     }
                 }
                     .font(.subheadline.weight(.bold))
@@ -390,6 +392,7 @@ struct AddClosetItemView: View {
                 saveItemAndDismiss()
             } label: {
                 Text(isSaving ? "저장 확인 중" : (pendingManualItem != nil ? "등록 결과 다시 확인" : (isEditing ? "수정 저장" : "내 옷장에 저장")))
+                    .fitMatchActionText()
                     .font(.headline.weight(.bold))
                     .foregroundStyle(viewModel.canSave ? Color(.systemBackground) : .secondary)
                     .frame(maxWidth: .infinity)
@@ -718,6 +721,7 @@ struct AddClosetSelectionMenu<Option: Hashable>: View {
                 Spacer(minLength: 12)
 
                 Image(systemName: "chevron.up.chevron.down")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.black))
                     .foregroundStyle(.secondary)
                     .frame(width: 28, height: 28)
@@ -771,6 +775,7 @@ private struct AddClosetOptionalSelectionMenu<Option: Hashable>: View {
                 }
                 Spacer(minLength: 12)
                 Image(systemName: "chevron.up.chevron.down")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.black))
                     .foregroundStyle(.secondary)
                     .frame(width: 28, height: 28)
@@ -808,9 +813,11 @@ private struct AddClosetMeasurementField: View {
                     if let onShowGuide {
                         Button(action: onShowGuide) {
                             Label("측정 방법", systemImage: "questionmark.circle")
+                                .fitMatchActionText()
                                 .font(.caption2.weight(.bold))
                         }
                         .buttonStyle(.plain)
+                        .fitMatchInlineAction()
                         .foregroundStyle(.blue)
                     }
                 }

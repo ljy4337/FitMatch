@@ -458,6 +458,7 @@ private struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
+                .fitMatchActionText()
                 .font(.caption.weight(.bold))
                 .foregroundStyle(isSelected ? Color(.systemBackground) : .primary)
                 .padding(.horizontal, 12)
@@ -539,6 +540,7 @@ private struct AddClosetMethodRow: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
+                        .fitMatchActionText()
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(subtitle)
@@ -550,6 +552,7 @@ private struct AddClosetMethodRow: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }

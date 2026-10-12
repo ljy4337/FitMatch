@@ -719,6 +719,7 @@ struct AddComparedProductToClosetSheet: View {
                 }
             } label: {
                 Label(bottomButtonTitle, systemImage: step == .confirm ? "plus" : "chevron.right")
+                    .fitMatchActionText()
                     .font(.headline.weight(.bold))
                     .foregroundStyle(isSaving ? Color.secondary : Color(.systemBackground))
                     .frame(maxWidth: .infinity)
@@ -1396,6 +1397,7 @@ private struct RegistrationMenuRow<Content: View>: View {
                 Spacer(minLength: 12)
 
                 Image(systemName: "chevron.up.chevron.down")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.black))
                     .foregroundStyle(.secondary)
                     .frame(width: 28, height: 28)

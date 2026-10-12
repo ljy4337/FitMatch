@@ -230,9 +230,11 @@ private struct FitMatchReleaseLinkLabel: View {
         FitMatchCard {
             HStack(spacing: 12) {
                 Label(title, systemImage: systemImage)
+                    .fitMatchActionText()
                     .font(.body.weight(.semibold))
                 Spacer(minLength: 12)
                 Image(systemName: "arrow.up.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
             }

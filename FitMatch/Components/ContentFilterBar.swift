@@ -49,6 +49,7 @@ struct ContentFilterBar: View {
                                     .truncationMode(.tail)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 Image(systemName: "chevron.down")
+                                    .fitMatchInlineAction()
                                     .font(.caption2.weight(.bold))
                                     .accessibilityHidden(true)
                             }

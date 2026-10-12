@@ -1019,6 +1019,7 @@ private extension CompareFlowSheet {
                         productURL = UIPasteboard.general.string ?? ""
                     } label: {
                         Text("붙여넣기")
+                            .fitMatchActionText()
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
@@ -1026,6 +1027,7 @@ private extension CompareFlowSheet {
                             .background(Color.black, in: Capsule())
                     }
                     .buttonStyle(.plain)
+                    .fitMatchInlineAction()
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -2238,6 +2240,7 @@ private struct ShoppingShortcutButton: View {
                     .lineLimit(1)
 
                 Text(status)
+                    .fitMatchActionText()
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(isEnabled ? Color(.systemBackground) : .secondary)
                     .padding(.horizontal, 8)
@@ -2295,6 +2298,7 @@ private struct CompareSelectionMenu<Content: View>: View {
                     .lineLimit(1)
                 Spacer()
                 Image(systemName: "chevron.down")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
             }
@@ -2382,6 +2386,7 @@ private struct ClosetComparisonSummaryCard: View {
                         }
 
                         Image(systemName: "chevron.right")
+                            .fitMatchInlineAction()
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)
                             .accessibilityHidden(true)
@@ -2485,6 +2490,7 @@ private struct ClosetReferenceChoiceCard: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
             }
@@ -2691,13 +2697,16 @@ private struct ManualComparisonProductEntrySheet: View {
     private func manualSelectionRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
+                .fitMatchActionText()
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
             Spacer()
             Text(value)
+                .fitMatchActionText()
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
             Image(systemName: "chevron.up.chevron.down")
+                .fitMatchInlineAction()
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.secondary)
         }

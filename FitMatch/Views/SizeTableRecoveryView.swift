@@ -167,6 +167,7 @@ struct SizeTableRecoveryView: View {
                     matching: .images
                 ) {
                     Label("사진에서 불러오기", systemImage: "photo.badge.plus")
+                        .fitMatchActionText()
                         .font(.headline.weight(.bold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
@@ -255,6 +256,8 @@ struct SizeTableRecoveryView: View {
                     .font(.headline.weight(.bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
+                    .allowsTightening(true)
+                    .truncationMode(.tail)
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")

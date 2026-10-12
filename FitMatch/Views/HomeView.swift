@@ -74,6 +74,7 @@ struct HomeView: View {
                     HStack(spacing: 4) {
                         Text("전체보기")
                         Image(systemName: "chevron.right")
+                        .fitMatchInlineAction()
                     }
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.primary)
@@ -113,6 +114,7 @@ struct HomeView: View {
 
                             Spacer(minLength: 4)
                             Image(systemName: "chevron.right")
+                        .fitMatchInlineAction()
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
                         }
@@ -144,6 +146,7 @@ struct HomeView: View {
                     HStack(spacing: 4) {
                         Text("전체보기")
                         Image(systemName: "chevron.right")
+                        .fitMatchInlineAction()
                     }
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.primary)
@@ -198,6 +201,7 @@ struct HomeView: View {
                             Spacer(minLength: 4)
 
                             Image(systemName: "chevron.right")
+                        .fitMatchInlineAction()
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.secondary)
                         }
@@ -285,6 +289,7 @@ private struct HomeClosetPreviewCard: View {
                     ClosetItemDetailView(item: item)
                 } label: {
                     Text("수정")
+                        .fitMatchActionText()
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color(.systemBackground))
                         .frame(maxWidth: .infinity)
@@ -469,6 +474,7 @@ struct CompareStartSheet: View {
 
             Button(action: submitURL) {
                 Label("비교하기", systemImage: "sparkles")
+                    .fitMatchActionText()
                     .font(.headline.weight(.bold))
                     .foregroundStyle(Color.white)
                     .frame(maxWidth: .infinity)
@@ -520,6 +526,7 @@ private struct CompareStartRow: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
+                        .fitMatchActionText()
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
                     if let subtitle {
@@ -533,6 +540,8 @@ private struct CompareStartRow: View {
 
                 if let actionText {
                     Text(actionText)
+                        .fitMatchActionText()
+                        .fitMatchInlineAction()
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color(.systemBackground))
                         .padding(.horizontal, 12)
@@ -547,6 +556,7 @@ private struct CompareStartRow: View {
                         .background(Color(.secondarySystemGroupedBackground), in: Capsule())
                 } else {
                     Image(systemName: "chevron.right")
+                        .fitMatchInlineAction()
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.tertiary)
                 }
@@ -720,6 +730,7 @@ struct RecentProductPreviewCard: View {
         HStack(spacing: 8) {
             Button(action: onToggleFavorite) {
                 Label(isFavorite ? "관심 해제" : "관심", systemImage: isFavorite ? "heart.fill" : "heart")
+                    .fitMatchActionText()
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(isFavorite ? .red : .secondary)
                     .frame(maxWidth: .infinity)
@@ -734,6 +745,7 @@ struct RecentProductPreviewCard: View {
 
             Button(action: onRecompare) {
                 Text("다시 비교")
+                    .fitMatchActionText()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
@@ -760,6 +772,7 @@ struct RecentProductPreviewCard: View {
     private var recompareButton: some View {
         Button(action: onRecompare) {
             Text("다시 비교")
+                .fitMatchActionText()
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Color(.systemBackground))
                 .padding(.horizontal, 10)
@@ -767,6 +780,7 @@ struct RecentProductPreviewCard: View {
                 .background(.primary, in: Capsule())
         }
         .buttonStyle(.plain)
+        .fitMatchInlineAction()
         .disabled(history.product.sourceURLString == nil)
         .opacity(history.product.sourceURLString == nil ? 0.45 : 1)
     }

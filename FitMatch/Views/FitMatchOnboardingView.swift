@@ -86,6 +86,7 @@ struct FitMatchOnboardingView: View {
                 }
             } label: {
                 Text("다음").font(.headline.bold())
+                    .fitMatchActionText()
                     .frame(maxWidth: .infinity).padding(.vertical, 18)
                     .foregroundStyle(Color(.systemBackground))
                     .background(Color.primary, in: RoundedRectangle(cornerRadius: 24))

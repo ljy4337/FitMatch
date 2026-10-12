@@ -155,6 +155,7 @@ struct MyPageView: View {
     private func menuRow(_ item: MyMenuItem) -> some View {
         HStack {
             Label(item.title, systemImage: item.systemImage)
+                .fitMatchActionText()
                 .font(.body.weight(.semibold))
             Spacer()
             if item.destination == .comingSoon {
@@ -163,6 +164,7 @@ struct MyPageView: View {
                     .foregroundStyle(.secondary)
             } else if item.destination.isNavigable {
                 Image(systemName: "chevron.right")
+                    .fitMatchInlineAction()
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }
@@ -342,9 +344,11 @@ private struct FitMatchUsageGuideView: View {
                                 .frame(width: 42, height: 42)
                                 .background(.primary.opacity(0.07), in: Circle())
                             Text("온보딩 다시 보기")
+                                .fitMatchActionText()
                                 .font(.body.weight(.bold))
                             Spacer()
                             Image(systemName: "chevron.right")
+                                .fitMatchInlineAction()
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.tertiary)
                         }

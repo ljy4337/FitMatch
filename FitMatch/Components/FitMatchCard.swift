@@ -1,5 +1,18 @@
 import SwiftUI
 
+#if DEBUG
+private struct FitMatchButtonLayoutObserverKey: EnvironmentKey {
+    static let defaultValue: ((CGRect) -> Void)? = nil
+}
+
+extension EnvironmentValues {
+    var fitMatchButtonLayoutObserver: ((CGRect) -> Void)? {
+        get { self[FitMatchButtonLayoutObserverKey.self] }
+        set { self[FitMatchButtonLayoutObserverKey.self] = newValue }
+    }
+}
+#endif
+
 struct CardView<Content: View>: View {
     var radius: CGFloat = 22
     var padding: CGFloat = 18
@@ -134,6 +147,22 @@ struct RecommendationMetricColumn: View {
     }
 }
 
+extension View {
+    /// Apply to an action's text, not to cards containing multiline descriptions.
+    func fitMatchActionText() -> some View {
+        lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .allowsTightening(true)
+            .truncationMode(.tail)
+    }
+
+    /// Short inline actions keep their width when adjacent product text is long.
+    func fitMatchInlineAction() -> some View {
+        fixedSize(horizontal: true, vertical: false)
+            .layoutPriority(1)
+    }
+}
+
 struct PrimaryButton: View {
     @Environment(\.isEnabled) private var isEnabled
 
@@ -154,6 +183,7 @@ struct PrimaryButton: View {
 
                 Text(title)
                     .fontWeight(.semibold)
+                    .fitMatchActionText()
             }
             .font(.body)
             .foregroundStyle(isEnabled ? Color.white : Color.secondary)
@@ -178,6 +208,7 @@ struct EmptyStateActionButton: View {
             HStack(spacing: 6) {
                 Image(systemName: systemImage)
                 Text(title)
+                    .fitMatchActionText()
             }
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color(.systemBackground))
@@ -201,6 +232,7 @@ struct SecondaryButton: View {
                 }
                 Text(title)
                     .fontWeight(.semibold)
+                    .fitMatchActionText()
             }
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)

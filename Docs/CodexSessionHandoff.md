@@ -1,3 +1,10 @@
+## 2026-10-12 BF1012-07 — 긴 상품명과 버튼 레이아웃 (UI 후속)
+
+- 사용자 첨부 IMG_2589.PNG의 “비교할 내 옷 변경” 버튼 깨짐과 앱 내부 버튼의 긴 텍스트 대응을 UI 범위로 명시 승인. 기존 clean bugfix1012=`68a716a`에서 작업, 브랜치 변경0.
+- 공통 액션 텍스트를 한 줄·축소·말줄임 처리. 상품 텍스트 옆 인라인 액션/화살표의 폭 우선 확보. 선택한 내 옷 카드의 브랜드/상품명/옵션은 남는 폭에서 말줄임. 같은 데이터와 같은 액션을 받는 표시용 ResultClosetReferenceCard로 실제 카드 레이아웃 검증.
+- 액션/조건/상태/저장/identity/서버 계약/비교/점수 변경0. DB/SQL 변경0, QA/main merge·commit·push·배포0. 보호 스크롤 diff0. 자세한 대상/결과는 Docs/ChangeHistory/bugfix1012.md의 BF1012-07.
+- **PASS** 최종 QA build-for-testing, ButtonLayoutFinal.xcresult 4검사(신규 UI3+기존 mounted 선택1)/0fail/0skip. 320/375/430pt 실제 카드 버튼의 짧은/긴 이름 폭 동일·높이38·경계 유지; 긴 액션 문구80/156/280pt 한 줄 검사. **PASS** diff-check/보호 스크롤. 최초 접근성 측정 nil 실패는 DEBUG geometry 측정으로 보정 후 재실행. drawHierarchy 검은 캡처는 근거에서 제외하고 ImageRenderer 후속 UI3 재실행 PASS/exit0, 320/375/430pt 실제 결과 카드 렌더 직접 확인 PASS. 공통 버튼 이미지의 Secondary는 렌더 식별이 불명확해 시각 PASS 제외(자동 한 줄 검사는 PASS). 증거/소스 hash: Docs/ChangeHistory/bugfix1012-button-layout-verification.json. **NOT RUN** 실기기/전체 화면 직접 조작/QA 반영. 로그인된 앱의 실제 서버 E2E는 이번 UI 작업으로 확인하지 않으며 아래 인증 지원 필요 상태를 PASS로 바꾸지 않는다.
+
 ## 2026-10-12 BF1012-06 — 개발 DB 재검증 / 실제 로그인 지원 필요
 
 - 사용자 개발 DB 재테스트 요청에 따라 clean QA `fa01c7d771aed079fe9cc3048d9a802a990cdbb9`를 고정해 FitMatch-QA/Debug-QA를 새 빌드·설치·일반 실행했다. 실제 번들 URL은 개발 `hnkplvyegonlhumlejst`, bundle `com.ljy4337.fitmatch.qa`; fake auth/launch override 없음. iPhone 17 Simulator에서 `Continue with Apple` 로그인 화면 확인. 개발 SQL 재적용0, 앱/SQL 소스 변경0, 운영/main 변경0.
