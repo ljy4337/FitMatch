@@ -300,3 +300,14 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - 캡처 검증: drawHierarchy 이미지가 검게 나와 시각 확인 근거에서 제외. ImageRenderer로 같은 실제 UI 컴포넌트를 렌더링해 재실행: `ButtonLayoutRender.xcresult` UI3 PASS/0FAIL/0SKIP, xcodebuild exit0. 실제 결과 카드의 320/375/430pt 긴 이름 이미지 직접 확인 PASS(버튼 한 줄, 상품 텍스트 말줄임). `/private/tmp/bf1012/button-layout/BF1012-button-{320,375,430}-long.png`. 합성 입력/표시용 카드이며 실제 서버·전체 화면·실기기 증거 아님. 공통 버튼 이미지의 Secondary 렌더는 배경/글자 식별이 불명확해 시각 PASS 근거로 쓰지 않음; 공통 액션의 한 줄·폭 자동 검사는 PASS.
 - **PASS** `git diff --check`, 보호 스크롤 diff0 및 검사, 최종 UI diff에서 기존 action/상태/조건/서버 코드 보존 확인. 재현/검증 증거와 소스 hash: `Docs/ChangeHistory/bugfix1012-button-layout-verification.json`.
 - **NOT RUN** 실기기 UI 확인, 앱 전체 화면의 직접 조작, 이번 UI 변경의 QA merge/push/배포. 정상 인증 DB E2E의 기존 미검증 상태는 이번 UI 검사로 대체하지 않는다. 추가 DB 승인·SQL 적용 필요 없음.
+
+## BF1012-08 / BF1012-09 — 사이즈 판단 변경 통합 및 개발 DB 조사
+
+브랜치: bugfix1012 · 작업일: 2026-10-20 (Asia/Seoul)
+
+- 대상: 기존 `89e6014`의 알고리즘·결과 표시·v3 SQL 40파일, 복구 결합 SQL 회귀, 개발 읽기 전용 preflight, 통합 이력.
+- 변경 전: bugfix 수정과 알고리즘 변경이 서로 다른 브랜치에 존재했고 현재 로컬은 detached였다. 개발에는 v3 검증 함수가 없었다.
+- 변경: 기존 bugfix에 정상 병합하고 문서 양쪽 이력 및 기존 미커밋 조사기록을 보존한다. QR이 있는 QA 최종 조합도 별도로 검증한다. main/실제 DB/배포는 변경하지 않는다.
+- 검증: 현 개발 함수로 격리 v3 SQL31개, 기존 baseline31개, 복구 단독 및 v3 결합 SQL 회귀 PASS. 앱·QA 검증의 실제 결과는 아래 상세 기록을 따른다. 정상 사용자 원격 인증 비교/실기기 E2E는 NOT RUN.
+- 개발 DB v3 SQL 적용 승인은 이번 요청에 포함되지 않았으며 실제 적용0. 앞기장 활성화는 사전 정의/매핑 및 최소 앱 버전 조건으로 보류한다.
+- 상세/결과: [bugfix1012-size-decision-integration-20261020.md](bugfix1012-size-decision-integration-20261020.md).

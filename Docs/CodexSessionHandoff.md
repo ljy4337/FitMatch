@@ -1,3 +1,12 @@
+## 2026-10-20 BF1012-08/09 — bugfix1012로 알고리즘 통합, QA 통합 진행
+
+- 사용자 승인으로 `89e6014`를 기존 `bugfix1012`에 정상 merge(`6648ebf`). Handoff 충돌은 양쪽 이력 모두 보존. 원래 작업 폴더의 미커밋 조사81행은 backup 후 통합 커밋에서 제외하고 최종 현재 폴더에 복원한다. 로컬 선택 브랜치는 bugfix1012로 유지한다.
+- PASS: FitMatch-QA / Debug-QA 통합 앱 회귀121개, 실패/skip0, xcodebuild exit0. 첫 시도는 시뮬레이터 대기로 중단(BLOCKED), 테스트 기기만 데이터 삭제 없이 재시작한 재실행 결과다. QA 최종 조합은 별도 검증한다.
+- PASS: 현 개발 complete_comparison 정의 + v3 SQL31개, 기존 baseline31개, 기존 복구 SQL 및 v3/복구 결합 SQL 회귀. 실제 서버가 아닌 PGlite synthetic auth/catalog/hash 격리 검증이다. 버튼/옷장/History 기존 수정은 유지된다.
+- 개발 `hnkplvyegonlhumlejst` 읽기 전용 확인: v3 validator/연결 없음, 삽입 anchor 존재, 기존 복구 처리와 public RPC2개 존재. v3 migration 적용 필요하나 실제 적용0/별도 승인 필요. 앞기장 canonical 정의 미존재로 활성화SQL은 보류. 운영 조회/쓰기0.
+- 소스 `89e6014`의 조건부 점수 표시를 그대로 통합하며 점수 완전제거 정책은 이번에 추가 구현하지 않음. main/배포/DB 변경0, 정상 로그인 개발DB 비교 및 실기기 E2E NOT RUN.
+- 상세: Docs/ChangeHistory/bugfix1012-size-decision-integration-20261020.{md,json}; 원문 /private/tmp/FitMatchIntegration20261020/. QA에는 기존 QR 소스를 보존해 통합 후 새 검증을 실행한다.
+
 ## 2026-10-12 가슴 한 항목 98% 문제 재설계·구현
 
 - 사용자 요청: 고객에게 측정법 해석을 맡기지 말고, 유니클로·무신사·자라 치수를 이용한 실제 사이즈 판단과 결과 표시를 다시 설계하고 구현. 최신 main 2d01ea4 기반 `feature/size-decision-20261012`, 작업 폴더 `/Users/jinyoung/Developer/FitMatchLocal/FitMatchSizeDecision20261012`. 다른 작업 폴더와 QA/main은 병합하지 않았다.

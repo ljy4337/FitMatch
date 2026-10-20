@@ -1,0 +1,119 @@
+{
+  "dateAsiaSeoul": "2026-10-20",
+  "branch": "bugfix1012",
+  "historyIDs": [
+    "BF1012-08",
+    "BF1012-09"
+  ],
+  "sourceCommit": "89e601424245cd8be4cb6240c5aff8551c6cbe7f",
+  "originalBugfixCommit": "0a5801927981a694725de66a783c5a101faf97c8",
+  "originalQACommit": "a1f09dfb53c4e3b093de27938f7b3e7763555ab2",
+  "mainUnchanged": "2d01ea4cc0dd245f9406a9f3e80e2f50711d485d",
+  "developmentDatabase": {
+    "project": "hnkplvyegonlhumlejst",
+    "classification": "development per FitMatchBuildEnvironments",
+    "state": "ACTIVE_HEALTHY",
+    "validatorExists": false,
+    "validatorConnected": false,
+    "patchAnchorExists": true,
+    "userRecoverySupported": true,
+    "userRecoveryPublicRPCCount": 2,
+    "frontLengthCanonicalExists": false,
+    "sqlApplied": [],
+    "observationDefinitionSHA256": "bce4fbbae408173327e810c20be3e986ffdaece52ce31eec951242ab1f725e23"
+  },
+  "sqlTests": [
+    {
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-current-development.log",
+      "status": "PASS",
+      "count": 31,
+      "boundary": "local PGlite with synthetic auth/catalog/hash; no live mutation",
+      "sha256": "c7b5c97b5399a021108ca41114e11a3e95087a63ffb12adf15b9082192cd24a9"
+    },
+    {
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-baseline.log",
+      "status": "PASS",
+      "count": 31,
+      "boundary": "local PGlite with synthetic auth/catalog/hash; no live mutation",
+      "sha256": "c7b5c97b5399a021108ca41114e11a3e95087a63ffb12adf15b9082192cd24a9"
+    },
+    {
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-recovery.log",
+      "status": "PASS",
+      "count": null,
+      "boundary": "local PGlite with synthetic auth/catalog/hash; no live mutation",
+      "sha256": "14855685aab0081dd23b80ebe886db275883dd098647babec67934825ec00937"
+    },
+    {
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-recovery-v3-combined.log",
+      "status": "PASS",
+      "count": null,
+      "boundary": "local PGlite with synthetic auth/catalog/hash; no live mutation",
+      "sha256": "14855685aab0081dd23b80ebe886db275883dd098647babec67934825ec00937"
+    }
+  ],
+  "appTests": {
+    "status": "PASS",
+    "scheme": "FitMatch-QA",
+    "configuration": "Debug-QA",
+    "destination": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+    "summary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "x86_64",
+            "deviceId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+            "deviceName": "iPhone 17",
+            "modelName": "iPhone 17",
+            "osBuildNumber": "23D8133",
+            "osVersion": "26.3.1",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 138,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1792457136.694,
+      "passedTests": 121,
+      "result": "Passed",
+      "skippedTests": 0,
+      "startTime": 1792456972.729,
+      "statistics": [
+        {
+          "subtitle": "21 test runs",
+          "title": "4 tests ran with dynamic parameters"
+        }
+      ],
+      "testFailures": [],
+      "title": "Test - FitMatch-QA",
+      "topInsights": [
+        {
+          "category": "Longest Test Runs",
+          "impact": "52% of duration",
+          "text": "2 longest test runs with outlier durations exceeding 2.08s (three standard deviations)"
+        }
+      ],
+      "totalTestCount": 121
+    },
+    "xcresult": "/private/tmp/FitMatchIntegration20261020/bugfix-retry.xcresult",
+    "commandExitCode": 0
+  },
+  "remoteAuthenticatedComparison": "NOT RUN",
+  "physicalDevice": "NOT RUN",
+  "databaseDeployment": "NOT RUN",
+  "integrationMergeCommit": "6648ebf",
+  "interruptedAttempt": {
+    "status": "BLOCKED",
+    "xcresult": "/private/tmp/FitMatchIntegration20261020/bugfix.xcresult",
+    "reason": "Simulator startup stalled; interrupted and restarted only the test device; no data erased"
+  }
+}
