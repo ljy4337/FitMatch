@@ -221,6 +221,8 @@ final class RecommendationHistory {
 
     var displayComparisonMethod: String {
         switch comparisonMethod {
+        case let method where method.hasPrefix("서버 승인"):
+            return "내 옷과 치수 비교"
         case "전체 fallback 비교":
             return "유사한 옷 기준 비교"
         default:

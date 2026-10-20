@@ -2380,7 +2380,7 @@ private struct ClosetComparisonSummaryCard: View {
                             .multilineTextAlignment(.trailing)
 
                         if let sizeLabel = summary.recommendedSizeLabel {
-                            Text("예상 \(sizeLabel.displaySizeName)")
+                            Text("\(summary.similarityPercent == nil ? "참고" : "가까운 사이즈") \(sizeLabel.displaySizeName)")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
                         }
@@ -2400,7 +2400,7 @@ private struct ClosetComparisonSummaryCard: View {
     }
 
     private var rankTitle: String? {
-        guard summary.evidenceState == .comparable,
+        guard summary.evidenceState == .comparable, summary.similarityPercent != nil,
               let rank = summary.rank else { return nil }
         return rank == 1 ? "예상 1위" : "예상 \(rank)위"
     }
@@ -2414,7 +2414,8 @@ private struct ClosetComparisonSummaryCard: View {
     }
 
     private var similarityText: String {
-        summary.similarityPercent.map { "\($0)%" } ?? "선택 후 확인"
+        summary.similarityPercent.map { "\($0)점" }
+            ?? (summary.commonMeasurementCount > 0 ? "부분 비교" : "선택 후 확인")
     }
 
     private var similarityForegroundStyle: Color {
@@ -2425,17 +2426,15 @@ private struct ClosetComparisonSummaryCard: View {
         if summary.evidenceState != .comparable {
             return summary.reason ?? "비교 가능한 실측이 부족해요."
         }
-        let basis = summary.comparisonBasis?.displayName ?? "실측 항목 비교"
-        let conversion = summary.conversionCount > 0
-            ? " · 환산 \(summary.conversionCount)개"
-            : ""
-        return "\(basis) · 실측 \(summary.commonMeasurementCount)개\(conversion)"
+        return summary.similarityPercent == nil
+            ? "실측 \(summary.commonMeasurementCount)개 확인 · 전체 판단 보류"
+            : "실측 \(summary.commonMeasurementCount)개로 치수 비교"
     }
 
     private var accessibilitySummary: String {
         let size = summary.recommendedSizeLabel.map { ", 예상 사이즈 \($0.displaySizeName)" }
             ?? ""
-        return "\(item.displayName), 보유 사이즈 \(item.sizeName), 예상 유사도 \(similarityText)\(size), \(comparisonEvidenceText)"
+        return "\(item.displayName), 보유 사이즈 \(item.sizeName), 치수 비교 \(similarityText)\(size), \(comparisonEvidenceText)"
     }
 }
 

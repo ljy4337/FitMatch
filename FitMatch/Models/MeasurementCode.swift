@@ -6,6 +6,7 @@ enum MeasurementCode: String, Codable, CaseIterable, Hashable {
     case chestWidthPitToPit = "chest_width_pit_to_pit"
     case chestCircumferenceGarment = "chest_circumference_garment"
     case chestWidthUniqloBodyWidth = "chest_width_uniqlo_body_width"
+    case bodyLengthFrontShoulderSeamToHem = "body_length_front_shoulder_seam_to_hem"
     case bodyLengthHPSToHemFront = "body_length_hps_to_hem_front"
     case bodyLengthBackNeckToHem = "body_length_back_neck_to_hem"
     case bodyLengthMusinsaType5 = "body_length_musinsa_type_5"
@@ -60,6 +61,7 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
         "chest_circumference",
         "chest_width",
         "front_rise",
+        "front_length_shoulder_to_hem",
         "hem_circumference",
         "hem_width",
         "hip_circumference",
@@ -88,6 +90,8 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
     ) -> FitMatchCanonicalMeasurementProjection? {
         let code = canonicalCode.trimmingCharacters(in: .whitespacesAndNewlines)
         switch code {
+        case "front_length_shoulder_to_hem":
+            return projection(code, .bodyLengthFrontShoulderSeamToHem, .totalLength)
         case "back_length":
             return projection(code, .bodyLengthBackNeckToHem, .totalLength)
         case "total_length":
@@ -171,6 +175,8 @@ nonisolated enum FitMatchCanonicalMeasurementCode {
             return "chest_width"
         case .chestCircumferenceGarment:
             return "chest_circumference"
+        case .bodyLengthFrontShoulderSeamToHem:
+            return "front_length_shoulder_to_hem"
         case .bodyLengthHPSToHemFront, .bodyLengthUniqloKnitFront,
              .skirtLengthWaistToHem:
             return "total_length"
@@ -257,7 +263,7 @@ extension MeasurementCode {
             return .chest
         case .shoulderWidthSeamToSeam:
             return .shoulder
-        case .bodyLengthHPSToHemFront,
+        case .bodyLengthFrontShoulderSeamToHem, .bodyLengthHPSToHemFront,
              .bodyLengthBackNeckToHem,
              .bodyLengthMusinsaType5,
              .bodyLengthMusinsaType20,
@@ -304,6 +310,7 @@ extension MeasurementCode {
         case .shoulderWidthSeamToSeam: return "양쪽 어깨 봉제선 사이"
         case .chestWidthPitToPit, .chestWidthUniqloBodyWidth: return "겨드랑이 사이 가슴 단면"
         case .chestCircumferenceGarment: return "옷의 가슴둘레"
+        case .bodyLengthFrontShoulderSeamToHem: return "어깨 봉제선부터 앞 밑단까지"
         case .bodyLengthHPSToHemFront: return "어깨 최고점부터 앞 밑단까지"
         case .bodyLengthBackNeckToHem, .bodyLengthMusinsaType5,
              .bodyLengthMusinsaType20, .bodyLengthMusinsaType21,

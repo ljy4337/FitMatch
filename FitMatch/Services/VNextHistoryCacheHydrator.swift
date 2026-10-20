@@ -438,7 +438,7 @@ struct VNextHistoryCacheHydrator {
               begin.snapshot.target.variantID == row.targetVariantID else {
             throw VNextHistoryCacheHydrationError.incompleteSnapshot(row.id)
         }
-        let analysis = try adapter.analyze(begin)
+        let analysis = try adapter.analyze(begin, engineVersion: row.engineVersion)
         guard analysis.recommended.productSizeID == recommendedID,
               completionMatches(row, analysis: analysis) else {
             throw VNextHistoryCacheHydrationError.completionMismatch(row.id)
@@ -455,7 +455,7 @@ struct VNextHistoryCacheHydrator {
               row.engineVersion == evidence.engineVersion else {
             return false
         }
-        let evidenceCount = analysis.completionPayload.metricEvidence.filter {
+        let evidenceCount = analysis.completionPayload.rankingMeasurementCodes?.count ?? analysis.completionPayload.metricEvidence.filter {
             $0.productSizeID == analysis.recommended.productSizeID
         }.count
         let tolerance = 0.000_001
@@ -468,6 +468,7 @@ struct VNextHistoryCacheHydrator {
             && abs(evidence.coverage - analysis.completionPayload.coverage) < tolerance
             && evidence.candidateSizeRanking == analysis.completionPayload.candidateSizeRanking
             && evidence.metricEvidence == analysis.completionPayload.metricEvidence
+            && evidence.rankingMeasurementCodes == analysis.completionPayload.rankingMeasurementCodes
     }
 
     private func makeProduct(

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import FitMatch
 
+@MainActor
 struct FitMatchVNextContractTests {
     @Test func completedReplayReliabilityAcceptsOnlyDocumentedFormulas() {
         // Includes all current DB distributions and historical threshold boundaries.
@@ -22,7 +23,7 @@ struct FitMatchVNextContractTests {
         }
         #expect(!VNextCompletedReplayPolicy.acceptsReliability(
             1, engineVersion: "unknown", evidenceCount: 1, coverage: 1))
-        #expect(VNextComparisonEngineAdapter.engineVersion == "fitmatch-ios-vnext-snapshot-v2")
+        #expect(VNextComparisonEngineAdapter.engineVersion == "fitmatch-ios-vnext-snapshot-v3")
     }
 
     @Test func retailerExactV2ContractRequiresExactUnscoredSemanticIdentity() throws {
@@ -185,7 +186,8 @@ struct FitMatchVNextContractTests {
         let summary = try #require(batch.items.first)
         let detail = try VNextComparisonEngineAdapter().analyze(begin)
         #expect(summary.recommendedProductSizeID == detail.recommended.productSizeID)
-        #expect(summary.similarityPercent == detail.recommended.result.score)
+        #expect(summary.similarityPercent == nil) // Chest alone is a partial comparison.
+        #expect(detail.recommended.result.score == 95)
         #expect(summary.commonMeasurementCount == detail.recommended.result.comparedItems.count)
         let mismatched = service.makeServerClosetComparisonBatchSummary(
             targetProductID: UUID(), comparisonGroup: group, candidates: [candidate])
@@ -235,6 +237,63 @@ struct FitMatchVNextContractTests {
         #expect(revised.score != baseline.score)
         #expect(cache.computationCount == 3)
         #expect(cache.compare(measurements, minimum: 2) == nil)
+    }
+
+    @Test(arguments: ["basis_code", "unit_code", "weight"])
+    func inconsistentCandidateSemanticsCannotBeRanked(field: String) throws {
+        let fixture = ComparisonBeginFixture()
+        var root = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        var snapshot = try #require(root["snapshot"] as? [String: Any])
+        var target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        var candidates = try #require(target["candidates"] as? [[String: Any]])
+        var metrics = try #require(candidates[1]["comparison_measurements"] as? [[String: Any]])
+        metrics[0][field] = field == "weight" ? (2 as Any) : ("different" as Any)
+        candidates[1]["comparison_measurements"] = metrics
+        target["candidates"] = candidates; snapshot["target_snapshot"] = target; root["snapshot"] = snapshot
+        let begin = try JSONDecoder().decode(VNextBeginComparisonDTO.self, from: JSONSerialization.data(withJSONObject: root))
+        #expect(throws: VNextComparisonEngineAdapterError.inconsistentRankingEvidence) {
+            try VNextComparisonEngineAdapter().analyze(begin)
+        }
+    }
+
+    @Test func allSizesUseSameEvidenceAndV2ReplayKeepsOriginalRanking() throws {
+        let fixture = ComparisonBeginFixture()
+        var root = try #require(JSONSerialization.jsonObject(with: Data(fixture.json().utf8)) as? [String: Any])
+        var snapshot = try #require(root["snapshot"] as? [String: Any])
+        var target = try #require(snapshot["target_snapshot"] as? [String: Any])
+        var candidates = try #require(target["candidates"] as? [[String: Any]])
+        let length: [String: Any] = ["measurement_code": "back_length", "reference_value": 60,
+            "target_value": 70, "difference": 10, "absolute_difference": 10,
+            "unit_code": "CM", "basis_code": "back_neck_to_hem", "weight": 1,
+            "requirement_mode": "OPTIONAL", "priority": 2]
+        var aMetrics = try #require(candidates[0]["comparison_measurements"] as? [[String: Any]])
+        aMetrics[0]["target_value"] = 50; aMetrics[0]["difference"] = 0; aMetrics[0]["absolute_difference"] = 0
+        aMetrics.append(length); candidates[0]["comparison_measurements"] = aMetrics
+        target["candidates"] = candidates; snapshot["target_snapshot"] = target
+        var policy = try #require(snapshot["policy_snapshot"] as? [String: Any])
+        var metrics = try #require(policy["metrics"] as? [[String: Any]])
+        metrics.append(["metric_mode": "CANONICAL", "fitmatch_measurement_code": "back_length",
+                        "weight": 1, "requirement_mode": "OPTIONAL", "priority": 2, "is_active": true])
+        policy["metrics"] = metrics; snapshot["policy_snapshot"] = policy; root["snapshot"] = snapshot
+        let begin = try JSONDecoder().decode(VNextBeginComparisonDTO.self, from: JSONSerialization.data(withJSONObject: root))
+        let adapter = VNextComparisonEngineAdapter()
+        let current = try adapter.analyze(begin)
+        #expect(current.recommended.productSizeID == fixture.sizeA)
+        #expect(current.recommended.result.score == 100)
+        #expect(current.completionPayload.rankingMeasurementCodes == ["chest_width"])
+        #expect(current.completionPayload.metricEvidence.count == 3)
+        #expect(current.completionPayload.coverage == 0.5)
+        #expect(current.recommended.result.additionalItems.first?.signedDifference == 10)
+        let decision = SizeComparisonDecision.make(group: .tops, result: current.recommended.result)
+        #expect(decision.overallScore == nil)
+        #expect(decision.differenceSummary.contains("옷 길이 10.0cm 김"))
+        let calculation = RecommendationCalculationSnapshot.make(comparison: current.recommended.result)
+        #expect(calculation.additionalMeasurements?.count == 1)
+        #expect(try JSONDecoder().decode(RecommendationCalculationSnapshot.self, from: JSONEncoder().encode(calculation)) == calculation)
+        #expect(current.analyses.allSatisfy { $0.result.comparedItems.count == 1 })
+        let old = try adapter.analyze(begin, engineVersion: VNextCompletedReplayPolicy.snapshotV2)
+        #expect(old.recommended.productSizeID == fixture.sizeB)
+        #expect(old.completionPayload.rankingMeasurementCodes == nil)
     }
 
     @Test func engineUsesOneServerAuthorizedCanonicalMetricWithCountBasedReliability() throws {
