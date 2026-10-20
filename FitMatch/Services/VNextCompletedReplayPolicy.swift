@@ -5,8 +5,9 @@ import Foundation
 /// v2 separates the current count policy from that legacy ambiguity.
 nonisolated enum VNextCompletedReplayPolicy {
     static let legacyVersion = "fitmatch-ios-vnext-snapshot-v1"
-    static let currentVersion = "fitmatch-ios-vnext-snapshot-v2"
-    static let supportedVersions: Set<String> = [legacyVersion, currentVersion]
+    static let snapshotV2 = "fitmatch-ios-vnext-snapshot-v2"
+    static let currentVersion = "fitmatch-ios-vnext-snapshot-v3"
+    static let supportedVersions: Set<String> = [legacyVersion, snapshotV2, currentVersion]
 
     static func acceptsReliability(
         _ stored: Int, engineVersion: String, evidenceCount: Int, coverage: Double

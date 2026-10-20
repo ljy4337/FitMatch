@@ -1,3 +1,23 @@
+## 2026-10-20 BF1012-08/09 — bugfix1012로 알고리즘 통합, QA 통합 진행
+
+- 사용자 승인으로 `89e6014`를 기존 `bugfix1012`에 정상 merge(`6648ebf`). Handoff 충돌은 양쪽 이력 모두 보존. 원래 작업 폴더의 미커밋 조사81행은 backup 후 통합 커밋에서 제외하고 최종 현재 폴더에 복원한다. 로컬 선택 브랜치는 bugfix1012로 유지한다.
+- PASS: FitMatch-QA / Debug-QA 통합 앱 회귀121개, 실패/skip0, xcodebuild exit0. 첫 시도는 시뮬레이터 대기로 중단(BLOCKED), 테스트 기기만 데이터 삭제 없이 재시작한 재실행 결과다. QA 최종 조합은 별도 검증한다.
+- PASS: 현 개발 complete_comparison 정의 + v3 SQL31개, 기존 baseline31개, 기존 복구 SQL 및 v3/복구 결합 SQL 회귀. 실제 서버가 아닌 PGlite synthetic auth/catalog/hash 격리 검증이다. 버튼/옷장/History 기존 수정은 유지된다.
+- 개발 `hnkplvyegonlhumlejst` 읽기 전용 확인: v3 validator/연결 없음, 삽입 anchor 존재, 기존 복구 처리와 public RPC2개 존재. v3 migration 적용 필요하나 실제 적용0/별도 승인 필요. 앞기장 canonical 정의 미존재로 활성화SQL은 보류. 운영 조회/쓰기0.
+- 소스 `89e6014`의 조건부 점수 표시를 그대로 통합하며 점수 완전제거 정책은 이번에 추가 구현하지 않음. main/배포/DB 변경0, 정상 로그인 개발DB 비교 및 실기기 E2E NOT RUN.
+- 상세: Docs/ChangeHistory/bugfix1012-size-decision-integration-20261020.{md,json}; 원문 /private/tmp/FitMatchIntegration20261020/. QA에는 기존 QR 소스를 보존해 통합 후 새 검증을 실행한다.
+
+## 2026-10-12 가슴 한 항목 98% 문제 재설계·구현
+
+- 사용자 요청: 고객에게 측정법 해석을 맡기지 말고, 유니클로·무신사·자라 치수를 이용한 실제 사이즈 판단과 결과 표시를 다시 설계하고 구현. 최신 main 2d01ea4 기반 `feature/size-decision-20261012`, 작업 폴더 `/Users/jinyoung/Developer/FitMatchLocal/FitMatchSizeDecision20261012`. 다른 작업 폴더와 QA/main은 병합하지 않았다.
+- 원인 재현: 가슴 43→42.5cm 한 항목의 산술 98이 종합 유사도·완벽한 핏으로 노출. 최초 회귀 검증에서 이 동작을 확인했다.
+- 구현: v3 공통 승인 항목 교집합으로 후보를 동일 조건에서 정렬. Decimal 반올림·동점 기준 통일. 모든 승인 근거는 보존하고 공통 순위에서 빠지는 추가 치수도 화면·로컬 snapshot에 보존. `SizeComparisonDecision`이 핵심 부위 충족을 판단하여 부분 비교 또는 치수 점수를 표시. 결과/후보/다른 사이즈/History에 연결. 측정법은 접힌 상세에 배치. 앞기장 exact 로컬 코드 추가.
+- 과거 기록: v1/v2는 해당 버전 산술·순위로 복원한다. 저장 값은 수정하지 않고 새 표시 정책만 적용한다. 새 앱이 옛 기록을 읽는 호환은 검증했다. 옛 앱이 v3 기록을 읽는 전방 호환은 없으므로 배포 시 최소 앱 버전을 확보해야 한다.
+- 검증: `verified2.xcresult`에서 선택한 앱 검증 48개 정상 완료. 최종 문구 수정 후 `presentation.xcresult`의 관련 검증 5개도 재확인했다. 실제 SwiftUI 카드 두 상태도 렌더링. 개발/운영 complete_comparison 정의를 각각 로컬 PGlite로 복제하여 31개씩 검증 완료. 실제 인증·RLS·API 왕복이나 전체 출시 검증을 완료했다고 확대 해석하지 않는다.
+- DB 준비: `20261012230000_size_decision_v3.sql`은 환경별 기존 함수와 ACL을 보존하는 삽입부 변경. 앞기장 정책은 구버전 앱이 새 코드를 거부하므로 별도 `20261012_front_length_Activate.sql`로 분리. 두 변경 모두 되돌리기 SQL 포함. 실제 개발/운영 DB 쓰기·App Store 배포는 하지 않았다.
+- 보호 스크롤 파일과 modifier 호출 변경 없음. 상세 설계·브랜드 조합·수치 예시·검증 범위: `Docs/Design/SizeDecision-20261012.md`.
+- 보고 선호: 사용자는 영문 PASS/NOT RUN 같은 상태표 대신 결론, 확인한 수치, 완료한 조치, 남은 적용 단계를 명확한 한국어로 보고하도록 지시했다. 이후에도 이 형식을 따른다.
+
 ## 2026-10-12 BF1012-07 — 버튼 UI QA 반영 / 89e6014 독립 재검증
 
 - 사용자 승인 “버튼 깨짐까지 QA 반영” 실행. bugfix1012 UI 커밋 `0a58019`, QA 정상 merge `e9ddb2a` 및 두 브랜치 원격 push 완료. QR `5606119`/`1580aa3`와 기존 BF1012-01~06 포함 확인. main/운영/DB/배포 변경0. 아래 BF1012-07의 QA NOT RUN은 당시 상태이며 이번 기록으로 대체한다.

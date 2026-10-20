@@ -1,0 +1,105 @@
+{
+  "base_commit": "2d01ea4cc0dd245f9406a9f3e80e2f50711d485d",
+  "branch": "feature/size-decision-20261012",
+  "app_verification": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+          "deviceName": "iPhone 17",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 63,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791812859.861,
+    "passedTests": 48,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791812397.967,
+    "statistics": [
+      {
+        "subtitle": "17 test runs",
+        "title": "2 tests ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "74% of duration",
+        "text": "1 longest test run with outlier durations exceeding 3.43s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 48
+  },
+  "final_presentation_verification": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "x86_64",
+          "deviceId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+          "deviceName": "iPhone 17",
+          "modelName": "iPhone 17",
+          "osBuildNumber": "23D8133",
+          "osVersion": "26.3.1",
+          "platform": "iOS Simulator"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 18,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791813486.465,
+    "passedTests": 5,
+    "result": "Passed",
+    "skippedTests": 0,
+    "startTime": 1791813063.878,
+    "statistics": [
+      {
+        "subtitle": "14 test runs",
+        "title": "1 test ran with dynamic parameters"
+      }
+    ],
+    "testFailures": [],
+    "title": "Test - FitMatch-QA",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "100% of duration",
+        "text": "1 longest test run with outlier durations exceeding 1.80s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 5
+  },
+  "sql_local_scenarios": {
+    "development_function_definition": 31,
+    "production_function_definition": 31
+  },
+  "live_database_changes": false,
+  "deployed": false,
+  "protected_scroll_changes": false
+}

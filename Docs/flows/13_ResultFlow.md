@@ -1,5 +1,13 @@
 # 13. 추천 결과 화면 흐름
 
+## 2026-10-12 치수 판단 변경
+
+서버 승인 snapshot → VNextRankingEvidence 공통 항목/Decimal 계산 → VNextComparisonEngineAdapter 순위/전체 근거 보존 → 서버 v3 검증 → RecommendationCalculationSnapshot → SizeComparisonDecision → 결과·다른 사이즈·History 표시. 목록도 같은 공통 항목 기준을 사용한다.
+
+핵심 부위가 빠지면 부분 비교와 실제 cm 차이를 표시하고 종합 점수는 숨긴다. 다른 후보에 없는 추가 승인 치수는 additionalMeasurements에 보존한다. 측정법은 접힌 상세에 표시한다. 사용자 선택·서버 권한·보호 스크롤은 그대로 유지한다.
+
+[설계와 배포 순서](../Design/SizeDecision-20261012.md). 실제 개발·운영 DB에는 아직 적용하지 않았다.
+
 ## ACT-RESULT-001 결과 확인
 
 ### UI

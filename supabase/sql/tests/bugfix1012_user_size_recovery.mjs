@@ -112,6 +112,13 @@ assert.equal(frozen.candidates[0].identity_kind,'USER_RECOVERY');
 // New draft supersedes the live pointer after begin, but exact frozen comparison must still complete.
 await save(request(104));
 const result={recommended_product_size_id:second.size_id,score:90,reliability:1,coverage:1,engine_version:'isolated-fixture',candidate_size_ranking:[{product_size_id:second.size_id,rank:1,score:90}],metric_evidence:frozen.candidates.flatMap(c=>c.comparison_measurements.map(m=>({...m,product_size_id:c.product_size_id})))};
+if (process.argv.includes('--with-size-decision-v3')) {
+ await db.exec(await load('../../migrations/20261012230000_size_decision_v3.sql'));
+ result.engine_version='fitmatch-ios-vnext-snapshot-v3';
+ result.ranking_measurement_codes=[...new Set(frozen.candidates.flatMap(c=>c.comparison_measurements.map(m=>m.measurement_code)))].sort();
+ const forged={...result,score:91,candidate_size_ranking:result.candidate_size_ranking.map(r=>({...r,score:91}))};
+ await assert.rejects(()=>scalar('select fitmatch_vnext.complete_comparison($1,$2::jsonb) value',[begun.comparison_id,JSON.stringify(forged)]),/V3 score, rank or summary/);
+}
 const completed=await scalar('select fitmatch_vnext.complete_comparison($1,$2::jsonb) value',[begun.comparison_id,JSON.stringify(result)]);
 assert.equal(completed.completed,true); assert.equal(completed.recommended_product_size_id,second.size_id);
 const stored=await query('select recommended_product_size_id,recommended_user_recovery_size_id from fitmatch_vnext.comparisons where id=$1',[begun.comparison_id]);

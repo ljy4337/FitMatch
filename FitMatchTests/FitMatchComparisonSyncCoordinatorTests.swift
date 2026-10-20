@@ -108,7 +108,7 @@ struct FitMatchComparisonSyncCoordinatorTests {
 
                 let draft = try! JSONSerialization.data(withJSONObject: root)
                 let row = try! JSONDecoder().decode(VNextComparisonHistoryDTO.self, from: draft)
-                let analysis = try! VNextComparisonEngineAdapter().analyze(row.snapshotBegin!)
+                let analysis = try! VNextComparisonEngineAdapter().analyze(row.snapshotBegin!, engineVersion: row.engineVersion)
                 var evidence = try! JSONSerialization.jsonObject(
                     with: JSONEncoder().encode(analysis.completionPayload)
                 ) as! [String: Any]
@@ -188,12 +188,13 @@ struct FitMatchComparisonSyncCoordinatorTests {
         #expect(try await pending.value == nil)
     }
 
-    @Test func completedReplayPreservesBothV1PoliciesAndNewV2() throws {
-        for (version, reliability) in [("v1", 2), ("v1", 1), ("v2", 1)] {
+    @Test func completedReplayPreservesV1V2AndV3() throws {
+        for (version, reliability) in [("v1", 2), ("v1", 1), ("v2", 1), ("v3", 1)] {
             let fixture = try ComparisonHistoryFixture(completedJSONTransform: { json in
-                json.replacingOccurrences(of: "snapshot-v1", with: "snapshot-" + version)
+                let upgraded = json.replacingOccurrences(of: "snapshot-v1", with: "snapshot-" + version)
                     .replacingOccurrences(of: "\"reliability\":2", with: "\"reliability\":\(reliability)")
                     .replacingOccurrences(of: "\"reliability_level\":2", with: "\"reliability_level\":\(reliability)")
+                return version == "v3" ? upgraded.replacingOccurrences(of: "\"metric_evidence\":[", with: "\"ranking_measurement_codes\":[\"chest_width_pit_to_pit\"],\"metric_evidence\":[") : upgraded
             })
             let container = try inMemoryContainer()
             let context = ModelContext(container)

@@ -171,6 +171,9 @@ struct MeasurementComparisonResult: Equatable {
     let requiredAllKinds: [MeasurementKind]
     let expectedWeightSum: Double
     let usedWeightSum: Double
+    /// Approved facts absent from at least one other candidate. Display them,
+    /// but never add them to the shared ranking score or evidence coverage.
+    var additionalItems: [MeasurementComparisonItem] = []
 
     var comparedKinds: [MeasurementKind] {
         comparedItems.map(\.kind)
@@ -342,6 +345,8 @@ struct MeasurementComparisonEngine {
         }
 
         switch code {
+        case "front_length_shoulder_to_hem":
+            return (.bodyLengthFrontShoulderSeamToHem, .totalLength)
         case "back_length", "total_length":
             return (.bodyLengthBackNeckToHem, .totalLength)
         case "outseam":
@@ -522,7 +527,7 @@ struct MeasurementComparisonEngine {
             return .chest
         case .shoulderWidthSeamToSeam:
             return .shoulder
-        case .bodyLengthHPSToHemFront,
+        case .bodyLengthFrontShoulderSeamToHem, .bodyLengthHPSToHemFront,
              .bodyLengthBackNeckToHem,
              .bodyLengthMusinsaType5,
              .bodyLengthMusinsaType20,
@@ -574,7 +579,7 @@ struct MeasurementComparisonEngine {
             return .chest
         case .shoulderWidthSeamToSeam:
             return .shoulder
-        case .bodyLengthHPSToHemFront,
+        case .bodyLengthFrontShoulderSeamToHem, .bodyLengthHPSToHemFront,
              .bodyLengthBackNeckToHem,
              .bodyLengthMusinsaType5,
              .bodyLengthMusinsaType20,

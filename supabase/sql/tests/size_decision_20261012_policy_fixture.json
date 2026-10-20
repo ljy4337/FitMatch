@@ -1,0 +1,44 @@
+[
+  {
+    "is_active": true,
+    "created_at": "2026-08-02T06:15:54.45449+00:00",
+    "updated_at": "2026-09-28T04:24:04.242011+00:00",
+    "policy_code": "tshirt",
+    "display_name": "티셔츠",
+    "policy_version": "vnext-policy-20260928-top-one-common-v1",
+    "policy_checksum": "87ca3df9b47fa848d42bcd11672765f134e8e047ba1f6f68600f51f42ea27f35",
+    "required_any_min": 0,
+    "audience_policy_code": "ADULT_ANY",
+    "allow_manual_extended": true,
+    "native_default_weight": 1,
+    "sleeve_mismatch_policy": "REQUIRE_MATCH",
+    "min_common_measurements": 1,
+    "body_length_mismatch_policy": "IGNORE",
+    "body_mismatch_excluded_codes": [],
+    "lower_length_mismatch_policy": "IGNORE",
+    "lower_mismatch_excluded_codes": [],
+    "sleeve_mismatch_excluded_codes": [
+      "sleeve_length"
+    ]
+  },
+  {
+    "is_active": true,
+    "created_at": "2026-08-02T06:15:54.45449+00:00",
+    "updated_at": "2026-09-14T10:11:25.56457+00:00",
+    "policy_code": "unclassified_outerwear",
+    "display_name": "분류 미확정 아우터",
+    "policy_version": "vnext-policy-20260914-group-session-v1",
+    "policy_checksum": "52c9a33eb2d0aa8850fa8fe994b293151c68005f4404a18c893c284f7387feda",
+    "required_any_min": 0,
+    "audience_policy_code": "ADULT_ANY",
+    "allow_manual_extended": true,
+    "native_default_weight": 1,
+    "sleeve_mismatch_policy": "IGNORE",
+    "min_common_measurements": 1,
+    "body_length_mismatch_policy": "IGNORE",
+    "body_mismatch_excluded_codes": [],
+    "lower_length_mismatch_policy": "IGNORE",
+    "lower_mismatch_excluded_codes": [],
+    "sleeve_mismatch_excluded_codes": []
+  }
+]

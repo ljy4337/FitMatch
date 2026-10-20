@@ -316,3 +316,14 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - 기본 폴더 HEAD를 정확히 `89e6014`로 전환(detached/clean). feature 브랜치는 기존 별도 worktree/동일 HEAD/clean 보존. QA와 후보 알고리즘을 합치지 않음.
 - **PASS** 후보 fresh48 focused 앱 검사, 개발/운영 completion 정의 fixture 각각31 PGlite SQL 시나리오. 실패가 없어 후보 폐기0. 알고리즘 소스 수정0. 대상/근거/미검증 경계는 최신 Handoff 및 `bugfix1012-qa-ui-and-size-decision-recheck.json`에 기록.
 - **NOT RUN** 실제 v3 DB 적용/정상 인증 비교·기록, 구버전 앱 혼용 E2E, 실기기, 후보+QA 통합, 운영/main/배포. v3 적용은 별도 승인 필요. 이전 BF1012-07의 QA 미반영 기록은 당시 상태이며 이번 후속으로 대체.
+
+## BF1012-08 / BF1012-09 — 사이즈 판단 변경 통합 및 개발 DB 조사
+
+브랜치: bugfix1012 · 작업일: 2026-10-20 (Asia/Seoul)
+
+- 대상: 기존 `89e6014`의 알고리즘·결과 표시·v3 SQL 40파일, 복구 결합 SQL 회귀, 개발 읽기 전용 preflight, 통합 이력.
+- 변경 전: bugfix 수정과 알고리즘 변경이 서로 다른 브랜치에 존재했고 현재 로컬은 detached였다. 개발에는 v3 검증 함수가 없었다.
+- 변경: 기존 bugfix에 정상 병합하고 문서 양쪽 이력 및 기존 미커밋 조사기록을 보존한다. QR이 있는 QA 최종 조합도 별도로 검증한다. main/실제 DB/배포는 변경하지 않는다.
+- 검증: 현 개발 함수로 격리 v3 SQL31개, 기존 baseline31개, 복구 단독 및 v3 결합 SQL 회귀 PASS. 앱·QA 검증의 실제 결과는 아래 상세 기록을 따른다. 정상 사용자 원격 인증 비교/실기기 E2E는 NOT RUN.
+- 개발 DB v3 SQL 적용 승인은 이번 요청에 포함되지 않았으며 실제 적용0. 앞기장 활성화는 사전 정의/매핑 및 최소 앱 버전 조건으로 보류한다.
+- 상세/결과: [bugfix1012-size-decision-integration-20261020.md](bugfix1012-size-decision-integration-20261020.md).
