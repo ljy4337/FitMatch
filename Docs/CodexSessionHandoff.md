@@ -1,3 +1,12 @@
+## 2026-10-20 BF1012-08/09 — bugfix 통합 및 QA 최종 조합 검증 완료
+
+- 현재 로컬은 기존 bugfix1012. 알고리즘89e6014를 정상 merge6648ebf, 검증기록29f75f2 후 QA에 merge de458b3. QR 앱 코드 차이는 원래 patch-id와 일치해 보존 확인. 문서 충돌은 양쪽 기록 유지. 아래 ‘QA 진행’ 항목은 이 완료 기록으로 갱신된다.
+- PASS: bugfix121개 및 QA 최종129개(기존121+QR8), 실패/skip0, 각 xcodebuild exit0. 첫 bugfix 시도는 기기 준비 지연으로 중단(BLOCKED), 기기 데이터 삭제 없이 재시작한 재실행에서121개 PASS. QA도 실제 통합 소스로 새 검사했다.
+- PASS: 현 개발 complete_comparison 복제/기존 baseline의 최종 SQL32개씩, 복구 SQL 및 복구/v3 결합 SQL. 현 개발 함수는 미적용 시 공통항목 v3 coverage를 거절하고 PENDING 유지, patch 후 같은 결과 정상 완료를 격리 재현했다. Synthetic auth/catalog/hash이며 실제 로그인 API/RLS E2E로 확대하지 않는다.
+- 개발 hnkplvyegonlhumlejst: v3 validator/연결 없음, 기존 복구 RPC/처리는 있음. 준비된 20261012230000_size_decision_v3.sql 적용 필요하나 실제 적용0/승인 대기. 앞기장 canonical 정의 미존재로 활성화 SQL은 보류하며 별도 사전 정의/매핑·최소 앱 버전 확인 필요.
+- main2d01ea4 유지, 운영/개발 DB 쓰기0/배포0. 정상 인증DB 비교/History·실기기·전체 Release Gate NOT RUN. 조건부 점수 표시를 그대로 통합했고 점수 완전제거는 이번에 추가 구현하지 않았다.
+- 미커밋 조사81행은 통합 커밋과 분리해 보존하고 최종 작업 폴더에 복원한다. 상세 Docs/ChangeHistory/bugfix1012-size-decision-integration-20261020.{md,json}; 원문 /private/tmp/FitMatchIntegration20261020/. 최종 Git/원격 확인은 scratch/branch-integration-20261020/final-git-state.json에 기록한다.
+
 ## 2026-10-20 BF1012-08/09 — bugfix1012로 알고리즘 통합, QA 통합 진행
 
 - 사용자 승인으로 `89e6014`를 기존 `bugfix1012`에 정상 merge(`6648ebf`). Handoff 충돌은 양쪽 이력 모두 보존. 원래 작업 폴더의 미커밋 조사81행은 backup 후 통합 커밋에서 제외하고 최종 현재 폴더에 복원한다. 로컬 선택 브랜치는 bugfix1012로 유지한다.

@@ -64,6 +64,13 @@ const reject=async(p,pattern=/V3/,t=target)=>{
  assert.equal((await db.query('select result_status from fitmatch_vnext.comparisons where id=$1',[u(21)])).rows[0].result_status,'PENDING');
  await db.query('delete from fitmatch_vnext.comparisons where id=$1',[u(21)]);checks++;
 };
+// Reproduce why the deployed pre-v3 completion needs this migration: its
+// full-evidence coverage rejects the v3 common-intersection result.
+await db.exec(before);
+await seed(19);
+await assert.rejects(()=>complete(19,result),/Coverage does not match/);
+assert.equal((await db.query('select result_status from fitmatch_vnext.comparisons where id=$1',[u(19)])).rows[0].result_status,'PENDING');
+await db.exec(after);checks++;
 await seed();const completed=await complete(20,result);
 assert.equal(completed.completed,true);assert.equal(completed.coverage,0.5);assert.equal(completed.validated_evidence_count,3);checks++;
 assert.equal((await complete(20,result)).idempotent,true);checks++;
