@@ -115,5 +115,79 @@
     "status": "BLOCKED",
     "xcresult": "/private/tmp/FitMatchIntegration20261020/bugfix.xcresult",
     "reason": "Simulator startup stalled; interrupted and restarted only the test device; no data erased"
-  }
+  },
+  "qaTests": {
+    "status": "PASS",
+    "sourceCommit": "de458b397d4f46e4c8a728d7de233c75f4f36108",
+    "summary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "x86_64",
+            "deviceId": "146FF9DA-E9A3-4F67-A629-D0C0C531F25A",
+            "deviceName": "iPhone 17",
+            "modelName": "iPhone 17",
+            "osBuildNumber": "23D8133",
+            "osVersion": "26.3.1",
+            "platform": "iOS Simulator"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 146,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "FitMatch-QA · Built with macOS 15.7.7",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1792457619.286,
+      "passedTests": 129,
+      "result": "Passed",
+      "skippedTests": 0,
+      "startTime": 1792457282.08,
+      "statistics": [
+        {
+          "subtitle": "21 test runs",
+          "title": "4 tests ran with dynamic parameters"
+        }
+      ],
+      "testFailures": [],
+      "title": "Test - FitMatch-QA",
+      "topInsights": [
+        {
+          "category": "Longest Test Runs",
+          "impact": "93% of duration",
+          "text": "6 longest test runs with outlier durations exceeding 0.82s (three standard deviations)"
+        }
+      ],
+      "totalTestCount": 129
+    },
+    "xcresult": "/private/tmp/FitMatchIntegration20261020/qa.xcresult",
+    "commandExitCode": 0
+  },
+  "qrPatchIdentity": {
+    "beforeIntegration": "74b2aaf2bffc4d2339d9555745443bb7dc45cccd",
+    "afterIntegration": "74b2aaf2bffc4d2339d9555745443bb7dc45cccd",
+    "status": "PASS"
+  },
+  "finalSqlTests": [
+    {
+      "status": "PASS",
+      "scenarios": 32,
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-current-development-final.log",
+      "sha256": "f47c084206b179c979f25c8bec55eafb51305f5537fb5639ea77f9025c173e13"
+    },
+    {
+      "status": "PASS",
+      "scenarios": 32,
+      "log": "/private/tmp/FitMatchIntegration20261020/sql-baseline-final.log",
+      "sha256": "f47c084206b179c979f25c8bec55eafb51305f5537fb5639ea77f9025c173e13"
+    }
+  ],
+  "fullReleaseGate": "NOT RUN",
+  "qaIntegration": "PASS"
 }

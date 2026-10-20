@@ -311,3 +311,8 @@ xcodebuild test -project FitMatch.xcodeproj -scheme FitMatch-QA \
 - 검증: 현 개발 함수로 격리 v3 SQL31개, 기존 baseline31개, 복구 단독 및 v3 결합 SQL 회귀 PASS. 앱·QA 검증의 실제 결과는 아래 상세 기록을 따른다. 정상 사용자 원격 인증 비교/실기기 E2E는 NOT RUN.
 - 개발 DB v3 SQL 적용 승인은 이번 요청에 포함되지 않았으며 실제 적용0. 앞기장 활성화는 사전 정의/매핑 및 최소 앱 버전 조건으로 보류한다.
 - 상세/결과: [bugfix1012-size-decision-integration-20261020.md](bugfix1012-size-decision-integration-20261020.md).
+
+### BF1012-08/09 최종 확인 — 2026-10-20
+
+- bugfix merge6648ebf 및 검증기록29f75f2, QA merge de458b3. QA 최종 앱129개/실패0/skip0 PASS; 현 개발 함수 복제 및 기존 baseline SQL 최종32개씩 PASS; 복구/v3 결합 SQL PASS.
+- 기존 QR 차이 patch-id 동일, main2d01ea4 유지. v3 SQL 실제 미적용/별도 승인 필요; 앞기장 활성화 보류; 정상 인증DB/실기기/전체 Release Gate NOT RUN.

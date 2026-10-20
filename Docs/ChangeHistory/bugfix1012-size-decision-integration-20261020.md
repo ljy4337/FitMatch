@@ -19,8 +19,8 @@
 
 ### 검증 결과
 
-- PASS: 현재 개발 `complete_comparison` 정의를 읽기 전용으로 확보해 로컬 PGlite에서 v3 SQL 31시나리오 실행.
-- PASS: 기존 baseline에 v3 SQL 31시나리오 실행.
+- PASS: 현재 개발 `complete_comparison` 정의를 읽기 전용으로 확보해 로컬 PGlite에서 v3 SQL 31시나리오 실행. 이후 미적용 오류 재현을 추가한 최종 실행은 32개 PASS.
+- PASS: 기존 baseline에 v3 SQL 31시나리오 실행. 최종 32개 PASS. 이후 미적용 오류 재현을 추가한 최종 실행은 32개 PASS.
 - PASS: 기존 사용자 복구 SQL 회귀, 그리고 v3와 복구 SQL을 함께 사용한 회귀 실행. 격리 DB와 synthetic auth/catalog/hash 의존성을 사용했다. 원격 정상 로그인/RLS/API E2E를 증명하지 않는다.
 - 앱·QA 최종 소스 검증 결과와 커밋은 동명 JSON 증거 및 인수인계에 기록한다. 과거 테스트 결과를 현재 통합의 PASS로 재사용하지 않는다.
 
@@ -56,3 +56,13 @@
 ### 앱 통합 회귀 실행
 
 PASS: FitMatch-QA / Debug-QA, iPhone17 시뮬레이터. xcresult totalTestCount121 / passedTests121 / 실패0 / skip0, xcodebuild exit0. 첫 시도는 기기 준비 대기로 중단(BLOCKED), 기기 데이터 삭제 없는 재시작 후 재실행했다. 실제 정상 로그인 DB 비교·실기기 E2E는 NOT RUN.
+
+### 개발 SQL 적용 필요성의 재현
+
+PASS: 이번에 읽은 개발 complete_comparison 정의를 로컬에 복제하고, M에는 가슴+기장/L에는 가슴만 있는 승인 snapshot으로 v3 공통 가슴 결과를 제출하면 미적용 함수는 `Coverage does not match begin-snapshot metric coverage`로 거절하고 PENDING을 유지한다. 같은 함수에 v3 삽입부를 적용하면 정상 완료한다. 실제 개발 서버 사용자 RPC 호출이 아닌 격리 재현이며, 최종 현재 개발 정의/기존 baseline 검사 각각32개 PASS.
+
+### QA 최종 조합 검증
+
+PASS: QA merge `de458b3` 소스를 FitMatch-QA / Debug-QA에서 새 빌드·검사. totalTestCount129 / passedTests129 / 실패0 / skip0 / xcodebuild exit0. 기존 알고리즘·복구·버튼·옷장·History121개와 QR8개 포함. bugfix→QA 앱 코드 patch-id는 기존 QR 통합 차이와 동일(`74b2aaf2bffc4d2339d9555745443bb7dc45cccd`). 문서 충돌2개는 양쪽 기록을 보존했다. 최종 후속 변경은 SQL 테스트·검증 문서뿐이며 앱 소스는 검증한 조합과 동일하다.
+
+NOT RUN: 전체 Release Gate / 실제 로그인 개발DB 저장·비교·History / 실기기. 개발 v3 SQL 적용은 승인 대기이며 앞기장 정의/최소 앱 버전 문제는 보류 상태다.
